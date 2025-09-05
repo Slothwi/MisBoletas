@@ -5,7 +5,7 @@ import {  View } from "react-native";
 export default function HomeScreen() {
   return (
     <View style={{ flex: 1, alignItems: "center" }}>
-      <ThemedText type="title" style={{ fontSize: 20, textAlign: "center" }}>
+      <ThemedText type="title" style={{ fontSize: 20, textAlign: "center", marginTop: 40 }}>
         Tus Productos
       </ThemedText>
     </View>
