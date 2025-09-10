@@ -24,7 +24,7 @@ function BasicExample() {
           <Form.Group style={styles.stepContainer} className="mb-3" controlId="formFechaCompra">
             <Form.Label style={styles.titleText}>Fecha de compra</Form.Label>
             <Form.Control
-              type="fecha"
+              type="date"
               placeholder="DD/MM/AAAA"
               style={styles.input}
             />
