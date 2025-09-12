@@ -21,11 +21,9 @@
    ```
 
 4. Aplicar cambios del reporsitorio Remoto al repositorio Local
-
-   ```bash
+   
    git pull
-   ```
-
+   
 5. Actualizar lista de ramas del repositorio.
 
    ```bash
