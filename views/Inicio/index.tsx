@@ -1,8 +1,8 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import React from 'react';
-import {  StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ThemedText } from "@/components/ThemedText";
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import React from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const inicio = () => {
    const router = useRouter();
@@ -15,7 +15,7 @@ const inicio = () => {
 
        {/* Trajetas de productos */}
        <View style={styles.cardsContainer}>
-        <TouchableOpacity style={styles.card} testID='tarjeta-producto-auto' onPress={() => router.push('/(tabs)/Inicio/Prod_Auto')}>
+        <TouchableOpacity style={styles.card} testID='tarjeta-producto-auto' onPress={() => router.push('/')}>
          <View style={styles.cardContent}>
          <MaterialCommunityIcons name="car" size={24} color="#1976d2" />
          <Text style={styles.cardText}>Auto jeep wrangler</Text>
@@ -23,7 +23,7 @@ const inicio = () => {
         <Ionicons name="chevron-forward" size={24} color="#1976d2" />
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.card} testID='tarjeta-producto-lavadora' onPress={() => router.push('/(tabs)/Inicio/Prod_Lavadora')}>
+      <TouchableOpacity style={styles.card} testID='tarjeta-producto-lavadora' onPress={() => router.push('/')}>
         <View style={styles.cardContent}>
          <MaterialCommunityIcons name="washing-machine" size={24} color="#1976d2" />
          <Text style={styles.cardText}>Lavadora LG 12 kilos</Text>
@@ -31,7 +31,7 @@ const inicio = () => {
        <Ionicons name="chevron-forward" size={24} color="#1976d2" />
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.card} testID='tarjeta-producto-microondas' onPress={() => router.push('/(tabs)/Inicio/Prod_Microondas')}>
+      <TouchableOpacity style={styles.card} testID='tarjeta-producto-microondas' onPress={() => router.push('/')}>
         <View style={styles.cardContent}>
          <MaterialCommunityIcons name="microwave" size={24} color="#1976d2" />
          <Text style={styles.cardText}>Microondas Samsung</Text>
