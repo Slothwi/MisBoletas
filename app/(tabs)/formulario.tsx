@@ -1,13 +1,18 @@
-import { useRef } from 'react';
+import { useState, useRef } from 'react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 
 function BasicExample() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [nota, setNota] = useState('');
+  const MAX_LENGTH = 200;
+
   const handleFileClick = () => {
     fileInputRef.current?.click();
   };
+
+  
 
   return (
     <div style={styles.scrollWrapper}>
@@ -52,10 +57,18 @@ function BasicExample() {
           <Form.Group style={styles.stepContainer} className="mb-3" controlId="formNotas">
             <Form.Label style={styles.titleText}>Notas</Form.Label>
             <Form.Control
-              type="nota"
+              as="textarea"
               placeholder="Observaciones del producto"
+              value={nota}
+              onChange={(e) => setNota(e.target.value)}
+              maxLength={MAX_LENGTH}
               style={styles.input}
-            />
+              />
+              <Form.Text muted>
+                {nota.length}/{MAX_LENGTH} caracteres usados <br />
+                Te quedan <strong>{MAX_LENGTH - nota.length} </strong>caracteres
+              </Form.Text>
+
           </Form.Group>
           <Form.Group style={styles.stepContainer} className="mb-3" controlId="formArchivo">
             <Form.Label style={styles.titleText}>Archivo</Form.Label>
