@@ -1,3 +1,4 @@
+import { AntDesign } from '@expo/vector-icons'; // ← Importar AntDesign
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
@@ -38,6 +39,15 @@ export default function TabLayout() {
         options={{
           title: 'Explore',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="configuracion"
+        options={{
+          title: 'Configuración',
+          tabBarIcon: ({ color, size }) => (
+            <AntDesign name="setting" size={size} color={color} />
+          ),
         }}
       />
     </Tabs>
