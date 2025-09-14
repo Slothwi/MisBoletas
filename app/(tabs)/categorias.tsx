@@ -15,13 +15,12 @@ interface Producto {
   id: string;
   nombre: string;
   tipo: string;
-  // ...los demás campos no son necesarios aquí, solo el 'tipo'
+  
 }
 
 // Interfaz para representar una categoría
 interface Categoria {
   nombre: string;
-  // Puedes agregar un ícono por defecto si quieres
   icono: keyof typeof MaterialCommunityIcons.glyphMap;
   cantidadProductos: number;
 }
@@ -57,7 +56,7 @@ const Categorias = () => {
             cantidadProductos: 0,
           });
         }
-        // Incrementamos el contador de productos para esa categoría
+        // Incrementar el contador de productos para esa categoría
         categoriasMap.get(producto.tipo)!.cantidadProductos++;
       });
 
@@ -93,7 +92,7 @@ const Categorias = () => {
 
   const handleCrearCategoria = () => {
     // Navega a un formulario para crear una nueva categoría
-    router.push("/crear-categoria" as Href); // Debes crear esta pantalla
+    router.push("/crear-categoria" as Href); // hay q crear esta pantalla
   };
 
   if (cargando) {
@@ -126,7 +125,7 @@ const Categorias = () => {
                 />
                 <View style={styles.cardTextContainer}>
                   <Text style={styles.cardTitle}>
-                    {/* Capitaliza la primera letra para mejor presentación */}
+                    {/* Capitaliza la primera letra */}
                     {categoria.nombre.charAt(0).toUpperCase() +
                       categoria.nombre.slice(1)}
                   </Text>
@@ -153,7 +152,7 @@ const Categorias = () => {
   );
 };
 
-// Estilos adaptados para la pantalla de categorías
+// Estilos para la pantalla de categorías
 const styles = StyleSheet.create({
   container: {
     flex: 1,
