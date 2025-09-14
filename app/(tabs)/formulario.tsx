@@ -12,9 +12,7 @@ function BasicExample() {
     fileInputRef.current?.click();
   };
 
-  
-
-  return (
+    return (
     <div style={styles.scrollWrapper}>
       <div style={styles.formWrapper}>
         <Form style={styles.form}>
@@ -54,6 +52,7 @@ function BasicExample() {
             <Form.Label style={styles.titleText}>Tienda</Form.Label>
             <Form.Control type="tienda" style={styles.input} />
           </Form.Group>
+
           <Form.Group style={styles.stepContainer} className="mb-3" controlId="formNotas">
             <Form.Label style={styles.titleText}>Notas</Form.Label>
             <Form.Control
@@ -64,7 +63,7 @@ function BasicExample() {
               maxLength={MAX_LENGTH}
               style={styles.input}
               />
-              <Form.Text muted>
+              <Form.Text muted style={{ fontFamily: 'Arial, sans-serif', fontSize: '14px' }}>
                 {nota.length}/{MAX_LENGTH} caracteres usados <br />
                 Te quedan <strong>{MAX_LENGTH - nota.length} </strong>caracteres
               </Form.Text>
@@ -129,13 +128,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     width: '100%',
   },
   form: {
-    background: '#fff',
+    background: 'linear-gradient(to bottom right, #007bff, #00c6ff)',
     padding: 32,
     borderRadius: 12,
     boxShadow: '0 2px 16px rgba(0,0,0,0.08)',
     minWidth: 320,
     maxWidth: 400,
     width: '100%',
+    color: '#fff',
   },
   titleText: {
     fontSize: 20,
