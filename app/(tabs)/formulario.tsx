@@ -48,6 +48,22 @@ function BasicExample() {
             <Form.Label style={styles.titleText}>Modelo</Form.Label>
             <Form.Control type="modelo" style={styles.input} />
           </Form.Group>
+          <Form.Group style={styles.stepContainer} className="mb-3" controlId="formTipo">
+            <Form.Label style={styles.titleText}>Tipo de producto</Form.Label>
+            <Form.Select  style={styles.input} >
+            <option></option>
+            <option>Auto</option>
+            <option>Lavadora</option>
+            <option>Microondas</option>
+            <option>Refrgerador</option>
+            <option>Televisor</option>
+            <option>Celular</option>
+            <option>Computador</option>
+            <option>Moto</option>
+            <option>Otro</option>
+            </Form.Select>
+            
+          </Form.Group>
           <Form.Group style={styles.stepContainer} className="mb-3" controlId="formTienda">
             <Form.Label style={styles.titleText}>Tienda</Form.Label>
             <Form.Control type="tienda" style={styles.input} />
