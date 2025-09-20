@@ -144,7 +144,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     width: '100%',
   },
   form: {
-    background: 'linear-gradient(to bottom right, #007bff, #00c6ff)',
+    background: '#a8cbf0', 
     padding: 32,
     borderRadius: 12,
     boxShadow: '0 2px 16px rgba(0,0,0,0.08)',

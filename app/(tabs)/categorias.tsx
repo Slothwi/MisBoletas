@@ -229,7 +229,7 @@ const Categorias = () => {
 
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5", padding: 24 },
+  container: { flex: 1, backgroundColor: "#a8cbf0", padding: 24 },
   scrollContainer: { flex: 1 },
   titulo: { fontSize: 20, textAlign: "center", marginTop: 40, marginBottom: 24 },
   cardsContainer: { width: "100%", gap: 16, marginBottom: 24 },

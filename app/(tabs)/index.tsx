@@ -330,7 +330,7 @@ const Inicio = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#a8cbf0',
     padding: 24,
   },
   scrollContainer: {
