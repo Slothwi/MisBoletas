@@ -20,7 +20,7 @@
    git fetch
    ```
 
-4. Aplicar cambios del reporsitorio Remoto al repositorio Local
+4. Aplicar cambios del repositorio Remoto al repositorio Local
    
    git pull
    

@@ -1,10 +1,5 @@
-import { Ionicons } from '@expo/vector-icons';
-import * as DocumentPicker from 'expo-document-picker';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
-  Alert,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,164 +8,115 @@ import {
   View
 } from 'react-native';
 
-const Formulario = () => {
-  const router = useRouter();
-  const [formData, setFormData] = useState({
-    nombre: '',
-    fechaCompra: '',
-    garantia: '',
-    marca: '',
-    modelo: '',
-    tienda: '',
-    notas: '',
-  });
-  const [archivo, setArchivo] = useState<any>(null);
+function BasicExample() {
+  const fileInputRef = useRef(null);
+  const [nota, setNota] = useState('');
   const MAX_LENGTH = 200;
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleFilePick = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({});
-      if (!result.canceled && result.assets.length > 0) {
-        setArchivo(result.assets[0]);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'No se pudo seleccionar el archivo');
-    }
-  };
-
-  const handleSubmit = () => {
-    // Aquí iría la lógica para guardar el producto
-    Alert.alert('Éxito', 'Producto guardado correctamente');
-    // Opcional: navegar de vuelta a la pantalla anterior
-    router.back();
-  };
-
-  const handleCancel = () => {
-    router.back();
+  const handleFileClick = () => {
+    // Lógica para manejar la selección de archivos
+    console.log("Seleccionar archivo");
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.scrollWrapper}>
+    <ScrollView style={styles.scrollWrapper}>
       <View style={styles.formWrapper}>
         <View style={styles.form}>
-          {/* Nombre Producto */}
           <View style={styles.stepContainer}>
             <Text style={styles.titleText}>Nombre Producto</Text>
             <TextInput
               style={styles.input}
               placeholder="Ingrese nombre del producto"
-              value={formData.nombre}
-              onChangeText={(text) => handleInputChange('nombre', text)}
+              placeholderTextColor="#999"
             />
           </View>
-
-          {/* Fecha de compra */}
+          
           <View style={styles.stepContainer}>
             <Text style={styles.titleText}>Fecha de compra</Text>
             <TextInput
               style={styles.input}
               placeholder="DD/MM/AAAA"
-              value={formData.fechaCompra}
-              onChangeText={(text) => handleInputChange('fechaCompra', text)}
+              placeholderTextColor="#999"
             />
           </View>
-
-          {/* Duración Garantía */}
+          
           <View style={styles.stepContainer}>
             <Text style={styles.titleText}>Duración Garantía</Text>
             <TextInput
               style={styles.input}
               placeholder="Meses de garantía"
-              value={formData.garantia}
-              onChangeText={(text) => handleInputChange('garantia', text)}
+              placeholderTextColor="#999"
               keyboardType="numeric"
             />
           </View>
-
-          {/* Marca */}
+          
           <View style={styles.stepContainer}>
             <Text style={styles.titleText}>Marca</Text>
             <TextInput
               style={styles.input}
-              value={formData.marca}
-              onChangeText={(text) => handleInputChange('marca', text)}
+              placeholder="Marca del producto"
+              placeholderTextColor="#999"
             />
           </View>
-
-          {/* Modelo */}
+          
           <View style={styles.stepContainer}>
             <Text style={styles.titleText}>Modelo</Text>
             <TextInput
               style={styles.input}
-              value={formData.modelo}
-              onChangeText={(text) => handleInputChange('modelo', text)}
+              placeholder="Modelo del producto"
+              placeholderTextColor="#999"
             />
           </View>
-
-          {/* Tienda */}
+          
+          <View style={styles.stepContainer}>
+            <Text style={styles.titleText}>Tipo de producto</Text>
+            <View style={styles.picker}>
+              <Text style={styles.pickerText}>Seleccionar tipo...</Text>
+            </View>
+          </View>
+          
           <View style={styles.stepContainer}>
             <Text style={styles.titleText}>Tienda</Text>
             <TextInput
               style={styles.input}
-              value={formData.tienda}
-              onChangeText={(text) => handleInputChange('tienda', text)}
+              placeholder="Tienda de compra"
+              placeholderTextColor="#999"
             />
           </View>
 
-          {/* Notas */}
           <View style={styles.stepContainer}>
             <Text style={styles.titleText}>Notas</Text>
             <TextInput
               style={[styles.input, styles.textArea]}
               placeholder="Observaciones del producto"
-              value={formData.notas}
-              onChangeText={(text) => handleInputChange('notas', text)}
+              placeholderTextColor="#999"
+              value={nota}
+              onChangeText={setNota}
               maxLength={MAX_LENGTH}
               multiline
               numberOfLines={4}
             />
-            <Text style={styles.charCount}>
-              {formData.notas.length}/{MAX_LENGTH} caracteres usados {'\n'}
-              Te quedan <Text style={styles.charRemaining}>{MAX_LENGTH - formData.notas.length}</Text> caracteres
+            <Text style={styles.charCounter}>
+              {nota.length}/{MAX_LENGTH} caracteres usados {"\n"}
+              Te quedan <Text style={styles.charRemaining}>{MAX_LENGTH - nota.length}</Text> caracteres
             </Text>
           </View>
-
-          {/* Archivo */}
+          
           <View style={styles.stepContainer}>
             <Text style={styles.titleText}>Archivo</Text>
             <TouchableOpacity
+              onPress={handleFileClick}
               style={styles.fileButton}
-              onPress={handleFilePick}
             >
-              <Ionicons name="cloud-upload" size={20} color="#fff" />
-              <Text style={styles.fileButtonText}>
-                {archivo ? 'Archivo seleccionado' : 'Subir archivo'}
-              </Text>
+              <Text style={styles.fileButtonText}>Subir archivo</Text>
             </TouchableOpacity>
-            {archivo && (
-              <Text style={styles.fileName}>{archivo.name}</Text>
-            )}
           </View>
-
-          {/* Botones */}
+          
           <View style={styles.buttonRow}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
-              onPress={handleCancel}
-            >
+            <TouchableOpacity style={[styles.button, styles.cancelButton]}>
               <Text style={styles.buttonText}>Cancelar</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.saveButton]}
-              onPress={handleSubmit}
-            >
+            <TouchableOpacity style={[styles.button, styles.saveButton]}>
               <Text style={styles.buttonText}>Guardar</Text>
             </TouchableOpacity>
           </View>
@@ -178,118 +124,104 @@ const Formulario = () => {
       </View>
     </ScrollView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   scrollWrapper: {
-    flexGrow: 1,
+    flex: 1,
     backgroundColor: '#f7f7f7',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 32,
   },
   formWrapper: {
-    backgroundColor: '#fff',
-    padding: 32,
-    borderRadius: 12,
-    minWidth: 320,
-    maxWidth: 400,
-    width: '100%',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
+    padding: 16,
+    alignItems: 'center',
   },
   form: {
+    backgroundColor: '#a8cbf0', 
+    padding: 24,
+    borderRadius: 12,
     width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   titleText: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '600',
     marginBottom: 4,
     color: '#222',
-    fontFamily: Platform.OS === 'ios' ? 'Helvetica' : 'sans-serif',
   },
   stepContainer: {
     marginBottom: 16,
   },
   input: {
+    backgroundColor: 'white',
     fontSize: 16,
-    fontWeight: '400',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    padding: 12,
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#ccc',
-    marginTop: 4,
-    backgroundColor: '#fafafa',
-    fontFamily: Platform.OS === 'ios' ? 'Helvetica' : 'sans-serif',
   },
   textArea: {
     minHeight: 100,
     textAlignVertical: 'top',
   },
-  charCount: {
-    fontSize: 12,
-    color: '#666',
+  charCounter: {
+    fontSize: 14,
+    color: '#555',
     marginTop: 4,
-    fontFamily: Platform.OS === 'ios' ? 'Helvetica' : 'sans-serif',
   },
   charRemaining: {
-    fontWeight: '600',
-    color: '#1976d2',
+    fontWeight: 'bold',
+  },
+  picker: {
+    backgroundColor: 'white',
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 12,
+    justifyContent: 'center',
+  },
+  pickerText: {
+    color: '#999',
+    fontSize: 16,
   },
   fileButton: {
     backgroundColor: '#6c757d',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    padding: 12,
     borderRadius: 6,
-    gap: 8,
-    marginTop: 4,
+    alignItems: 'center',
   },
   fileButtonText: {
-    color: '#fff',
+    color: 'white',
     fontWeight: '600',
     fontSize: 16,
-    fontFamily: Platform.OS === 'ios' ? 'Helvetica' : 'sans-serif',
-  },
-  fileName: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 8,
-    fontStyle: 'italic',
-    fontFamily: Platform.OS === 'ios' ? 'Helvetica' : 'sans-serif',
   },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 24,
-    gap: 16,
+    marginTop: 16,
   },
   button: {
-    flex: 1,
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     borderRadius: 6,
+    minWidth: 110,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   cancelButton: {
     backgroundColor: '#6c757d',
   },
   saveButton: {
-    backgroundColor: '#1976d2',
+    backgroundColor: '#007bff',
   },
   buttonText: {
-    color: '#fff',
+    color: 'white',
     fontWeight: '600',
     fontSize: 16,
-    fontFamily: Platform.OS === 'ios' ? 'Helvetica' : 'sans-serif',
   },
 });
 
-export default Formulario;
+export default BasicExample;
