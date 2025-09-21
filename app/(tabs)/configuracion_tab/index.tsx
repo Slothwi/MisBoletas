@@ -43,7 +43,7 @@ const Configuracion = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#a8cbf0',
         padding: 24,
         alignItems: 'center',
     },
