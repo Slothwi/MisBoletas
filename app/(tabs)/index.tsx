@@ -64,7 +64,7 @@ const Inicio = () => {
         {
           id: '1',
           nombre: 'Auto jeep wrangler',
-          tipo: 'car',
+          tipo: 'Auto',
           marca: 'Jeep',
           modelo: 'Wrangler 2023',
           fechaCompra: '15/03/2023',
@@ -81,7 +81,7 @@ const Inicio = () => {
         {
           id: '2',
           nombre: 'Lavadora LG 12 kilos',
-          tipo: 'washing-machine',
+          tipo: 'Lavadora',
           marca: 'LG',
           modelo: 'WM1234X',
           fechaCompra: '20/05/2023',
@@ -98,7 +98,7 @@ const Inicio = () => {
         {
           id: '3',
           nombre: 'Microondas Samsung',
-          tipo: 'microwave',
+          tipo: 'Microondas',
           marca: 'Samsung',
           modelo: 'ME731K',
           fechaCompra: '10/08/2023',
@@ -226,6 +226,11 @@ const Inicio = () => {
               <Text style={styles.infoValue}>{productoSeleccionado.garantia}</Text>
             </View>
             
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Tipo de producto:</Text>
+              <Text style={styles.infoValue}>{productoSeleccionado.tipo}</Text>
+            </View>
+
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Tienda:</Text>
               <Text style={styles.infoValue}>{productoSeleccionado.tienda}</Text>
