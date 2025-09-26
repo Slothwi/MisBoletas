@@ -7,10 +7,73 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+
+// Componente SelectTipoProducto - AGREGADO
+const SelectTipoProducto = (props: { valor: string; onChange: (valor: string) => void }) => {
+  const [mostrarOpciones, setMostrarOpciones] = useState(false);
+
+  const opciones = [
+    'Auto', 'Lavadora', 'Microondas', 'Refrigerador', 
+    'Computadora', 'Motocicleta', 'Televisor', 'Celular', 
+    'Tablet', 'Secadora', 'Otro'
+  ];
+
+  return (
+    <View style={{ flex: 1 }}>
+      <TouchableOpacity 
+        style={styles.picker}
+        onPress={() => setMostrarOpciones(!mostrarOpciones)}
+      >
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={{ 
+            fontSize: 16, 
+            color: props.valor ? '#000' : '#999' 
+          }}>
+            {props.valor || 'Seleccionar tipo de producto...'}
+          </Text>
+          <Ionicons 
+            name={mostrarOpciones ? "chevron-up" : "chevron-down"} 
+            size={20} 
+            color="#666" 
+          />
+        </View>
+      </TouchableOpacity>
+
+      {mostrarOpciones && (
+        <View style={styles.opcionesContainer}>
+          <ScrollView style={styles.opcionesScroll}>
+            {opciones.map((opcion, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.opcionItem,
+                  props.valor === opcion && styles.opcionSeleccionada
+                ]}
+                onPress={() => {
+                  props.onChange(opcion);
+                  setMostrarOpciones(false);
+                }}
+              >
+                <Text style={[
+                  styles.opcionText,
+                  props.valor === opcion && styles.opcionTextSeleccionada
+                ]}>
+                  {opcion}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+    </View>
+  );
+};
 
 function BasicExample() {
   const fileInputRef = useRef(null);
   const [nota, setNota] = useState('');
+  const [tipoProducto, setTipoProducto] = useState(''); // Estado para el tipo de producto
   const MAX_LENGTH = 200;
 
   const handleFileClick = () => {
@@ -70,9 +133,10 @@ function BasicExample() {
           
           <View style={styles.stepContainer}>
             <Text style={styles.titleText}>Tipo de producto</Text>
-            <View style={styles.picker}>
-              <Text style={styles.pickerText}>Seleccionar tipo...</Text>
-            </View>
+            <SelectTipoProducto 
+              valor={tipoProducto} 
+              onChange={setTipoProducto} 
+            />
           </View>
           
           <View style={styles.stepContainer}>
@@ -184,9 +248,38 @@ const styles = StyleSheet.create({
     padding: 12,
     justifyContent: 'center',
   },
-  pickerText: {
-    color: '#999',
+  // ESTILOS AGREGADOS para el selector
+  opcionesContainer: {
+    marginTop: 5,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 6,
+    backgroundColor: 'white',
+    maxHeight: 200,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  opcionesScroll: {
+    maxHeight: 200,
+  },
+  opcionItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  opcionSeleccionada: {
+    backgroundColor: '#e3f2fd',
+  },
+  opcionText: {
     fontSize: 16,
+    color: '#000',
+  },
+  opcionTextSeleccionada: {
+    color: '#1976d2',
+    fontWeight: '600',
   },
   fileButton: {
     backgroundColor: '#6c757d',
