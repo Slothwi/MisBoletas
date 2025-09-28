@@ -5,9 +5,12 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
+
 
 // Componente SelectTipoProducto - AGREGADO
 const SelectTipoProducto = (props: { valor: string; onChange: (valor: string) => void }) => {
@@ -73,12 +76,20 @@ const SelectTipoProducto = (props: { valor: string; onChange: (valor: string) =>
 function BasicExample() {
   const fileInputRef = useRef(null);
   const [nota, setNota] = useState('');
+  const [fechaCompra, setFechaCompra] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [tipoProducto, setTipoProducto] = useState(''); // Estado para el tipo de producto
   const MAX_LENGTH = 200;
 
   const handleFileClick = () => {
     // Lógica para manejar la selección de archivos
     console.log("Seleccionar archivo");
+  };
+  const formatDate = (date: Date) => {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   return (
@@ -95,13 +106,42 @@ function BasicExample() {
           </View>
           
           <View style={styles.stepContainer}>
-            <Text style={styles.titleText}>Fecha de compra</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="DD/MM/AAAA"
-              placeholderTextColor="#999"
-            />
-          </View>
+  <Text style={styles.titleText}>Fecha de compra</Text>
+
+  <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+  <View style={{ position: 'relative' }}>
+    <TextInput
+      style={styles.input}
+      value={fechaCompra ? formatDate(fechaCompra) : ''}
+      editable={false}
+      placeholder="DD/MM/AAAA"
+      placeholderTextColor="#999"
+      pointerEvents="none"
+    />
+    <Ionicons
+      name="calendar-outline"
+      size={20}
+      color="#666"
+      style={{ position: 'absolute', right: 12, top: 14 }}
+    />
+  </View>
+</TouchableOpacity>
+  {showDatePicker && (
+    <DateTimePicker
+      value={fechaCompra || new Date()} // Usa fecha actual si no hay valor
+      mode="date"
+      display={Platform.OS === 'android' ? 'calendar' : 'spinner'}
+      onChange={(event, selectedDate) => {
+        setShowDatePicker(false);
+        if (selectedDate) {
+          setFechaCompra(selectedDate);
+        }
+      }}
+      maximumDate={new Date()}
+    />
+  )}
+</View>
+
           
           <View style={styles.stepContainer}>
             <Text style={styles.titleText}>Duración Garantía</Text>
