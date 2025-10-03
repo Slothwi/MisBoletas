@@ -38,7 +38,7 @@ const SelectTipoProducto = (props: { valor: string; onChange: (valor: string) =>
           <Ionicons 
             name={mostrarOpciones ? "chevron-up" : "chevron-down"} 
             size={20} 
-            color="#666" 
+            color="#e77573" 
           />
         </View>
       </TouchableOpacity>
@@ -121,7 +121,7 @@ function BasicExample() {
     <Ionicons
       name="calendar-outline"
       size={20}
-      color="#666"
+      color="#e77573"
       style={{ position: 'absolute', right: 12, top: 14 }}
     />
   </View>
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   fileButton: {
-    backgroundColor: '#6c757d',
+    backgroundColor: '#e77573',
     padding: 12,
     borderRadius: 6,
     alignItems: 'center',
@@ -345,10 +345,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#6c757d',
+    backgroundColor: '#e77573',
   },
   saveButton: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#e77573',
   },
   buttonText: {
     color: 'white',

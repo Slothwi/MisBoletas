@@ -298,6 +298,7 @@ const Categorias = () => {
     );
   }
 
+     // SI SE SELECCIONÓ UN PRODUCTO, MUESTRA EL DETALLE
   if (productoSeleccionado) {
       return (
         <View style={styles.container}>
@@ -305,7 +306,7 @@ const Categorias = () => {
             style={styles.botonVolver}
             onPress={handleVolverALista}
           >
-            <Ionicons name="arrow-back" size={24} color="#1976d2" />
+            <Ionicons name="arrow-back" size={24} color="#e77573" />
             <Text style={styles.botonVolverTexto}>Volver a la lista</Text>
           </TouchableOpacity>
   
@@ -314,7 +315,7 @@ const Categorias = () => {
               <MaterialCommunityIcons 
                 name={productoSeleccionado.icono} 
                 size={48} 
-                color="#1976d2" 
+                color="#e77573" 
               />
               <Text style={styles.detalleTitulo}>{productoSeleccionado.nombre}</Text>
             </View>
@@ -389,7 +390,7 @@ const Categorias = () => {
     return (
       <View style={styles.container}>
         <TouchableOpacity style={styles.botonVolver} onPress={handleVolverACategorias}>
-            <Ionicons name="arrow-back" size={24} color="#1976d2" />
+            <Ionicons name="arrow-back" size={24} color="#e77573" />
             <Text style={styles.botonVolverTexto}>Volver a Categorías</Text>
         </TouchableOpacity>
 
@@ -405,7 +406,7 @@ const Categorias = () => {
                 testID={`tarjeta-producto-${producto.tipo}`}>
 
                     <View style={styles.cardContent}>
-                        <MaterialCommunityIcons name={producto.icono} size={24} color="#1976d2"/>
+                        <MaterialCommunityIcons name={producto.icono} size={24} color="#e77573"/>
                         <Text style={styles.cardTitle}>{producto.nombre}</Text>
                     </View>
                     <Ionicons name="chevron-forward" size={24} color="#ccc" />
@@ -435,7 +436,7 @@ const Categorias = () => {
               onPress={() => handleVerCategoria(categoria)}
             >
               <View style={styles.cardContent}>
-                <MaterialCommunityIcons name={categoria.icono} size={32} color="#1976d2" />
+                <MaterialCommunityIcons name={categoria.icono} size={32} color="#e77573" />
                 <View style={styles.cardTextContainer}>
                   <Text style={styles.cardTitle}>
                     {categoria.nombre.charAt(0).toUpperCase() + categoria.nombre.slice(1)}
@@ -445,7 +446,7 @@ const Categorias = () => {
                   </Text>
                 </View>
               </View>
-              <Ionicons name="chevron-forward" size={24} color="#1976d2" />
+              <Ionicons name="chevron-forward" size={24} color="#e77573" />
             </TouchableOpacity>
           ))}
         </View>
@@ -474,7 +475,7 @@ const Categorias = () => {
             </View>
         ) : (
             <TouchableOpacity style={styles.botonAgregar} onPress={handleMostrarFormulario}>
-                <Ionicons name="add-circle-outline" size={24} color="#1976d2" />
+                <Ionicons name="add-circle-outline" size={24} color="#e77573" />
                 <Text style={styles.botonAgregarTexto}>Crear Nueva Categoría</Text>
             </TouchableOpacity>
         )}
@@ -506,15 +507,15 @@ const styles = StyleSheet.create({
   cardSubtitle: { color: "#666", fontSize: 14 },
 
   botonAgregar: { flexDirection: "row", alignItems: "center", justifyContent: "center", 
-    paddingVertical: 16, borderRadius: 8, gap: 8, borderWidth: 1, borderColor: "#1976d2", 
+    paddingVertical: 16, borderRadius: 8, gap: 8, borderWidth: 1, borderColor: "#e77573", 
     backgroundColor: "#fff" },
 
-  botonAgregarTexto: { color: "#1976d2", fontSize: 16, fontWeight: "600" },
+  botonAgregarTexto: { color: "#222", fontSize: 16, fontWeight: "600" },
 
   // Estilos para el botón de volver en la vista de productos
   botonVolver: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
 
-  botonVolverTexto: { color: '#1976d2', fontSize: 16, marginLeft: 8, fontWeight: '600' },
+  botonVolverTexto: { color: '#e77573', fontSize: 16, marginLeft: 8, fontWeight: '600' },
 
   // Estilo para las tarjetas de productos
   cardProducto: { backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center',
@@ -531,9 +532,9 @@ const styles = StyleSheet.create({
 
   botonForm: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
 
-  botonCancelar: { backgroundColor: '#eee' },
+  botonCancelar: { backgroundColor: '#e77573' },
 
-  botonGuardar: { backgroundColor: '#1976d2' },
+  botonGuardar: { backgroundColor: '#e77573' },
 
   botonFormTexto: { fontWeight: '600', fontSize: 16 },
 
@@ -560,13 +561,13 @@ const styles = StyleSheet.create({
 
   archivoButtons: { flexDirection: 'row', gap: 12, marginBottom: 12 },
 
-  archivoButton: { backgroundColor: '#1976d2', flexDirection: 'row', alignItems: 'center', 
+  archivoButton: { backgroundColor: '#e77573', flexDirection: 'row', alignItems: 'center', 
     justifyContent: 'center', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8, 
     gap: 8,flex: 1,
   },
 
   descargarButton: {
-    backgroundColor: '#28a745',
+    backgroundColor: '#e77573',
   },
 
   archivoButtonText: { color: '#fff', fontSize: 14, fontWeight: '600'},

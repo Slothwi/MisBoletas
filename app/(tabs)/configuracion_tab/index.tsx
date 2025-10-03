@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View, ScrollView } from 'react-native';
 
 const user = {
     name: 'Nombre Usuario',
@@ -13,6 +13,7 @@ const Configuracion = () => {
     
     return (
         <View style={styles.container}>
+            <ScrollView  style={{ width: '100%' }} contentContainerStyle={{ alignItems: 'center' }}>
             {/* Profile Section */}
             <View style={styles.profileCard}>
                 <View style={styles.profileContainer}>
@@ -25,17 +26,18 @@ const Configuracion = () => {
             <View style={styles.cardsContainer}>
                 <TouchableOpacity style={styles.card} testID='card-configuracion' onPress={() => router.push('/configuracion_tab/detalle_configuracion')}>
                     <Text style={styles.cardText}>Configuración</Text>
-                    <Ionicons name="chevron-forward" size={24} color="#1976d2" />
+                    <Ionicons name="chevron-forward" size={24} color="#e77573" />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.card} testID='card-nosotros' onPress={() => router.push('/configuracion_tab/nosotros')}>
                     <Text style={styles.cardText}>Nosotros</Text>
-                    <Ionicons name="chevron-forward" size={24} color="#1976d2" />
+                    <Ionicons name="chevron-forward" size={24} color="#e77573" />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.card} testID='card-contacto' onPress={() => router.push('/configuracion_tab/contacto')}>
                     <Text style={styles.cardText}>Contacto</Text>
-                    <Ionicons name="chevron-forward" size={24} color="#1976d2" />
+                    <Ionicons name="chevron-forward" size={24} color="#e77573" />
                 </TouchableOpacity>
             </View>
+            </ScrollView>
         </View>
     );
 };

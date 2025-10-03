@@ -191,7 +191,7 @@ const Inicio = () => {
           style={styles.botonVolver}
           onPress={handleVolverALista}
         >
-          <Ionicons name="arrow-back" size={24} color="#1976d2" />
+          <Ionicons name="arrow-back" size={24} color="#e77573" />
           <Text style={styles.botonVolverTexto}>Volver a la lista</Text>
         </TouchableOpacity>
 
@@ -200,7 +200,7 @@ const Inicio = () => {
             <MaterialCommunityIcons 
               name={productoSeleccionado.icono} 
               size={48} 
-              color="#1976d2" 
+              color="#e77573" 
             />
             <Text style={styles.detalleTitulo}>{productoSeleccionado.nombre}</Text>
           </View>
@@ -309,11 +309,11 @@ const Inicio = () => {
                   <MaterialCommunityIcons 
                     name={producto.icono} 
                     size={24} 
-                    color="#1976d2" 
+                    color="#e77573" 
                   />
                   <Text style={styles.cardText}>{producto.nombre}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={24} color="#1976d2" />
+                <Ionicons name="chevron-forward" size={24} color="#e77573" />
               </TouchableOpacity>
             ))}
           </View>
@@ -322,7 +322,7 @@ const Inicio = () => {
             style={styles.botonAgregarSecundario}
             onPress={handleAgregarProducto}
           >
-            <Ionicons name="add-circle-outline" size={24} color="#1976d2" />
+            <Ionicons name="add-circle-outline" size={24} color="#e77573" />
             <Text style={styles.botonAgregarSecundarioTexto}>Agregar otro producto</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   botonVolverTexto: {
-    color: '#1976d2',
+    color: '#e77573',
     fontSize: 16,
     marginLeft: 8,
     fontWeight: '600',
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   archivoButton: {
-    backgroundColor: '#1976d2',
+    backgroundColor: '#e77573',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   descargarButton: {
-    backgroundColor: '#28a745',
+    backgroundColor: '#e77573',
   },
   archivoButtonText: {
     color: '#fff',
@@ -511,11 +511,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     gap: 8,
     borderWidth: 1,
-    borderColor: '#1976d2',
+    borderColor: '#e77573',
     backgroundColor: '#fff',
   },
   botonAgregarSecundarioTexto: {
-    color: '#1976d2',
+    color: '#222',
     fontSize: 16,
     fontWeight: '600',
   },
