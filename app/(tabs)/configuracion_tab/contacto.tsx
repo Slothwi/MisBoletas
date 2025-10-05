@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "700",
     marginBottom: 16,
-    color: "#1976d2",
+    color: "#e77573",
     textAlign: "center",
     marginTop: 20,
   },
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   button: {
-    backgroundColor: "#1976d2",
+    backgroundColor: "#e77573",
     borderRadius: 6,
     padding: 14,
     alignItems: "center",
@@ -199,6 +199,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   infoLink: {
-    color: "#1976d2",
+    color: "#e77573",
   },
 });

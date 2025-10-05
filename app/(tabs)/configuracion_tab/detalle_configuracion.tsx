@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 24,
-    color: '#1976d2',
+    color: '#e77573',
     fontFamily: 'Space Mono, monospace',
   },
   settingRow: {
