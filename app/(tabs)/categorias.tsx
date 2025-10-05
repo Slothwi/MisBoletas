@@ -179,6 +179,20 @@ const Categorias = () => {
       case "Lavadora": return "washing-machine";
       case "Microondas": return "microwave";
       case "Refrigerador": return "fridge";
+      case "Televisor": return "television-classic";
+      case "Celular": return "cellphone";
+      case "Computadora": return "laptop";
+      case "Tablet": return "tablet";
+      case "Aire acondicionado": return "air-conditioner";
+      case "Cámara": return "camera";
+      case "Impresora": return "printer-pos-outline";
+      case "Motocicleta": return "motorbike";
+      case "Reloj inteligente": return "watch";
+      case "Bicicleta": return "bike";
+      case "Auriculares": return "headphones";
+      case "Altavoz": return "speaker";
+      case "Consola de videojuegos": return "gamepad-variant";
+      case "Mueble": return "sofa";
       default: return "shape-outline";
     }
   };

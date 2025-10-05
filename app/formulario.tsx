@@ -19,7 +19,8 @@ const SelectTipoProducto = (props: { valor: string; onChange: (valor: string) =>
   const opciones = [
     'Auto', 'Lavadora', 'Microondas', 'Refrigerador', 
     'Computadora', 'Motocicleta', 'Televisor', 'Celular', 
-    'Tablet', 'Secadora', 'Otro'
+    'Tablet', 'Secadora','Aire acondicionado','Cámara','Impresora','Reloj inteligente', 
+    'Bicicleta','Auriculares','Altavoz','Consola de videojuegos','Mueble','Otro'
   ];
 
   return (
