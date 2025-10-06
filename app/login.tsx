@@ -5,14 +5,15 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import axios from "axios";
 import React, { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  Image,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 
 type LoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
@@ -283,6 +284,7 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
+      <Image source={require('../assets/images/logoMisBoletas.jpeg')} style={styles.imagenLogo} />
       <Text style={styles.title}>Iniciar Sesión</Text>
       
       <View style={styles.modoContainer}>
@@ -311,19 +313,25 @@ export default function LoginScreen() {
       <TextInput
         style={styles.input}
         placeholder="Usuario"
+        placeholderTextColor="#999" // Color explícito para placeholder (como prop, no en styles)
         value={username}
         onChangeText={setUsername}
         autoCapitalize="none"
         editable={!loading}
+        selectionColor="#007AFF" // Color del cursor
+        cursorColor="#007AFF" // Color del cursor (Android)
       />
       
       <TextInput
         style={styles.input}
         placeholder="Contraseña"
+        placeholderTextColor="#999" // Color explícito para placeholder (como prop, no en styles)
         secureTextEntry
         value={password}
         onChangeText={setPassword}
         editable={!loading}
+        selectionColor="#007AFF" // Color del cursor
+        cursorColor="#007AFF" // Color del cursor (Android)
       />
       
       <TouchableOpacity 
@@ -331,7 +339,7 @@ export default function LoginScreen() {
         onPress={handleLogin}
         disabled={loading}
       >
-        <Text style={styles.buttonText}>Iniciar Sesión</Text>
+        <Text style={styles.loginButtonText}>Iniciar Sesión</Text>
       </TouchableOpacity>
       
       <TouchableOpacity 
@@ -339,29 +347,8 @@ export default function LoginScreen() {
         onPress={handleRegister}
         disabled={loading}
       >
-        <Text style={styles.buttonText}>Registrarse</Text>
+        <Text style={styles.registerButtonText}>Registrarse</Text>
       </TouchableOpacity>
-      
-      <TouchableOpacity 
-        style={[styles.button, styles.profileButton]} 
-        onPress={handlePerfil}
-        disabled={loading}
-      >
-        <Text style={styles.buttonText}>Ver Perfil</Text>
-      </TouchableOpacity>
-
-      <View style={styles.infoBox}>
-        <Text style={styles.infoTitle}>💡 Información:</Text>
-        <Text style={styles.infoText}>
-          • <Text style={styles.bold}>BD Local</Text>: Funciona sin internet
-        </Text>
-        <Text style={styles.infoText}>
-          • <Text style={styles.bold}>Backend</Text>: Requiere servidor FastAPI
-        </Text>
-        <Text style={styles.infoText}>
-          • Toca "Ver Usuarios de Prueba" para ver credenciales
-        </Text>
-      </View>
     </View>
   );
 }
@@ -371,18 +358,28 @@ const styles = StyleSheet.create({
     flex: 1, 
     justifyContent: "center", 
     padding: 20, 
-    backgroundColor: "#f4f4f4" 
+    backgroundColor: "#a8cbf0" 
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f4f4f4"
+    backgroundColor: "#a8cbf0"
   },
   loadingText: {
     marginTop: 10,
     fontSize: 16,
     color: "#666"
+  },
+  imagenLogo:{
+    width: 140,
+    height: 140,
+    marginBottom: 30,
+    alignSelf: 'center',
+    borderRadius: 70,    
+    resizeMode: 'cover',
+    borderColor: '#a8cbf0',       
+    borderWidth: 3,
   },
   title: { 
     fontSize: 28, 
@@ -438,6 +435,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: "white",
     fontSize: 16,
+    color: "#333"
   },
   button: {
     padding: 15,
@@ -446,16 +444,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loginButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#e77573",
   },
   registerButton: {
-    backgroundColor: "#34C759",
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#e77573"
   },
-  profileButton: {
-    backgroundColor: "#8E8E93",
+  loginButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
-  buttonText: {
-    color: "white",
+  registerButtonText: {
+    color: "#e77573",
     fontSize: 16,
     fontWeight: "bold",
   },
