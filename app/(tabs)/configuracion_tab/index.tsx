@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View, ScrollView } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const user = {
     name: 'Nombre Usuario',
@@ -11,32 +12,92 @@ const user = {
 const Configuracion = () => {
     const router = useRouter();
     
+    const handleCerrarSesion = () => {
+        Alert.alert(
+            "Cerrar Sesión",
+            "¿Estás seguro de que quieres cerrar sesión?",
+            [
+                {
+                    text: "Cancelar",
+                    style: "cancel"
+                },
+                {
+                    text: "Cerrar Sesión",
+                    style: "destructive",
+                    onPress: cerrarSesion
+                }
+            ]
+        );
+    };
+
+    const cerrarSesion = async () => {
+        try {
+            // Eliminar el token de autenticación
+            await AsyncStorage.removeItem('token');
+            
+            // También puedes eliminar otros datos de usuario si los tienes
+            // await AsyncStorage.removeItem('userData');
+            
+            console.log('Sesión cerrada exitosamente');
+            
+            // Redirigir al login
+            router.replace('/login');
+            
+        } catch (error) {
+            console.error('Error al cerrar sesión:', error);
+            Alert.alert('Error', 'No se pudo cerrar sesión. Intenta nuevamente.');
+        }
+    };
+
     return (
         <View style={styles.container}>
-            <ScrollView  style={{ width: '100%' }} contentContainerStyle={{ alignItems: 'center' }}>
-            {/* Profile Section */}
-            <View style={styles.profileCard}>
-                <View style={styles.profileContainer}>
-                    <Image source={{ uri: user.photo }} style={styles.profileImage} />
-                    <Text style={styles.profileName}>{user.name}</Text>
+            <ScrollView style={{ width: '100%' }} contentContainerStyle={{ alignItems: 'center' }}>
+                {/* Profile Section */}
+                <View style={styles.profileCard}>
+                    <View style={styles.profileContainer}>
+                        <Image source={{ uri: user.photo }} style={styles.profileImage} />
+                        <Text style={styles.profileName}>{user.name}</Text>
+                    </View>
                 </View>
-            </View>
 
-            {/* Cards Section */}
-            <View style={styles.cardsContainer}>
-                <TouchableOpacity style={styles.card} testID='card-configuracion' onPress={() => router.push('/configuracion_tab/detalle_configuracion')}>
-                    <Text style={styles.cardText}>Configuración</Text>
-                    <Ionicons name="chevron-forward" size={24} color="#e77573" />
+                {/* Cards Section */}
+                <View style={styles.cardsContainer}>
+                    <TouchableOpacity 
+                        style={styles.card} 
+                        testID='card-configuracion' 
+                        onPress={() => router.push('/configuracion_tab/detalle_configuracion')}
+                    >
+                        <Text style={styles.cardText}>Configuración</Text>
+                        <Ionicons name="chevron-forward" size={24} color="#e77573" />
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                        style={styles.card} 
+                        testID='card-nosotros' 
+                        onPress={() => router.push('/configuracion_tab/nosotros')}
+                    >
+                        <Text style={styles.cardText}>Nosotros</Text>
+                        <Ionicons name="chevron-forward" size={24} color="#e77573" />
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                        style={styles.card} 
+                        testID='card-contacto' 
+                        onPress={() => router.push('/configuracion_tab/contacto')}
+                    >
+                        <Text style={styles.cardText}>Contacto</Text>
+                        <Ionicons name="chevron-forward" size={24} color="#e77573" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                    style={styles.cardLogOut}
+                    testID='boton-cerrar-sesion'
+                    onPress={handleCerrarSesion}
+                >                    
+                    <Text style={styles.cardText}>Cerrar Sesión</Text>
+                    <Ionicons name="log-out-outline" size={24} color="#e77573" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.card} testID='card-nosotros' onPress={() => router.push('/configuracion_tab/nosotros')}>
-                    <Text style={styles.cardText}>Nosotros</Text>
-                    <Ionicons name="chevron-forward" size={24} color="#e77573" />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.card} testID='card-contacto' onPress={() => router.push('/configuracion_tab/contacto')}>
-                    <Text style={styles.cardText}>Contacto</Text>
-                    <Ionicons name="chevron-forward" size={24} color="#e77573" />
-                </TouchableOpacity>
-            </View>
+                </View>
             </ScrollView>
         </View>
     );
@@ -79,6 +140,7 @@ const styles = StyleSheet.create({
     cardsContainer: {
         width: '100%',
         gap: 16,
+        marginBottom: 32,
     },
     card: {
         backgroundColor: '#f5f7fa',
@@ -99,6 +161,23 @@ const styles = StyleSheet.create({
         color: '#222',
         fontSize: 18,
         fontWeight: '600',
+    },
+    cardLogOut: {
+        backgroundColor: '#f5f7fa',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 18,
+        paddingHorizontal: 20,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: "#e77573",
+        marginBottom: 8,
+        shadowColor: '#000',
+        shadowOpacity: 0.04,
+        shadowRadius: 6,
+        shadowOffset: { width: 0, height: 1 },
+        elevation: 1,
     },
 });
 

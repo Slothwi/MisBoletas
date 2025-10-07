@@ -1,4 +1,4 @@
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { useColorScheme } from '@/src/hooks/useColorScheme';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -12,6 +12,14 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen 
           name="login" 
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="formulario" 
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="(auth)/login" 
           options={{ headerShown: false }}
         />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
