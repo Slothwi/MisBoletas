@@ -4,7 +4,7 @@
     "slug": "MisBoletas",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logomisboletas.png",
+    "icon": "./assets/images/logomisboletas2.png",
     "scheme": "misboletas",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -13,7 +13,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logomisboletas.png",
+        "foregroundImage": "./assets/images/logomisboletas2.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -29,7 +29,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/logomisboletas.png",
+          "image": "./assets/images/logomisboletas2.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
