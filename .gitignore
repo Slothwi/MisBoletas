@@ -1,13 +1,21 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
+# Dependencies
 node_modules/
+/.pnp
+.pnp.js
 
 # Expo
 .expo/
 dist/
 web-build/
 expo-env.d.ts
+
+# Testing
+/coverage
+
+# Production
+/build
+*.aab
+*.apk
 
 # Native
 .kotlin/
@@ -17,23 +25,85 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
+*.keystore
+*.hprof
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# IDE - IntelliJ
+.idea/
+*.iml
+*.iws
+.idea-workspace
+*.ipr
 
 # Metro
 .metro-health-check*
+.metro/
 
-# debug
+# Debug
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+debug.log
+logs
+*.log
 
 # macOS
 .DS_Store
-*.pem
+.AppleDouble
+.LSOverride
+Icon
+._*
 
-# local env files
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Environment Variables
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
 .env*.local
 
-# typescript
+# TypeScript
 *.tsbuildinfo
+tsconfig.tsbuildinfo
 
-app-example
+# Temporary files
+*.swp
+*.swo
+*~
+.temp
+.tmp
+
+# Cache
+.cache/
+.npm
+.eslintcache
+
+# Project specific
+app-example/
+__tests__/coverage/
+google-services.json
+GoogleService-Info.plist
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# Bundle artifact
+*.jsbundle

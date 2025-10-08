@@ -1,4 +1,4 @@
-import { RootStackParamList } from "@/types/navigation";
+import { RootStackParamList } from "@/src/types/navigation";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";

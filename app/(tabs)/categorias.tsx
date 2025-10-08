@@ -1,10 +1,9 @@
 import { ThemedText } from "@/components/ThemedText";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as FileSystem from 'expo-file-system';
-import { useRouter } from "expo-router";
 import * as Sharing from 'expo-sharing';
 import React, { useEffect, useState } from "react";
-import {Alert, Linking, ScrollView, StyleSheet, Text, TextInput,  TouchableOpacity, View,} from "react-native";
+import { Alert, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, } from "react-native";
 
 // Interfaz para el producto
 interface Producto {
