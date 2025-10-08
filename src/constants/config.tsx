@@ -14,18 +14,18 @@ export const CURRENT_ENV = (process.env.EXPO_PUBLIC_ENV || ENVIRONMENTS.DEV) as 
 const API_CONFIG: Record<Environment, { baseURL: string; timeout: number }> = {
   LOCAL: {
     baseURL: Platform.OS === 'android'
-      ? 'http://10.0.2.2:8000/api/'  // Android emulator
+      ? 'http://10.0.2.2:8000/api'  // Android emulator
       : Platform.OS === 'ios'
-      ? 'http://localhost:8000/api/'  // iOS simulator
-      : 'http://localhost:8000/api/', // Web
+      ? 'http://localhost:8000/api'  // iOS simulator
+      : 'http://localhost:8000/api', // Web
     timeout: 15000,
   },
   DEV: {
-    baseURL: '.env.BACKEND_URL',
+    baseURL: process.env.EXPO_PUBLIC_API_URL || 'https://back-misboletas.onrender.com',
     timeout: 15000,
   },
   PROD: {
-    baseURL: '.env.BACKEND_URL',
+    baseURL: process.env.EXPO_PUBLIC_API_URL || 'https://back-misboletas.onrender.com',
     timeout: 10000,
   },
 };
@@ -41,25 +41,26 @@ export const APP_CONFIG = {
   
   // Features flags
   features: {
-    enableAnalytics: CURRENT_ENV === 'PROD', // Changed from 'production' to 'PROD'
+    enableAnalytics: CURRENT_ENV === 'PROD',
     enableDebugMenu: __DEV__,
     enableMockData: __DEV__,
   },
   
   // URLs importantes
   urls: {
-    support: 'https://support.tu-dominio.com',
-    privacyPolicy: 'https://tu-dominio.com/privacy',
-    termsOfService: 'https://tu-dominio.com/terms',
+    api: BASE_URL,
+    support: 'https://back-misboletas.onrender.com/support',
+    privacyPolicy: 'https://back-misboletas.onrender.com/privacy',
+    termsOfService: 'https://back-misboletas.onrender.com/terms',
   },
 };
 
 // Configuración de almacenamiento
 export const STORAGE_CONFIG = {
-  authTokenKey: 'auth_token',
-  userDataKey: 'user_data',
-  appSettingsKey: 'app_settings',
-  cacheKey: 'app_cache',
+  authTokenKey: '@MisBoletas:auth_token',
+  userDataKey: '@MisBoletas:user_data',
+  appSettingsKey: '@MisBoletas:app_settings',
+  cacheKey: '@MisBoletas:app_cache',
 };
 
 export default {

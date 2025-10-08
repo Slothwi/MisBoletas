@@ -284,7 +284,7 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Image source={require('../assets/images/logoMisBoletas.jpeg')} style={styles.imagenLogo} />
+      <Image source={require('@/assets/images/logoMisBoletas.jpeg')} style={styles.imagenLogo} />
       <Text style={styles.title}>Iniciar Sesión</Text>
       
       <View style={styles.modoContainer}>

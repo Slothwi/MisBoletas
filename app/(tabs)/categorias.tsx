@@ -4,6 +4,8 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import React, { useEffect, useState } from "react";
 import { Alert, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, } from "react-native";
+import { useRouter } from "expo-router";
+import { Href } from "expo-router";
 
 // Interfaz para el producto
 interface Producto {
@@ -116,6 +118,7 @@ const todosLosProductos: Producto[] = [
 
 
 const Categorias = () => {
+  const router = useRouter();
   
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -151,6 +154,11 @@ const Categorias = () => {
     return 'file:///storage/emulated/0/Download/';
   };
 
+  // Función para navegar al formulario
+  const handleAgregarProducto = () => {
+    // Navegar al formulario usando type assertion
+    router.push('/formulario' as Href);
+  };
 
   useEffect(() => {
     setTimeout(() => {
@@ -425,6 +433,15 @@ const Categorias = () => {
                     <Ionicons name="chevron-forward" size={24} color="#ccc" />
                 </TouchableOpacity>
             ))}
+            
+            {/* BOTÓN AGREGAR PRODUCTO - NUEVO */}
+            <TouchableOpacity 
+              style={styles.botonAgregarSecundario}
+              onPress={handleAgregarProducto}
+            >
+              <Ionicons name="add-circle-outline" size={24} color="#e77573" />
+              <Text style={styles.botonAgregarSecundarioTexto}>Agregar otro producto</Text>
+            </TouchableOpacity>
         </ScrollView>
       </View>
     );
@@ -586,6 +603,27 @@ const styles = StyleSheet.create({
   archivoButtonText: { color: '#fff', fontSize: 14, fontWeight: '600'},
 
   archivoNombre: { fontSize: 14, color: '#666', fontStyle: 'italic'},
+
+  // NUEVO: Estilos para el botón agregar secundario
+  botonAgregarSecundario: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#e77573',
+    backgroundColor: '#fff',
+    marginTop: 16,
+    marginBottom: 20,
+  },
+  botonAgregarSecundarioTexto: {
+    color: '#222',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
 
 export default Categorias;
