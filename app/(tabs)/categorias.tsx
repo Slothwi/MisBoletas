@@ -1,123 +1,15 @@
 import { ThemedText } from "@/components/ThemedText";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import * as FileSystem from 'expo-file-system';
 import { useRouter } from "expo-router";
-import * as Sharing from 'expo-sharing';
 import React, { useEffect, useState } from "react";
-import {Alert, Linking, ScrollView, StyleSheet, Text, TextInput,  TouchableOpacity, View,} from "react-native";
-
-// Interfaz para el producto
-interface Producto {
-  id: string;
-  nombre: string;
-  tipo: string;
-  marca: string;
-  modelo: string;
-  fechaCompra: string;
-  garantia: string;
-  tienda: string;
-  notas: string;
-  archivo?: {
-    uri: string;
-    name: string;
-    type: string;
-  };
-  icono: keyof typeof MaterialCommunityIcons.glyphMap;
-}
-
-// Interfaz extendida para FileSystem con la propiedad documentDirectory
-interface FileSystemWithDocumentDirectory {
-  documentDirectory?: string;
-  cacheDirectory?: string;
-  downloadAsync: (uri: string, fileUri: string, options?: any) => Promise<any>;
-}
-
-const FileSystemWithDir = FileSystem as unknown as FileSystemWithDocumentDirectory;
-
-// Interfaz para representar una categoría
-interface Categoria {
-  nombre: string;
-  icono: keyof typeof MaterialCommunityIcons.glyphMap;
-  cantidadProductos: number;
-}
-
-// Datos de ejemplo que simulan venir de una base de datos
-const todosLosProductos: Producto[] = [
-    { id: '1',
-          nombre: 'Auto jeep wrangler',
-          tipo: 'Auto',
-          marca: 'Jeep',
-          modelo: 'Wrangler 2023',
-          fechaCompra: '15/03/2023',
-          garantia: '36 meses',
-          tienda: 'Concesionario Jeep',
-          notas: 'Vehículo 4x4, color rojo',
-          archivo: {
-            uri: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-            name: 'garantia_jeep.pdf',
-            type: 'application/pdf'
-          },
-          icono: 'car'},
-    { id: '2',
-          nombre: 'Lavadora LG 12 kilos',
-          tipo: 'Lavadora',
-          marca: 'LG',
-          modelo: 'WM1234X',
-          fechaCompra: '20/05/2023',
-          garantia: '24 meses',
-          tienda: 'Electrohogar Center',
-          notas: 'Lavadora de carga frontal, eficiencia A++',
-          archivo: {
-            uri: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-            name: 'garantia_lg.pdf',
-            type: 'application/pdf'
-          },
-          icono: 'washing-machine'},
-    { id: '3',
-          nombre: 'Microondas Samsung',
-          tipo: 'Microondas',
-          marca: 'Samsung',
-          modelo: 'ME731K',
-          fechaCompra: '10/08/2023',
-          garantia: '18 meses',
-          tienda: 'Tienda Departamental',
-          notas: 'Microondas con grill, 25L de capacidad',
-          icono: 'microwave' },
-    { id: '4',
-          nombre: 'Auto volkswagen beetle',
-          tipo: 'Auto',
-          marca: 'volkswagen',
-          modelo: '345DS',
-          fechaCompra: '11/11/2023',
-          garantia: '4 años',
-          tienda: 'Concesionario volkswagen',
-          notas: 'Auto 4x4 decapotable, color azul',
-          icono: 'car' },
-    { id: '5',
-          nombre: 'Microondas LG',
-          tipo: 'Microondas',
-          marca: 'LG',
-          modelo: 'sdfre32',
-          fechaCompra: '23/07/2020',
-          garantia: '11 meses',
-          tienda: 'Tienda Departamental',
-          notas: 'Microondas con grill, 25L de capacidad',
-          icono: 'microwave' },
-    { id: '6',
-          nombre: 'Refrigerador Samsung',
-          tipo: 'Refrigerador',
-          marca: 'Samsung',
-          modelo: '45354JKN',
-          fechaCompra: '11/01/2022',
-          garantia: '20 meses',
-          tienda: 'Tienda Departamental',
-          notas: 'Microondas con grill, 25L de capacidad',
-          icono: 'microwave' },
-];
-
+import {Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View,} from "react-native";
+import { useAuth } from "../../src/hooks/useAuth";
+import categoriaService, { Categoria } from "../../src/services/CategoriaServiceSimplified";
+import productoService, { Producto } from "../../src/services/ProductServiceSimplified";
+import { BASE_URL } from "../../src/constants/config";
 
 const Categorias = () => {
-  
+  const { authState } = useAuth();
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [cargando, setCargando] = useState(true);
 
@@ -136,302 +28,290 @@ const Categorias = () => {
   // MOSTRAR PRODUCTO SELECCIONADO
   const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
 
-  // Función para obtener el directorio de documentos de forma segura
-  const getDocumentDirectory = (): string => {
-    // Verificar si documentDirectory existe usando type assertion
-    if (FileSystemWithDir.documentDirectory) {
-      return FileSystemWithDir.documentDirectory;
-    }
-    
-    // Si documentDirectory no existe, usar cacheDirectory
-    if (FileSystemWithDir.cacheDirectory) {
-      return FileSystemWithDir.cacheDirectory;
-    }
-    
-    // Si ningún directorio está disponible, usar una ruta por defecto
-    return 'file:///storage/emulated/0/Download/';
-  };
-
-
-  useEffect(() => {
-    setTimeout(() => {
-      // La lógica para generar categorías a partir de 'todosLosProductos' 
-      const categoriasMap = new Map<string, Categoria>();
-      todosLosProductos.forEach((producto) => {
-        if (!categoriasMap.has(producto.tipo)) {
-          categoriasMap.set(producto.tipo, {
-            nombre: producto.tipo,
-            icono: getIconoPorTipo(producto.tipo),
-            cantidadProductos: 0,
-          });
-        }
-        categoriasMap.get(producto.tipo)!.cantidadProductos++;
-      });
-      const categoriasArray = Array.from(categoriasMap.values());
-      setCategorias(categoriasArray);
+  // Cargar categorías del backend
+  const cargarCategorias = async () => {
+    if (!authState.isAuthenticated) {
+      console.log('❌ No se puede cargar categorías: usuario no autenticado');
       setCargando(false);
-    }, 1000);
-  }, []);
+      return;
+    }
 
-  const getIconoPorTipo = ( tipo: string ): keyof typeof MaterialCommunityIcons.glyphMap => {
-    switch (tipo) {
-      case "Auto": return "car";
-      case "Lavadora": return "washing-machine";
-      case "Microondas": return "microwave";
-      case "Refrigerador": return "fridge";
-      case "Televisor": return "television-classic";
-      case "Celular": return "cellphone";
-      case "Computadora": return "laptop";
-      case "Tablet": return "tablet";
-      case "Aire acondicionado": return "air-conditioner";
-      case "Cámara": return "camera";
-      case "Impresora": return "printer-pos-outline";
-      case "Motocicleta": return "motorbike";
-      case "Reloj inteligente": return "watch";
-      case "Bicicleta": return "bike";
-      case "Auriculares": return "headphones";
-      case "Altavoz": return "speaker";
-      case "Consola de videojuegos": return "gamepad-variant";
-      case "Mueble": return "sofa";
-      default: return "shape-outline";
+    try {
+      console.log('📂 Cargando categorías del servidor...');
+      console.log('🔐 Usuario autenticado:', authState.user?.email);
+      console.log('🔗 Token disponible:', !!authState.token);
+      console.log('🌐 Base URL:', BASE_URL);
+      console.log('📍 Endpoint completo:', `${BASE_URL}/categorias/`);
+      
+      const categoriasDelServidor = await categoriaService.getAll();
+      console.log('📦 Respuesta del servidor:', categoriasDelServidor);
+      
+      setCategorias(categoriasDelServidor);
+      console.log(`✅ ${categoriasDelServidor.length} categorías cargadas`);
+    } catch (error: any) {
+      console.error('❌ Error completo cargando categorías:', {
+        message: error.message,
+        type: error.type,
+        status: error.status,
+        stack: error.stack
+      });
+      
+      Alert.alert(
+        'Error', 
+        error.message || 'No se pudieron cargar las categorías.',
+        [
+          { text: 'Reintentar', onPress: cargarCategorias },
+          { text: 'Cancelar', style: 'cancel' }
+        ]
+      );
+    } finally {
+      setCargando(false);
     }
   };
 
+  // Cargar categorías al inicializar
+  useEffect(() => {
+    if (authState.isAuthenticated && !authState.isLoading) {
+      cargarCategorias();
+    } else if (!authState.isLoading && !authState.isAuthenticated) {
+      setCategorias([]);
+      setCargando(false);
+    }
+  }, [authState.isAuthenticated, authState.isLoading]);
+
+  // Obtener productos por categoría
+  const obtenerProductosPorCategoria = async (categoriaId: number) => {
+    try {
+      console.log(`📦 Cargando productos de categoría ${categoriaId}...`);
+      const todosLosProductos = await productoService.getAll();
+      const productosFiltrados = todosLosProductos.filter(producto => 
+        producto.categorias?.some(cat => cat.CategoriaID === categoriaId)
+      );
+      setProductosDeCategoria(productosFiltrados);
+      console.log(`✅ ${productosFiltrados.length} productos encontrados para la categoría`);
+    } catch (error: any) {
+      console.error('❌ Error cargando productos de categoría:', error);
+      Alert.alert('Error', 'No se pudieron cargar los productos de la categoría');
+    }
+  };
 
   // Muestra la lista de productos de la categoría seleccionada
   const handleVerCategoria = (categoria: Categoria) => {
-    // Filtramos los productos que coinciden con el nombre de la categoría
-    const productosFiltrados = todosLosProductos.filter(p => p.tipo === categoria.nombre);
-    // Guardamos esos productos en el estado
-    setProductosDeCategoria(productosFiltrados);
-    // Guardamos la categoría seleccionada para cambiar la vista
     setCategoriaSeleccionada(categoria);
+    if (categoria.CategoriaID) {
+      obtenerProductosPorCategoria(categoria.CategoriaID);
+    }
   };
 
   // Para volver de la lista de productos a la lista de categorías
   const handleVolverACategorias = () => {
     setCategoriaSeleccionada(null);
-    setProductosDeCategoria([]); // Limpiamos la lista de productos
+    setProductosDeCategoria([]);
   };
   
   // Para volver de la vista de detalle del producto a la lista de productos
   const handleVolverALista = () => {
-  setProductoSeleccionado(null);
-  
-};
+    setProductoSeleccionado(null);
+  };
 
-  const handleVerArchivo = async (archivo: { uri: string; name: string }) => {
-      try {
-        const supported = await Linking.canOpenURL(archivo.uri);
-        if (supported) {
-          await Linking.openURL(archivo.uri);
-        } else {
-          Alert.alert('Error', 'No se puede abrir este tipo de archivo');
-        }
-      } catch (error) {
-        Alert.alert('Error', 'No se pudo abrir el archivo');
-        console.error(error);
-      }
-    };
-
-    const handleDescargarArchivo = async (archivo: { uri: string; name: string }) => {
-        try {
-          // Verificar si sharing está disponible
-          const isSharingAvailable = await Sharing.isAvailableAsync();
-          if (!isSharingAvailable) {
-            Alert.alert('Error', 'La función de compartir no está disponible en este dispositivo');
-            return;
-          }
-    
-          // Usar la función segura para obtener el directorio
-          const directory = getDocumentDirectory();
-          const fileUri = `${directory}${archivo.name}`;
-          
-          // Usar FileSystem.downloadAsync directamente (esta propiedad sí existe)
-          const downloadResult = await FileSystem.downloadAsync(archivo.uri, fileUri);
-    
-          if (downloadResult.status === 200) {
-            // Compartir el archivo descargado
-            await Sharing.shareAsync(downloadResult.uri, {
-              mimeType: 'application/pdf',
-              dialogTitle: `Compartir ${archivo.name}`,
-              UTI: 'com.adobe.pdf'
-            });
-          } else {
-            Alert.alert('Error', 'No se pudo descargar el archivo');
-          }
-        } catch (error) {
-          console.error('Error al descargar/compartir:', error);
-          Alert.alert('Error', 'No se pudo procesar el archivo');
-        }
-      };
+  const handleVerProducto = (producto: Producto) => {
+    setProductoSeleccionado(producto);
+  };
 
   // Mostrar el formulario en lugar de navegar
   const handleMostrarFormulario = () => {
     setMostrandoFormulario(true);
   };
 
-  const handleVerProducto = (producto: Producto) => {
-    setProductoSeleccionado(producto);
-};
-
   // Guardar la nueva categoría creada en el formulario
-  const handleGuardarCategoria = () => {
-    const nombreLimpio = nuevoNombreCategoria.trim().toLowerCase();
+  const handleGuardarCategoria = async () => {
+    const nombreLimpio = nuevoNombreCategoria.trim();
     if (!nombreLimpio) {
       Alert.alert("Error", "El nombre de la categoría no puede estar vacío.");
       return;
     }
-    // Verificar si la categoría ya existe
-    if (categorias.some(cat => cat.nombre === nombreLimpio)) {
-      Alert.alert("Error", "Esa categoría ya existe.");
-      return;
+
+    try {
+      console.log('💾 Guardando nueva categoría:', nombreLimpio);
+      
+      const nuevaCategoria = await categoriaService.create({
+        NombreCategoria: nombreLimpio,
+        Color: categoriaService.getRandomColor()
+      });
+
+      // Agregar a la lista local
+      setCategorias([...categorias, nuevaCategoria]);
+      
+      // Limpiar formulario
+      setMostrandoFormulario(false);
+      setNuevoNombreCategoria("");
+      
+      Alert.alert("Éxito", "Categoría creada correctamente");
+      console.log('✅ Categoría creada exitosamente');
+      
+    } catch (error: any) {
+      console.error('❌ Error creando categoría:', error);
+      Alert.alert("Error", error.message || "No se pudo crear la categoría");
     }
-
-    // Crear el objeto de la nueva categoría
-    const nuevaCategoria: Categoria = {
-      nombre: nombreLimpio,
-      icono: getIconoPorTipo(nombreLimpio), // Le asignamos un ícono
-      cantidadProductos: 0, // Inicia con 0 productos
-    };
-
-    // añadir a la lista de categorías existentes
-    setCategorias([...categorias, nuevaCategoria]);
-    // Ocultar el formulario y limpiamos el input
-    setMostrandoFormulario(false);
-    setNuevoNombreCategoria("");
   };
 
   // --- LÓGICA DE RENDERIZADO ---
 
-  if (cargando) {
+  if (authState.isLoading) {
     return (
       <View style={styles.container}>
-        <Text>Cargando...</Text>
+        <View style={styles.sinCategoriasContainer}>
+          <MaterialCommunityIcons name="loading" size={64} color="#ccc" />
+          <Text style={styles.sinCategoriasTexto}>Verificando autenticación...</Text>
+        </View>
       </View>
     );
   }
 
-     // SI SE SELECCIONÓ UN PRODUCTO, MUESTRA EL DETALLE
+  if (!authState.isAuthenticated) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.sinCategoriasContainer}>
+          <MaterialCommunityIcons name="account-alert" size={64} color="#ccc" />
+          <Text style={styles.sinCategoriasTexto}>Necesitas iniciar sesión</Text>
+          <Text style={styles.sinCategoriasSubtexto}>
+            Ve a la sección de login para acceder a tus categorías
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (cargando) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.sinCategoriasContainer}>
+          <MaterialCommunityIcons name="loading" size={64} color="#ccc" />
+          <Text style={styles.sinCategoriasTexto}>Cargando categorías...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  // SI SE SELECCIONÓ UN PRODUCTO, MUESTRA EL DETALLE
   if (productoSeleccionado) {
-      return (
-        <View style={styles.container}>
-          <TouchableOpacity 
-            style={styles.botonVolver}
-            onPress={handleVolverALista}
-          >
-            <Ionicons name="arrow-back" size={24} color="#e77573" />
-            <Text style={styles.botonVolverTexto}>Volver a la lista</Text>
-          </TouchableOpacity>
-  
-          <ScrollView style={styles.detalleContainer}>
-            <View style={styles.detalleHeader}>
-              <MaterialCommunityIcons 
-                name={productoSeleccionado.icono} 
-                size={48} 
-                color="#e77573" 
-              />
-              <Text style={styles.detalleTitulo}>{productoSeleccionado.nombre}</Text>
+    return (
+      <View style={styles.container}>
+        <TouchableOpacity 
+          style={styles.botonVolver}
+          onPress={handleVolverALista}
+        >
+          <Ionicons name="arrow-back" size={24} color="#e77573" />
+          <Text style={styles.botonVolverTexto}>Volver a la lista</Text>
+        </TouchableOpacity>
+
+        <ScrollView style={styles.detalleContainer}>
+          <View style={styles.detalleHeader}>
+            <MaterialCommunityIcons 
+              name="package-variant" 
+              size={48} 
+              color="#e77573" 
+            />
+            <Text style={styles.detalleTitulo}>{productoSeleccionado.NombreProducto}</Text>
+          </View>
+
+          <View style={styles.detalleInfo}>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Marca:</Text>
+              <Text style={styles.infoValue}>{productoSeleccionado.Marca || 'No especificada'}</Text>
             </View>
-  
-            <View style={styles.detalleInfo}>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Marca:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.marca}</Text>
-              </View>
-              
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Modelo:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.modelo}</Text>
-              </View>
-              
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Fecha de compra:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.fechaCompra}</Text>
-              </View>
-              
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Garantía:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.garantia}</Text>
-              </View>
-              
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Tipo de producto:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.tipo}</Text>
-              </View>
-  
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Tienda:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.tienda}</Text>
-              </View>
-              
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Notas:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.notas}</Text>
-              </View>
+            
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Modelo:</Text>
+              <Text style={styles.infoValue}>{productoSeleccionado.Modelo || 'No especificado'}</Text>
             </View>
-  
-            {productoSeleccionado.archivo && (
-              <View style={styles.archivoSection}>
-                <Text style={styles.archivoTitulo}>Archivo adjunto:</Text>
-                <View style={styles.archivoButtons}>
-                  <TouchableOpacity 
-                    style={styles.archivoButton}
-                    onPress={() => handleVerArchivo(productoSeleccionado.archivo!)}
-                  >
-                    <Ionicons name="eye" size={20} color="#fff" />
-                    <Text style={styles.archivoButtonText}>Ver archivo</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={[styles.archivoButton, styles.descargarButton]}
-                    onPress={() => handleDescargarArchivo(productoSeleccionado.archivo!)}
-                  >
-                    <Ionicons name="download" size={20} color="#fff" />
-                    <Text style={styles.archivoButtonText}>Descargar</Text>
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.archivoNombre}>{productoSeleccionado.archivo.name}</Text>
+            
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Fecha de compra:</Text>
+              <Text style={styles.infoValue}>
+                {productoSeleccionado.FechaCompra ? 
+                  new Date(productoSeleccionado.FechaCompra).toLocaleDateString() : 
+                  'No especificada'
+                }
+              </Text>
+            </View>
+            
+            {productoSeleccionado.DuracionGarantia && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Garantía (días):</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.DuracionGarantia}</Text>
               </View>
             )}
-          </ScrollView>
-        </View>
-      );
-    }
+            
+            {productoSeleccionado.categorias && productoSeleccionado.categorias.length > 0 && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Categorías:</Text>
+                <Text style={styles.infoValue}>
+                  {productoSeleccionado.categorias.map(cat => cat.NombreCategoria).join(', ')}
+                </Text>
+              </View>
+            )}
+
+            {productoSeleccionado.Tienda && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Tienda:</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.Tienda}</Text>
+              </View>
+            )}
+            
+            {productoSeleccionado.Notas && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Notas:</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.Notas}</Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
 
   // SI SE SELECCIONÓ UNA CATEGORÍA, MUESTRA LA LISTA DE PRODUCTOS
   if (categoriaSeleccionada) {
     return (
       <View style={styles.container}>
         <TouchableOpacity style={styles.botonVolver} onPress={handleVolverACategorias}>
-            <Ionicons name="arrow-back" size={24} color="#e77573" />
-            <Text style={styles.botonVolverTexto}>Volver a Categorías</Text>
+          <Ionicons name="arrow-back" size={24} color="#e77573" />
+          <Text style={styles.botonVolverTexto}>Volver a Categorías</Text>
         </TouchableOpacity>
 
         <ThemedText type="title" style={styles.titulo}>
-            Productos en {categoriaSeleccionada.nombre}
+          Productos en {categoriaSeleccionada.NombreCategoria}
         </ThemedText>
 
-        <ScrollView>
+        {productosDeCategoria.length === 0 ? (
+          <View style={styles.sinCategoriasContainer}>
+            <MaterialCommunityIcons name="package-variant-closed" size={64} color="#ccc" />
+            <Text style={styles.sinCategoriasTexto}>
+              No hay productos en esta categoría
+            </Text>
+          </View>
+        ) : (
+          <ScrollView>
             {productosDeCategoria.map(producto => (
-                <TouchableOpacity key={producto.id} 
+              <TouchableOpacity 
+                key={producto.ProductoID}
                 style={styles.cardProducto} 
                 onPress={() => handleVerProducto(producto)}
-                testID={`tarjeta-producto-${producto.tipo}`}>
-
-                    <View style={styles.cardContent}>
-                        <MaterialCommunityIcons name={producto.icono} size={24} color="#e77573"/>
-                        <Text style={styles.cardTitle}>{producto.nombre}</Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={24} color="#ccc" />
-                </TouchableOpacity>
+                testID={`tarjeta-producto-${producto.ProductoID}`}
+              >
+                <View style={styles.cardContent}>
+                  <MaterialCommunityIcons name="package-variant" size={24} color="#e77573"/>
+                  <Text style={styles.cardTitle}>{producto.NombreProducto}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color="#ccc" />
+              </TouchableOpacity>
             ))}
-        </ScrollView>
+          </ScrollView>
+        )}
       </View>
     );
   }
-
-  
 
   // VISTA PRINCIPAL: MUESTRA CATEGORÍAS Y EL FORMULARIO
   return (
@@ -441,152 +321,119 @@ const Categorias = () => {
       </ThemedText>
 
       <ScrollView style={styles.scrollContainer}>
-        {/* Mostramos la lista de categorías normal */}
-        <View style={styles.cardsContainer}>
-          {categorias.map((categoria) => (
-            <TouchableOpacity
-              key={categoria.nombre}
-              style={styles.card}
-              onPress={() => handleVerCategoria(categoria)}
-            >
-              <View style={styles.cardContent}>
-                <MaterialCommunityIcons name={categoria.icono} size={32} color="#e77573" />
-                <View style={styles.cardTextContainer}>
-                  <Text style={styles.cardTitle}>
-                    {categoria.nombre.charAt(0).toUpperCase() + categoria.nombre.slice(1)}
-                  </Text>
-                  <Text style={styles.cardSubtitle}>
-                    {categoria.cantidadProductos} producto(s)
-                  </Text>
+        {categorias.length === 0 ? (
+          <View style={styles.sinCategoriasContainer}>
+            <MaterialCommunityIcons name="shape-outline" size={64} color="#ccc" />
+            <Text style={styles.sinCategoriasTexto}>
+              Aún no has creado categorías
+            </Text>
+            <Text style={styles.sinCategoriasSubtexto}>
+              Crea tu primera categoría para organizar tus productos
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.cardsContainer}>
+            {categorias.map((categoria) => (
+              <TouchableOpacity
+                key={categoria.CategoriaID}
+                style={styles.card}
+                onPress={() => handleVerCategoria(categoria)}
+              >
+                <View style={styles.cardContent}>
+                  <View style={[styles.colorIndicator, { backgroundColor: categoria.Color }]} />
+                  <MaterialCommunityIcons name="shape" size={32} color="#e77573" />
+                  <View style={styles.cardTextContainer}>
+                    <Text style={styles.cardTitle}>
+                      {categoria.NombreCategoria}
+                    </Text>
+                    <Text style={styles.cardSubtitle}>
+                      Toca para ver productos
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              <Ionicons name="chevron-forward" size={24} color="#e77573" />
-            </TouchableOpacity>
-          ))}
-        </View>
+                <Ionicons name="chevron-forward" size={24} color="#e77573" />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
         
         {/* MINI FORMULARIO Y BOTÓN PARA CREAR CATEGORÍA */}
         {mostrandoFormulario ? (
-            <View style={styles.formularioContainer}>
-                <TextInput
-                    style={styles.input}
-                    placeholder="Nombre de la nueva categoría"
-                    value={nuevoNombreCategoria}
-                    onChangeText={setNuevoNombreCategoria}
-                />
-                <View style={styles.botonesFormulario}>
-                    <TouchableOpacity 
-                        style={[styles.botonForm, styles.botonCancelar]} 
-                        onPress={() => setMostrandoFormulario(false)}>
-                        <Text style={styles.botonFormTexto}>Cancelar</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                        style={[styles.botonForm, styles.botonGuardar]} 
-                        onPress={handleGuardarCategoria}>
-                        <Text style={[styles.botonFormTexto, { color: '#fff' }]}>Guardar</Text>
-                    </TouchableOpacity>
-                </View>
+          <View style={styles.formularioContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Nombre de la nueva categoría"
+              value={nuevoNombreCategoria}
+              onChangeText={setNuevoNombreCategoria}
+            />
+            <View style={styles.botonesFormulario}>
+              <TouchableOpacity 
+                style={[styles.botonForm, styles.botonCancelar]} 
+                onPress={() => setMostrandoFormulario(false)}
+              >
+                <Text style={styles.botonFormTexto}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.botonForm, styles.botonGuardar]} 
+                onPress={handleGuardarCategoria}
+              >
+                <Text style={[styles.botonFormTexto, { color: '#fff' }]}>Guardar</Text>
+              </TouchableOpacity>
             </View>
+          </View>
         ) : (
-            <TouchableOpacity style={styles.botonAgregar} onPress={handleMostrarFormulario}>
-                <Ionicons name="add-circle-outline" size={24} color="#e77573" />
-                <Text style={styles.botonAgregarTexto}>Crear Nueva Categoría</Text>
-            </TouchableOpacity>
+          <TouchableOpacity style={styles.botonAgregar} onPress={handleMostrarFormulario}>
+            <Ionicons name="add-circle-outline" size={24} color="#e77573" />
+            <Text style={styles.botonAgregarTexto}>Crear Nueva Categoría</Text>
+          </TouchableOpacity>
         )}
       </ScrollView>
     </View>
   );
 };
 
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#a8cbf0", padding: 24 },
-
   scrollContainer: { flex: 1 },
-
   titulo: { fontSize: 20, textAlign: "center", marginTop: 40, marginBottom: 24 },
-
   cardsContainer: { width: "100%", gap: 16, marginBottom: 24 },
-
   card: { backgroundColor: "#ffffff", flexDirection: "row", alignItems: "center", 
     justifyContent: "space-between", padding: 20, borderRadius: 12, elevation: 2, 
     shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 10 },
-
   cardContent: { flexDirection: "row", alignItems: "center", gap: 15 },
-
   cardTextContainer: { flexDirection: "column" },
-
   cardTitle: { color: "#222", fontSize: 18, fontWeight: "600" },
-
   cardSubtitle: { color: "#666", fontSize: 14 },
-
+  colorIndicator: { width: 16, height: 16, borderRadius: 8, marginRight: 8 },
   botonAgregar: { flexDirection: "row", alignItems: "center", justifyContent: "center", 
     paddingVertical: 16, borderRadius: 8, gap: 8, borderWidth: 1, borderColor: "#e77573", 
     backgroundColor: "#fff" },
-
   botonAgregarTexto: { color: "#222", fontSize: 16, fontWeight: "600" },
-
-  // Estilos para el botón de volver en la vista de productos
   botonVolver: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-
   botonVolverTexto: { color: '#e77573', fontSize: 16, marginLeft: 8, fontWeight: '600' },
-
-  // Estilo para las tarjetas de productos
   cardProducto: { backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center',
      justifyContent: 'space-between', padding: 16, borderRadius: 12, marginBottom: 10 },
-  
-  // Estilos para el formulario
   formularioContainer: { backgroundColor: '#fff', borderRadius: 12, padding: 20, 
     marginTop: 10, elevation: 2 },
-
   input: { borderWidth: 1, borderColor: '#ddd', padding: 12, borderRadius: 8, 
     fontSize: 16, marginBottom: 15 },
-
   botonesFormulario: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10 },
-
   botonForm: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
-
-  botonCancelar: { backgroundColor: '#e77573' },
-
+  botonCancelar: { backgroundColor: '#f0f0f0' },
   botonGuardar: { backgroundColor: '#e77573' },
-
   botonFormTexto: { fontWeight: '600', fontSize: 16 },
-
-  // Estilos para el detalle del producto
   detalleContainer: { flex: 1, backgroundColor: '#f9f9f9', borderRadius: 12, padding: 20 },
-
   detalleHeader: { flexDirection: 'row', alignItems: 'center', gap: 15, marginBottom: 20 },
-
-  detalleTitulo: { fontSize: 24, fontWeight: 'bold',  color: '#222', marginTop: 16, 
+  detalleTitulo: { fontSize: 24, fontWeight: 'bold', color: '#222', marginTop: 16, 
      textAlign: 'center'},
-
   detalleInfo: { backgroundColor: '#fff', borderRadius: 12, padding: 20, marginBottom: 20},
-
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, 
-    borderBottomWidth: 1, borderBottomColor: '##f0f0f0'},
-
+    borderBottomWidth: 1, borderBottomColor: '#f0f0f0'},
   infoLabel: { fontSize: 16, fontWeight: '600', color: '#666'},
-
   infoValue: { fontSize: 16, color: '#222', textAlign: 'right', flex: 1, marginLeft: 10},
-
-  archivoSection: { backgroundColor: '#fff', borderRadius: 12, padding: 20},
-
-  archivoTitulo: {  fontSize: 18,fontWeight: '600', color: '#222', marginBottom: 16},
-
-  archivoButtons: { flexDirection: 'row', gap: 12, marginBottom: 12 },
-
-  archivoButton: { backgroundColor: '#e77573', flexDirection: 'row', alignItems: 'center', 
-    justifyContent: 'center', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8, 
-    gap: 8,flex: 1,
-  },
-
-  descargarButton: {
-    backgroundColor: '#e77573',
-  },
-
-  archivoButtonText: { color: '#fff', fontSize: 14, fontWeight: '600'},
-
-  archivoNombre: { fontSize: 14, color: '#666', fontStyle: 'italic'},
+  sinCategoriasContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  sinCategoriasTexto: { fontSize: 18, color: '#666', marginTop: 16, textAlign: 'center' },
+  sinCategoriasSubtexto: { fontSize: 14, color: '#999', marginTop: 8, textAlign: 'center' },
 });
 
 export default Categorias;

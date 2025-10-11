@@ -1,121 +1,83 @@
 import { ThemedText } from "@/components/ThemedText";
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import * as FileSystem from 'expo-file-system';
 import { Href, useRouter } from 'expo-router';
-import * as Sharing from 'expo-sharing';
 import React, { useEffect, useState } from 'react';
-import { Alert, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
-// Interfaz extendida para FileSystem con la propiedad documentDirectory
-interface FileSystemWithDocumentDirectory {
-  documentDirectory?: string;
-  cacheDirectory?: string;
-  downloadAsync: (uri: string, fileUri: string, options?: any) => Promise<any>;
-}
-
-// Type assertion para FileSystem
-const FileSystemWithDir = FileSystem as unknown as FileSystemWithDocumentDirectory;
-
-// Interfaz para el producto
-interface Producto {
-  id: string;
-  nombre: string;
-  tipo: string;
-  marca: string;
-  modelo: string;
-  fechaCompra: string;
-  garantia: string;
-  tienda: string;
-  notas: string;
-  archivo?: {
-    uri: string;
-    name: string;
-    type: string;
-  };
-  icono: keyof typeof MaterialCommunityIcons.glyphMap;
-}
+import { Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, Linking } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { useAuth } from '../../src/hooks/useAuth';
+import productoService, { Producto } from '../../src/services/ProductServiceSimplified';
+import documentoService, { Documento } from '../../src/services/DocumentoService';
 
 const Inicio = () => {
   const router = useRouter();
+  const { authState } = useAuth();
   const [productos, setProductos] = useState<Producto[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
+  const [documentos, setDocumentos] = useState<Documento[]>([]);
+  const [cargandoDocumentos, setCargandoDocumentos] = useState(false);
 
-  // Función para obtener el directorio de documentos de forma segura
-  const getDocumentDirectory = (): string => {
-    // Verificar si documentDirectory existe usando type assertion
-    if (FileSystemWithDir.documentDirectory) {
-      return FileSystemWithDir.documentDirectory;
+  // Cargar productos del backend
+  const cargarProductos = async () => {
+    // Verificar autenticación antes de hacer la petición
+    if (!authState.isAuthenticated) {
+      console.log('❌ No se puede cargar productos: usuario no autenticado');
+      setCargando(false);
+      return;
     }
-    
-    // Si documentDirectory no existe, usar cacheDirectory
-    if (FileSystemWithDir.cacheDirectory) {
-      return FileSystemWithDir.cacheDirectory;
+
+    try {
+      console.log('📦 Cargando productos del servidor...');
+      const productosDelServidor = await productoService.getAll();
+      setProductos(productosDelServidor);
+      console.log(`✅ ${productosDelServidor.length} productos cargados`);
+    } catch (error: any) {
+      console.error('❌ Error cargando productos:', error);
+      Alert.alert(
+        'Error', 
+        'No se pudieron cargar los productos. Verifica tu conexión.',
+        [
+          { text: 'Reintentar', onPress: cargarProductos },
+          { text: 'Cancelar', style: 'cancel' }
+        ]
+      );
+    } finally {
+      setCargando(false);
+      setRefreshing(false);
     }
-    
-    // Si ningún directorio está disponible, usar una ruta por defecto
-    return 'file:///storage/emulated/0/Download/';
   };
 
-  // Simular carga de productos
+  // Cargar productos al inicializar
   useEffect(() => {
-    setTimeout(() => {
-      const productosGuardados: Producto[] = [
-        {
-          id: '1',
-          nombre: 'Auto jeep wrangler',
-          tipo: 'Auto',
-          marca: 'Jeep',
-          modelo: 'Wrangler 2023',
-          fechaCompra: '15/03/2023',
-          garantia: '36 meses',
-          tienda: 'Concesionario Jeep',
-          notas: 'Vehículo 4x4, color rojo',
-          archivo: {
-            uri: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-            name: 'garantia_jeep.pdf',
-            type: 'application/pdf'
-          },
-          icono: 'car'
-        },
-        {
-          id: '2',
-          nombre: 'Lavadora LG 12 kilos',
-          tipo: 'Lavadora',
-          marca: 'LG',
-          modelo: 'WM1234X',
-          fechaCompra: '20/05/2023',
-          garantia: '24 meses',
-          tienda: 'Electrohogar Center',
-          notas: 'Lavadora de carga frontal, eficiencia A++',
-          archivo: {
-            uri: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-            name: 'garantia_lg.pdf',
-            type: 'application/pdf'
-          },
-          icono: 'washing-machine'
-        },
-        {
-          id: '3',
-          nombre: 'Microondas Samsung',
-          tipo: 'Microondas',
-          marca: 'Samsung',
-          modelo: 'ME731K',
-          fechaCompra: '10/08/2023',
-          garantia: '18 meses',
-          tienda: 'Tienda Departamental',
-          notas: 'Microondas con grill, 25L de capacidad',
-          icono: 'microwave'
-        }
-      ];
-      
-      setProductos(productosGuardados);
+    // Solo cargar productos si está autenticado Y la verificación inicial ya terminó
+    if (authState.isAuthenticated && !authState.isLoading) {
+      cargarProductos();
+    } else if (!authState.isLoading && !authState.isAuthenticated) {
+      // Si ya terminó de verificar y no está autenticado, limpiar productos
+      setProductos([]);
       setCargando(false);
-    }, 1000);
-  }, []);
+    }
+  }, [authState.isAuthenticated, authState.isLoading]);
+
+  // Cargar documentos cuando se selecciona un producto
+  useEffect(() => {
+    if (productoSeleccionado?.ProductoID) {
+      cargarDocumentos(productoSeleccionado.ProductoID);
+    } else {
+      setDocumentos([]);
+    }
+  }, [productoSeleccionado]);
+
+  // Función para refrescar
+  const onRefresh = React.useCallback(() => {
+    if (authState.isAuthenticated && !authState.isLoading) {
+      setRefreshing(true);
+      cargarProductos();
+    }
+  }, [authState.isAuthenticated, authState.isLoading]);
 
   const handleAgregarProducto = () => {
-    // Navegar al formulario usando type assertion
     router.push('/formulario' as Href);
   };
 
@@ -127,49 +89,156 @@ const Inicio = () => {
     setProductoSeleccionado(null);
   };
 
-  const handleDescargarArchivo = async (archivo: { uri: string; name: string }) => {
+  const handleEliminarProducto = async (producto: Producto) => {
+    Alert.alert(
+      'Eliminar Producto',
+      `¿Estás seguro de que quieres eliminar "${producto.NombreProducto}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (producto.ProductoID) {
+                await productoService.delete(producto.ProductoID);
+                Alert.alert('Éxito', 'Producto eliminado correctamente');
+                cargarProductos(); // Recargar la lista
+                handleVolverALista();
+              }
+            } catch (error) {
+              Alert.alert('Error', 'No se pudo eliminar el producto');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Cargar documentos de un producto
+  const cargarDocumentos = async (productoId: number) => {
     try {
-      // Verificar si sharing está disponible
-      const isSharingAvailable = await Sharing.isAvailableAsync();
-      if (!isSharingAvailable) {
-        Alert.alert('Error', 'La función de compartir no está disponible en este dispositivo');
-        return;
-      }
-
-      // Usar la función segura para obtener el directorio
-      const directory = getDocumentDirectory();
-      const fileUri = `${directory}${archivo.name}`;
+      setCargandoDocumentos(true);
+      console.log('📎 Cargando documentos del producto:', productoId);
+      const docs = await documentoService.getByProducto(productoId);
       
-      // Usar FileSystem.downloadAsync directamente (esta propiedad sí existe)
-      const downloadResult = await FileSystem.downloadAsync(archivo.uri, fileUri);
-
-      if (downloadResult.status === 200) {
-        // Compartir el archivo descargado
-        await Sharing.shareAsync(downloadResult.uri, {
-          mimeType: 'application/pdf',
-          dialogTitle: `Compartir ${archivo.name}`,
-          UTI: 'com.adobe.pdf'
-        });
-      } else {
-        Alert.alert('Error', 'No se pudo descargar el archivo');
+      // DEBUG: Ver estructura de documentos
+      if (docs.length > 0) {
+        console.log('📄 Estructura del primer documento:', JSON.stringify(docs[0], null, 2));
       }
+      
+      setDocumentos(docs);
+      console.log(`✅ ${docs.length} documentos cargados`);
     } catch (error) {
-      console.error('Error al descargar/compartir:', error);
-      Alert.alert('Error', 'No se pudo procesar el archivo');
+      console.error('❌ Error cargando documentos:', error);
+      // No mostrar error al usuario si no hay documentos
+      setDocumentos([]);
+    } finally {
+      setCargandoDocumentos(false);
     }
   };
 
-  const handleVerArchivo = async (archivo: { uri: string; name: string }) => {
+  // Subir nuevo documento
+  const handleSubirDocumento = async () => {
+    if (!productoSeleccionado?.ProductoID) return;
+
     try {
-      const supported = await Linking.canOpenURL(archivo.uri);
-      if (supported) {
-        await Linking.openURL(archivo.uri);
-      } else {
-        Alert.alert('Error', 'No se puede abrir este tipo de archivo');
+      // Solicitar permisos
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permisos necesarios',
+          'Se requieren permisos para acceder a tus fotos y documentos'
+        );
+        return;
+      }
+
+      // Abrir selector de imágenes
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: false,
+        quality: 0.8,
+        allowsMultipleSelection: false,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        
+        // Extraer nombre del archivo
+        const uriParts = asset.uri.split('/');
+        const fileName = uriParts[uriParts.length - 1];
+        
+        console.log('📎 Subiendo documento:', fileName);
+        
+        await documentoService.upload(
+          productoSeleccionado.ProductoID,
+          {
+            uri: asset.uri,
+            type: asset.type === 'image' ? 'image/jpeg' : undefined,
+            name: fileName || 'documento.jpg',
+          }
+        );
+        
+        Alert.alert('Éxito', 'Documento subido correctamente');
+        cargarDocumentos(productoSeleccionado.ProductoID);
       }
     } catch (error) {
-      Alert.alert('Error', 'No se pudo abrir el archivo');
-      console.error(error);
+      console.error('Error subiendo documento:', error);
+      Alert.alert('Error', 'No se pudo subir el documento');
+    }
+  };
+
+  // Eliminar documento
+  const handleEliminarDocumento = async (documentoId: number | undefined) => {
+    // Validar que el ID existe
+    if (!documentoId) {
+      Alert.alert('Error', 'ID de documento inválido');
+      return;
+    }
+
+    Alert.alert(
+      'Eliminar Documento',
+      '¿Estás seguro de que quieres eliminar este documento?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await documentoService.delete(documentoId);
+              Alert.alert('Éxito', 'Documento eliminado correctamente');
+              if (productoSeleccionado?.ProductoID) {
+                cargarDocumentos(productoSeleccionado.ProductoID);
+              }
+            } catch (error) {
+              Alert.alert('Error', 'No se pudo eliminar el documento');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Abrir documento en el navegador
+  const handleVerDocumento = async (url: string) => {
+    // Validar que la URL existe
+    if (!url || url.trim() === '') {
+      Alert.alert('Error', 'URL de documento no disponible');
+      return;
+    }
+
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'No se puede abrir la URL');
+      }
+    } catch (error) {
+      console.error('Error al abrir documento:', error);
+      Alert.alert('Error', 'No se pudo abrir el documento');
     }
   };
 
@@ -179,7 +248,9 @@ const Inicio = () => {
         <ThemedText type="title" style={styles.titulo}>
           Tus Productos
         </ThemedText>
-        <Text>Cargando productos...</Text>
+        <View style={styles.centeredContainer}>
+          <Text style={styles.cargandoTexto}>Cargando productos...</Text>
+        </View>
       </View>
     );
   }
@@ -195,76 +266,161 @@ const Inicio = () => {
           <Text style={styles.botonVolverTexto}>Volver a la lista</Text>
         </TouchableOpacity>
 
-        <ScrollView style={styles.detalleContainer}>
+        <ScrollView 
+          style={styles.detalleContainer}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
           <View style={styles.detalleHeader}>
             <MaterialCommunityIcons 
-              name={productoSeleccionado.icono} 
+              name="package-variant" 
               size={48} 
               color="#e77573" 
             />
-            <Text style={styles.detalleTitulo}>{productoSeleccionado.nombre}</Text>
+            <Text style={styles.detalleTitulo}>{productoSeleccionado.NombreProducto}</Text>
           </View>
 
           <View style={styles.detalleInfo}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Marca:</Text>
-              <Text style={styles.infoValue}>{productoSeleccionado.marca}</Text>
-            </View>
+            {productoSeleccionado.Marca && (
+              <View key="marca" style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Marca:</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.Marca}</Text>
+              </View>
+            )}
             
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Modelo:</Text>
-              <Text style={styles.infoValue}>{productoSeleccionado.modelo}</Text>
-            </View>
+            {productoSeleccionado.Modelo && (
+              <View key="modelo" style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Modelo:</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.Modelo}</Text>
+              </View>
+            )}
             
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Fecha de compra:</Text>
-              <Text style={styles.infoValue}>{productoSeleccionado.fechaCompra}</Text>
-            </View>
+            {productoSeleccionado.FechaCompra && (
+              <View key="fechaCompra" style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Fecha de compra:</Text>
+                <Text style={styles.infoValue}>
+                  {new Date(productoSeleccionado.FechaCompra).toLocaleDateString()}
+                </Text>
+              </View>
+            )}
             
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Garantía:</Text>
-              <Text style={styles.infoValue}>{productoSeleccionado.garantia}</Text>
-            </View>
+            {productoSeleccionado.DuracionGarantia && (
+              <View key="garantia" style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Garantía (días):</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.DuracionGarantia}</Text>
+              </View>
+            )}
             
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Tipo de producto:</Text>
-              <Text style={styles.infoValue}>{productoSeleccionado.tipo}</Text>
-            </View>
+            {productoSeleccionado.categorias && productoSeleccionado.categorias.length > 0 && (
+              <View key="categorias" style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Categorías:</Text>
+                <Text style={styles.infoValue}>
+                  {productoSeleccionado.categorias.map(cat => cat.NombreCategoria).join(', ')}
+                </Text>
+              </View>
+            )}
 
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Tienda:</Text>
-              <Text style={styles.infoValue}>{productoSeleccionado.tienda}</Text>
-            </View>
+            {productoSeleccionado.Tienda && (
+              <View key="tienda" style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Tienda:</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.Tienda}</Text>
+              </View>
+            )}
             
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Notas:</Text>
-              <Text style={styles.infoValue}>{productoSeleccionado.notas}</Text>
-            </View>
+            {productoSeleccionado.Notas && (
+              <View key="notas" style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Notas:</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.Notas}</Text>
+              </View>
+            )}
           </View>
 
-          {productoSeleccionado.archivo && (
-            <View style={styles.archivoSection}>
-              <Text style={styles.archivoTitulo}>Archivo adjunto:</Text>
-              <View style={styles.archivoButtons}>
-                <TouchableOpacity 
-                  style={styles.archivoButton}
-                  onPress={() => handleVerArchivo(productoSeleccionado.archivo!)}
-                >
-                  <Ionicons name="eye" size={20} color="#fff" />
-                  <Text style={styles.archivoButtonText}>Ver archivo</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.archivoButton, styles.descargarButton]}
-                  onPress={() => handleDescargarArchivo(productoSeleccionado.archivo!)}
-                >
-                  <Ionicons name="download" size={20} color="#fff" />
-                  <Text style={styles.archivoButtonText}>Descargar</Text>
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.archivoNombre}>{productoSeleccionado.archivo.name}</Text>
+          {/* Sección de Documentos */}
+          <View style={styles.documentosSection}>
+            <View style={styles.documentosHeader}>
+              <Ionicons name="document-text" size={24} color="#e77573" />
+              <Text style={styles.documentosTitulo}>Documentos</Text>
             </View>
-          )}
+
+            {cargandoDocumentos ? (
+              <Text style={styles.cargandoTexto}>Cargando documentos...</Text>
+            ) : documentos.length === 0 ? (
+              <Text style={styles.noDocumentosTexto}>
+                No hay documentos asociados a este producto
+              </Text>
+            ) : (
+              <View style={styles.documentosList}>
+                {documentos.map((doc, index) => {
+                  // Manejar ambos formatos de ID (documentoid o DocumentoID)
+                  const docId = doc.documentoid || doc.DocumentoID;
+                  // Manejar ambos formatos de URL (url_gcs o URL_GCS)
+                  const urlGCS = doc.url_gcs || doc.URL_GCS || '';
+                  // Manejar ambos formatos de nombrearchivo
+                  const nombreArchivo = doc.nombrearchivo || doc.NombreArchivo || 'Archivo';
+                  // Manejar ambos formatos de content_type
+                  const contentType = doc.content_type || doc.ContentType;
+                  // Manejar ambos formatos de size_bytes
+                  const sizeBytes = doc.size_bytes || doc.SizeBytes;
+                  // Manejar ambos formatos de fecha_subida
+                  const fechaSubida = doc.fecha_subida || doc.FechaSubida || new Date().toISOString();
+                  
+                  return (
+                    <View key={docId || `doc-${index}`} style={styles.documentoItem}>
+                      <View style={styles.documentoInfo}>
+                        <Ionicons 
+                          name={documentoService.isImage(contentType, nombreArchivo) ? "image" : "document"} 
+                          size={24} 
+                          color="#e77573" 
+                        />
+                        <View style={styles.documentoTexto}>
+                          <Text style={styles.documentoNombre} numberOfLines={1}>
+                            {nombreArchivo}
+                          </Text>
+                          <Text style={styles.documentoFecha}>
+                            {new Date(fechaSubida).toLocaleDateString()} • {documentoService.formatFileSize(sizeBytes)}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.documentoAcciones}>
+                        <TouchableOpacity 
+                          onPress={() => handleVerDocumento(urlGCS)}
+                          style={styles.botonIcono}
+                          disabled={!urlGCS}
+                        >
+                          <Ionicons name="eye" size={20} color={urlGCS ? "#4CAF50" : "#ccc"} />
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          onPress={() => handleEliminarDocumento(docId)}
+                          style={styles.botonIcono}
+                        >
+                          <Ionicons name="trash" size={20} color="#f44336" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+
+            <TouchableOpacity 
+              style={styles.botonSubirDocumento}
+              onPress={handleSubirDocumento}
+            >
+              <Ionicons name="cloud-upload" size={20} color="#fff" />
+              <Text style={styles.botonSubirTexto}>Subir Documento</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.accionesContainer}>
+            <TouchableOpacity 
+              style={styles.botonEliminar}
+              onPress={() => handleEliminarProducto(productoSeleccionado)}
+            >
+              <Ionicons name="trash" size={20} color="#fff" />
+              <Text style={styles.botonEliminarTexto}>Eliminar</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </View>
     );
@@ -276,7 +432,32 @@ const Inicio = () => {
         Tus Productos
       </ThemedText>
 
-      {productos.length === 0 ? (
+      {/* Mostrar loading mientras se verifica autenticación */}
+      {authState.isLoading ? (
+        <View style={styles.sinProductosContainer}>
+          <MaterialCommunityIcons name="loading" size={64} color="#ccc" />
+          <Text style={styles.sinProductosTexto}>
+            Verificando autenticación...
+          </Text>
+        </View>
+      ) : !authState.isAuthenticated ? (
+        <View style={styles.sinProductosContainer}>
+          <MaterialCommunityIcons name="account-alert" size={64} color="#ccc" />
+          <Text style={styles.sinProductosTexto}>
+            Necesitas iniciar sesión
+          </Text>
+          <Text style={styles.sinProductosSubtexto}>
+            Ve a la sección de login para acceder a tus productos
+          </Text>
+        </View>
+      ) : cargando ? (
+        <View style={styles.sinProductosContainer}>
+          <MaterialCommunityIcons name="loading" size={64} color="#ccc" />
+          <Text style={styles.sinProductosTexto}>
+            Cargando productos...
+          </Text>
+        </View>
+      ) : productos.length === 0 ? (
         <View style={styles.sinProductosContainer}>
           <MaterialCommunityIcons name="package-variant" size={64} color="#ccc" />
           <Text style={styles.sinProductosTexto}>
@@ -300,18 +481,18 @@ const Inicio = () => {
           <View style={styles.cardsContainer}>
             {productos.map((producto) => (
               <TouchableOpacity 
-                key={producto.id}
+                key={producto.ProductoID}
                 style={styles.card}
                 onPress={() => handleVerProducto(producto)}
-                testID={`tarjeta-producto-${producto.tipo}`}
+                testID={`tarjeta-producto-${producto.ProductoID}`}
               >
                 <View style={styles.cardContent}>
                   <MaterialCommunityIcons 
-                    name={producto.icono} 
+                    name="package-variant" 
                     size={24} 
                     color="#e77573" 
                   />
-                  <Text style={styles.cardText}>{producto.nombre}</Text>
+                  <Text style={styles.cardText}>{producto.NombreProducto}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={24} color="#e77573" />
               </TouchableOpacity>
@@ -346,6 +527,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 40,
     marginBottom: 24,
+  },
+  centeredContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cargandoTexto: {
+    fontSize: 16,
+    color: '#666',
   },
   cardsContainer: {
     width: '100%',
@@ -413,7 +603,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '##f0f0f0',
+    borderBottomColor: '#f0f0f0',
   },
   infoLabel: {
     fontSize: 16,
@@ -427,23 +617,71 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 10,
   },
-  archivoSection: {
+  documentosSection: {
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 20,
+    marginBottom: 20,
   },
-  archivoTitulo: {
-    fontSize: 18,
+  documentosHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 10,
+  },
+  documentosTitulo: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#222',
+  },
+  noDocumentosTexto: {
+    fontSize: 14,
+    color: '#888',
+    textAlign: 'center',
+    paddingVertical: 20,
+    fontStyle: 'italic',
+  },
+  documentosList: {
+    gap: 12,
+  },
+  documentoItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  documentoInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 12,
+  },
+  documentoTexto: {
+    flex: 1,
+  },
+  documentoNombre: {
+    fontSize: 15,
     fontWeight: '600',
     color: '#222',
-    marginBottom: 16,
+    marginBottom: 4,
   },
-  archivoButtons: {
+  documentoFecha: {
+    fontSize: 12,
+    color: '#666',
+  },
+  documentoAcciones: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 12,
   },
-  archivoButton: {
+  botonIcono: {
+    padding: 8,
+  },
+  botonSubirDocumento: {
     backgroundColor: '#e77573',
     flexDirection: 'row',
     alignItems: 'center',
@@ -452,20 +690,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 8,
     gap: 8,
-    flex: 1,
+    marginTop: 16,
   },
-  descargarButton: {
-    backgroundColor: '#e77573',
-  },
-  archivoButtonText: {
+  botonSubirTexto: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
   },
-  archivoNombre: {
-    fontSize: 14,
-    color: '#666',
-    fontStyle: 'italic',
+  accionesContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+  },
+  botonEliminar: {
+    backgroundColor: '#dc3545',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    gap: 8,
+  },
+  botonEliminarTexto: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   sinProductosContainer: {
     flex: 1,

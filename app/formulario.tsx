@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -6,22 +6,43 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  Platform
+  Platform,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
+import { useAuth } from '../src/hooks/useAuth';
+import productoService from '../src/services/ProductServiceSimplified';
+import documentoService from '../src/services/DocumentoService';
+import categoriaService, { Categoria } from '../src/services/CategoriaServiceSimplified';
 
 
-// Componente SelectTipoProducto - AGREGADO
-const SelectTipoProducto = (props: { valor: string; onChange: (valor: string) => void }) => {
+// Componente SelectCategoria - Carga categorías desde el backend
+const SelectCategoria = (props: { 
+  categorias: Categoria[];
+  categoriaSeleccionada: Categoria | null;
+  onChange: (categoria: Categoria) => void;
+  cargando: boolean;
+}) => {
   const [mostrarOpciones, setMostrarOpciones] = useState(false);
 
-  const opciones = [
-    'Auto', 'Lavadora', 'Microondas', 'Refrigerador', 
-    'Computadora', 'Motocicleta', 'Televisor', 'Celular', 
-    'Tablet', 'Secadora','Aire acondicionado','Cámara','Impresora','Reloj inteligente', 
-    'Bicicleta','Auriculares','Altavoz','Consola de videojuegos','Mueble','Otro'
-  ];
+  if (props.cargando) {
+    return (
+      <View style={styles.picker}>
+        <Text style={{ fontSize: 16, color: '#999' }}>Cargando categorías...</Text>
+      </View>
+    );
+  }
+
+  if (props.categorias.length === 0) {
+    return (
+      <View style={styles.picker}>
+        <Text style={{ fontSize: 16, color: '#999' }}>No hay categorías creadas</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1 }}>
@@ -30,12 +51,25 @@ const SelectTipoProducto = (props: { valor: string; onChange: (valor: string) =>
         onPress={() => setMostrarOpciones(!mostrarOpciones)}
       >
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={{ 
-            fontSize: 16, 
-            color: props.valor ? '#000' : '#999' 
-          }}>
-            {props.valor || 'Seleccionar tipo de producto...'}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {props.categoriaSeleccionada && (
+              <View 
+                style={{ 
+                  width: 12, 
+                  height: 12, 
+                  borderRadius: 6, 
+                  backgroundColor: props.categoriaSeleccionada.Color,
+                  marginRight: 8 
+                }} 
+              />
+            )}
+            <Text style={{ 
+              fontSize: 16, 
+              color: props.categoriaSeleccionada ? '#000' : '#999' 
+            }}>
+              {props.categoriaSeleccionada?.NombreCategoria || 'Seleccionar categoría...'}
+            </Text>
+          </View>
           <Ionicons 
             name={mostrarOpciones ? "chevron-up" : "chevron-down"} 
             size={20} 
@@ -47,24 +81,35 @@ const SelectTipoProducto = (props: { valor: string; onChange: (valor: string) =>
       {mostrarOpciones && (
         <View style={styles.opcionesContainer}>
           <ScrollView style={styles.opcionesScroll}>
-            {opciones.map((opcion, index) => (
+            {props.categorias.map((categoria) => (
               <TouchableOpacity
-                key={index}
+                key={categoria.CategoriaID}
                 style={[
                   styles.opcionItem,
-                  props.valor === opcion && styles.opcionSeleccionada
+                  props.categoriaSeleccionada?.CategoriaID === categoria.CategoriaID && styles.opcionSeleccionada
                 ]}
                 onPress={() => {
-                  props.onChange(opcion);
+                  props.onChange(categoria);
                   setMostrarOpciones(false);
                 }}
               >
-                <Text style={[
-                  styles.opcionText,
-                  props.valor === opcion && styles.opcionTextSeleccionada
-                ]}>
-                  {opcion}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View 
+                    style={{ 
+                      width: 12, 
+                      height: 12, 
+                      borderRadius: 6, 
+                      backgroundColor: categoria.Color,
+                      marginRight: 10 
+                    }} 
+                  />
+                  <Text style={[
+                    styles.opcionText,
+                    props.categoriaSeleccionada?.CategoriaID === categoria.CategoriaID && styles.opcionTextSeleccionada
+                  ]}>
+                    {categoria.NombreCategoria}
+                  </Text>
+                </View>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -75,22 +120,220 @@ const SelectTipoProducto = (props: { valor: string; onChange: (valor: string) =>
 };
 
 function BasicExample() {
+  const router = useRouter();
+  const { authState } = useAuth();
   const fileInputRef = useRef(null);
-  const [nota, setNota] = useState('');
+  
+  // Estados del formulario
+  const [nombreProducto, setNombreProducto] = useState('');
   const [fechaCompra, setFechaCompra] = useState<Date | null>(null);
+  const [duracionGarantia, setDuracionGarantia] = useState('');
+  const [marca, setMarca] = useState('');
+  const [modelo, setModelo] = useState('');
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<Categoria | null>(null);
+  const [tienda, setTienda] = useState('');
+  const [notas, setNotas] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [tipoProducto, setTipoProducto] = useState(''); // Estado para el tipo de producto
+  const [isLoading, setIsLoading] = useState(false);
+  const [archivoSeleccionado, setArchivoSeleccionado] = useState<{
+    uri: string;
+    name: string;
+    type?: string;
+    size?: number;
+  } | null>(null);
+  
+  // Estados para categorías
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [cargandoCategorias, setCargandoCategorias] = useState(true);
+  
   const MAX_LENGTH = 200;
 
-  const handleFileClick = () => {
-    // Lógica para manejar la selección de archivos
-    console.log("Seleccionar archivo");
+  // Cargar categorías al montar el componente
+  useEffect(() => {
+    const cargarCategorias = async () => {
+      try {
+        setCargandoCategorias(true);
+        console.log('📂 Cargando categorías para el formulario...');
+        const categoriasDelServidor = await categoriaService.getAll();
+        setCategorias(categoriasDelServidor);
+        console.log(`✅ ${categoriasDelServidor.length} categorías cargadas`);
+      } catch (error) {
+        console.error('❌ Error cargando categorías:', error);
+        // No bloquear el formulario si falla la carga de categorías
+        setCategorias([]);
+      } finally {
+        setCargandoCategorias(false);
+      }
+    };
+
+    if (authState.isAuthenticated) {
+      cargarCategorias();
+    }
+  }, [authState.isAuthenticated]);
+
+  const handleFileClick = async () => {
+    try {
+      // Solicitar permisos
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permisos necesarios',
+          'Se requieren permisos para acceder a tus fotos y documentos'
+        );
+        return;
+      }
+
+      // Abrir selector de imágenes
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: false,
+        quality: 0.8,
+        allowsMultipleSelection: false,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        
+        // Extraer nombre del archivo de la URI
+        const uriParts = asset.uri.split('/');
+        const fileName = uriParts[uriParts.length - 1];
+        
+        setArchivoSeleccionado({
+          uri: asset.uri,
+          name: fileName || 'documento.jpg',
+          type: asset.type === 'image' ? 'image/jpeg' : undefined,
+          size: asset.fileSize,
+        });
+        
+        Alert.alert(
+          'Archivo seleccionado',
+          `${fileName}\n${documentoService.formatFileSize(asset.fileSize)}`
+        );
+      }
+    } catch (error) {
+      console.error('Error seleccionando archivo:', error);
+      Alert.alert('Error', 'No se pudo seleccionar el archivo');
+    }
   };
+
   const formatDate = (date: Date) => {
     const day = date.getDate().toString().padStart(2, '0');
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
+  };
+
+  const formatDateForAPI = (date: Date) => {
+    return date.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+  };
+
+  const handleGuardar = async () => {
+    try {
+      // Validaciones básicas
+      if (!nombreProducto.trim()) {
+        Alert.alert('Error', 'El nombre del producto es requerido');
+        return;
+      }
+
+      if (!authState.isAuthenticated) {
+        Alert.alert('Error', 'Debes estar autenticado para crear productos');
+        return;
+      }
+
+      setIsLoading(true);
+
+      // Preparar datos para el backend
+      const productoData = {
+        NombreProducto: nombreProducto.trim(),
+        FechaCompra: fechaCompra ? formatDateForAPI(fechaCompra) : undefined,
+        DuracionGarantia: duracionGarantia ? parseInt(duracionGarantia) : undefined,
+        Marca: marca.trim() || undefined,
+        Modelo: modelo.trim() || undefined,
+        Tienda: tienda.trim() || undefined,
+        Notas: notas.trim() || undefined,
+        categoria_id: categoriaSeleccionada?.CategoriaID, // NUEVO: Enviar categoría
+      };
+
+      console.log('📝 Creando producto:', productoData);
+      console.log('🏷️ categoriaSeleccionada completa:', categoriaSeleccionada);
+      console.log('🏷️ categoria_id extraída:', categoriaSeleccionada?.CategoriaID);
+      if (categoriaSeleccionada) {
+        console.log('🏷️ Con categoría:', categoriaSeleccionada.NombreCategoria);
+      } else {
+        console.log('⚠️ NO hay categoría seleccionada');
+      }
+
+      // Enviar al backend
+      const nuevoProducto = await productoService.create(productoData);
+      
+      console.log('✅ Producto creado exitosamente:', nuevoProducto);
+
+      // Si hay un archivo seleccionado, subirlo
+      if (archivoSeleccionado && nuevoProducto.ProductoID) {
+        try {
+          console.log('📎 Subiendo archivo asociado al producto...');
+          
+          await documentoService.upload(
+            nuevoProducto.ProductoID,
+            {
+              uri: archivoSeleccionado.uri,
+              type: archivoSeleccionado.type,
+              name: archivoSeleccionado.name,
+            }
+          );
+          
+          console.log('✅ Archivo subido exitosamente');
+        } catch (uploadError) {
+          console.error('⚠️ Error subiendo archivo:', uploadError);
+          // No bloquear el flujo si falla el upload del archivo
+          Alert.alert(
+            'Advertencia',
+            'El producto se guardó correctamente, pero hubo un error al subir el archivo. Puedes intentar subirlo después.'
+          );
+        }
+      }
+
+      Alert.alert(
+        'Éxito', 
+        archivoSeleccionado 
+          ? 'Producto y documento guardados correctamente'
+          : 'Producto guardado correctamente',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Navegar específicamente a la pantalla de productos
+              router.replace('/(tabs)/home');
+            }
+          }
+        ]
+      );
+
+    } catch (error: any) {
+      console.error('❌ Error guardando producto:', error);
+      Alert.alert(
+        'Error', 
+        error.message || 'No se pudo guardar el producto. Verifica tu conexión e intenta nuevamente.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCancelar = () => {
+    Alert.alert(
+      'Cancelar',
+      '¿Estás seguro? Se perderán los datos ingresados.',
+      [
+        { text: 'No', style: 'cancel' },
+        { 
+          text: 'Sí, cancelar', 
+          style: 'destructive',
+          onPress: () => router.back()
+        }
+      ]
+    );
   };
 
   return (
@@ -103,47 +346,47 @@ function BasicExample() {
               style={styles.input}
               placeholder="Ingrese nombre del producto"
               placeholderTextColor="#999"
+              value={nombreProducto}
+              onChangeText={setNombreProducto}
             />
           </View>
           
           <View style={styles.stepContainer}>
-  <Text style={styles.titleText}>Fecha de compra</Text>
+            <Text style={styles.titleText}>Fecha de compra</Text>
+            <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+              <View style={{ position: 'relative' }}>
+                <TextInput
+                  style={styles.input}
+                  value={fechaCompra ? formatDate(fechaCompra) : ''}
+                  editable={false}
+                  placeholder="DD/MM/AAAA"
+                  placeholderTextColor="#999"
+                  pointerEvents="none"
+                />
+                <Ionicons
+                  name="calendar-outline"
+                  size={20}
+                  color="#e77573"
+                  style={{ position: 'absolute', right: 12, top: 14 }}
+                />
+              </View>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={fechaCompra || new Date()}
+                mode="date"
+                display={Platform.OS === 'android' ? 'calendar' : 'spinner'}
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker(false);
+                  if (selectedDate) {
+                    setFechaCompra(selectedDate);
+                  }
+                }}
+                maximumDate={new Date()}
+              />
+            )}
+          </View>
 
-  <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-  <View style={{ position: 'relative' }}>
-    <TextInput
-      style={styles.input}
-      value={fechaCompra ? formatDate(fechaCompra) : ''}
-      editable={false}
-      placeholder="DD/MM/AAAA"
-      placeholderTextColor="#999"
-      pointerEvents="none"
-    />
-    <Ionicons
-      name="calendar-outline"
-      size={20}
-      color="#e77573"
-      style={{ position: 'absolute', right: 12, top: 14 }}
-    />
-  </View>
-</TouchableOpacity>
-  {showDatePicker && (
-    <DateTimePicker
-      value={fechaCompra || new Date()} // Usa fecha actual si no hay valor
-      mode="date"
-      display={Platform.OS === 'android' ? 'calendar' : 'spinner'}
-      onChange={(event, selectedDate) => {
-        setShowDatePicker(false);
-        if (selectedDate) {
-          setFechaCompra(selectedDate);
-        }
-      }}
-      maximumDate={new Date()}
-    />
-  )}
-</View>
-
-          
           <View style={styles.stepContainer}>
             <Text style={styles.titleText}>Duración Garantía</Text>
             <TextInput
@@ -151,6 +394,8 @@ function BasicExample() {
               placeholder="Meses de garantía"
               placeholderTextColor="#999"
               keyboardType="numeric"
+              value={duracionGarantia}
+              onChangeText={setDuracionGarantia}
             />
           </View>
           
@@ -160,6 +405,8 @@ function BasicExample() {
               style={styles.input}
               placeholder="Marca del producto"
               placeholderTextColor="#999"
+              value={marca}
+              onChangeText={setMarca}
             />
           </View>
           
@@ -169,14 +416,18 @@ function BasicExample() {
               style={styles.input}
               placeholder="Modelo del producto"
               placeholderTextColor="#999"
+              value={modelo}
+              onChangeText={setModelo}
             />
           </View>
           
           <View style={styles.stepContainer}>
-            <Text style={styles.titleText}>Tipo de producto</Text>
-            <SelectTipoProducto 
-              valor={tipoProducto} 
-              onChange={setTipoProducto} 
+            <Text style={styles.titleText}>Categoría</Text>
+            <SelectCategoria 
+              categorias={categorias}
+              categoriaSeleccionada={categoriaSeleccionada}
+              onChange={setCategoriaSeleccionada}
+              cargando={cargandoCategorias}
             />
           </View>
           
@@ -186,6 +437,8 @@ function BasicExample() {
               style={styles.input}
               placeholder="Tienda de compra"
               placeholderTextColor="#999"
+              value={tienda}
+              onChangeText={setTienda}
             />
           </View>
 
@@ -195,15 +448,15 @@ function BasicExample() {
               style={[styles.input, styles.textArea]}
               placeholder="Observaciones del producto"
               placeholderTextColor="#999"
-              value={nota}
-              onChangeText={setNota}
+              value={notas}
+              onChangeText={setNotas}
               maxLength={MAX_LENGTH}
               multiline
               numberOfLines={4}
             />
             <Text style={styles.charCounter}>
-              {nota.length}/{MAX_LENGTH} caracteres usados {"\n"}
-              Te quedan <Text style={styles.charRemaining}>{MAX_LENGTH - nota.length}</Text> caracteres
+              {notas.length}/{MAX_LENGTH} caracteres usados {"\n"}
+              Te quedan <Text style={styles.charRemaining}>{MAX_LENGTH - notas.length}</Text> caracteres
             </Text>
           </View>
           
@@ -211,18 +464,47 @@ function BasicExample() {
             <Text style={styles.titleText}>Archivo</Text>
             <TouchableOpacity
               onPress={handleFileClick}
-              style={styles.fileButton}
+              style={[
+                styles.fileButton,
+                archivoSeleccionado && styles.fileButtonSelected
+              ]}
             >
-              <Text style={styles.fileButtonText}>Subir archivo</Text>
+              <Ionicons 
+                name={archivoSeleccionado ? "checkmark-circle" : "cloud-upload-outline"} 
+                size={20} 
+                color={archivoSeleccionado ? "#4CAF50" : "#e77573"} 
+                style={{ marginRight: 8 }}
+              />
+              <Text style={[
+                styles.fileButtonText,
+                archivoSeleccionado && styles.fileButtonTextSelected
+              ]}>
+                {archivoSeleccionado ? archivoSeleccionado.name : 'Subir archivo'}
+              </Text>
             </TouchableOpacity>
+            {archivoSeleccionado && (
+              <Text style={styles.fileInfo}>
+                {documentoService.formatFileSize(archivoSeleccionado.size)}
+              </Text>
+            )}
           </View>
           
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={[styles.button, styles.cancelButton]}>
+            <TouchableOpacity 
+              style={[styles.button, styles.cancelButton]}
+              onPress={handleCancelar}
+              disabled={isLoading}
+            >
               <Text style={styles.buttonText}>Cancelar</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.button, styles.saveButton]}>
-              <Text style={styles.buttonText}>Guardar</Text>
+            <TouchableOpacity 
+              style={[styles.button, styles.saveButton, isLoading && styles.buttonDisabled]}
+              onPress={handleGuardar}
+              disabled={isLoading}
+            >
+              <Text style={styles.buttonText}>
+                {isLoading ? 'Guardando...' : 'Guardar'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -302,6 +584,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+    zIndex: 1000, // NUEVO: Para que se muestre encima de otros elementos
+    position: 'relative', // NUEVO: Necesario para que funcione zIndex
   },
   opcionesScroll: {
     maxHeight: 200,
@@ -327,11 +611,27 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 6,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  fileButtonSelected: {
+    backgroundColor: '#4CAF50',
+    borderWidth: 2,
+    borderColor: '#388E3C',
   },
   fileButtonText: {
     color: 'white',
     fontWeight: '600',
     fontSize: 16,
+  },
+  fileButtonTextSelected: {
+    color: 'white',
+  },
+  fileInfo: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+    textAlign: 'center',
   },
   buttonRow: {
     flexDirection: 'row',
@@ -355,6 +655,9 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: '600',
     fontSize: 16,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
 });
 

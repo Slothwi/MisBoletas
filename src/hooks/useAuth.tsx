@@ -1,162 +1,268 @@
+import React, { useState, useEffect, useContext, createContext, ReactNode } from 'react';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { clearAuthData, getAuthToken, getUserData, getUserProfile, loginUser, logoutUser, registerUser, saveAuthToken, saveUserData } from '../services/authService';
-import { ApiError, User } from '../types/auth';
+import authService from '../services/authService';
+import { User, LoginCredentials, RegisterData, AuthState } from '../types/auth';
 
-interface UseAuthReturn {
-  user: any | null;
-  token: string | null;
-  loading: boolean;
-  error: ApiError | null;
-  isAuthenticated: boolean;
-  login: (credentials: Omit<User, 'email'>) => Promise<void>;
-  register: (userData: User) => Promise<void>;
+// Contexto de autenticación
+interface AuthContextType {
+  authState: AuthState;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (userData: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (userData: Partial<User>) => Promise<void>;
+  checkAuthStatus: () => Promise<void>;
   clearError: () => void;
-  checkAuth: () => Promise<void>;
 }
 
-export const useAuth = (): UseAuthReturn => {
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Estado inicial
+const initialAuthState: AuthState = {
+  isAuthenticated: false,
+  isLoading: true,
+  user: null,
+  token: null,
+  error: null,
+};
+
+// Provider del contexto
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [authState, setAuthState] = useState<AuthState>(initialAuthState);
   const router = useRouter();
-  const [user, setUser] = useState<any | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<ApiError | null>(null);
 
-  const isAuthenticated = !!token && !!user;
+  // Verificar estado de autenticación al cargar la app
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
 
-  const clearError = useCallback(() => setError(null), []);
-
-  const login = useCallback(async (credentials: Omit<User, 'email'>): Promise<void> => {
-    setLoading(true);
-    setError(null);
-    
+  // Función para verificar el estado de autenticación
+  const checkAuthStatus = async () => {
     try {
-      const response = await loginUser(credentials);
+      setAuthState(prev => ({ ...prev, isLoading: true }));
       
-      // Guardar token y datos del usuario
-      await saveAuthToken(response.access_token);
-      await saveUserData(response.user);
+      const token = await authService.getToken();
+      const storedUser = await authService.getStoredUser();
       
-      setToken(response.access_token);
-      setUser(response.user);
+      if (token && storedUser) {
+        // Verificar si el token sigue siendo válido
+        const isValid = await authService.isAuthenticated();
+        
+        if (isValid) {
+          setAuthState({
+            isAuthenticated: true,
+            isLoading: false,
+            user: storedUser,
+            token,
+            error: null,
+          });
+        } else {
+          // Token inválido, limpiar datos
+          await authService.clearAuthData();
+          setAuthState({
+            isAuthenticated: false,
+            isLoading: false,
+            user: null,
+            token: null,
+            error: null,
+          });
+        }
+      } else {
+        setAuthState({
+          isAuthenticated: false,
+          isLoading: false,
+          user: null,
+          token: null,
+          error: null,
+        });
+      }
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+      setAuthState({
+        isAuthenticated: false,
+        isLoading: false,
+        user: null,
+        token: null,
+        error: 'Error verificando autenticación',
+      });
+    }
+  };
+
+  // Función de login
+  const login = async (credentials: LoginCredentials) => {
+    try {
+      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
-      console.log('✅ Login exitoso');
+      const response = await authService.login(credentials);
+      
+      setAuthState({
+        isAuthenticated: true,
+        isLoading: false,
+        user: response.user,
+        token: response.access_token,
+        error: null,
+      });
+      
+      console.log('✅ User logged in successfully');
       
       // Redirigir a la pantalla principal
       router.replace('/(tabs)');
-      
-    } catch (err) {
-      const authError = err as ApiError;
-      setError(authError);
-      throw authError;
-    } finally {
-      setLoading(false);
+    } catch (error: any) {
+      console.error('❌ Login failed:', error);
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error.message || 'Error en el login',
+      }));
+      throw error;
     }
-  }, [router]);
+  };
 
-  const register = useCallback(async (userData: User): Promise<void> => {
-    setLoading(true);
-    setError(null);
-    
+  // Función de registro
+  const register = async (userData: RegisterData) => {
     try {
-      await registerUser(userData);
-      console.log('✅ Registro exitoso');
+      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
-    } catch (err) {
-      const authError = err as ApiError;
-      setError(authError);
-      throw authError;
-    } finally {
-      setLoading(false);
+      const response = await authService.register(userData);
+      
+      setAuthState({
+        isAuthenticated: true,
+        isLoading: false,
+        user: response.user,
+        token: response.access_token,
+        error: null,
+      });
+      
+      console.log('✅ User registered successfully');
+      
+      // Redirigir a la pantalla principal
+      router.replace('/(tabs)');
+    } catch (error: any) {
+      console.error('❌ Registration failed:', error);
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error.message || 'Error en el registro',
+      }));
+      throw error;
     }
-  }, []);
+  };
 
-  const logout = useCallback(async (): Promise<void> => {
-    setLoading(true);
-    
+  // Función de logout
+  const logout = async () => {
     try {
-      // Intentar cerrar sesión en el servidor si tenemos token
-      if (token) {
-        await logoutUser(token);
-      }
-    } catch (error) {
-      console.warn('Warning during server logout:', error);
-    } finally {
-      // Siempre limpiamos el almacenamiento local
-      await clearAuthData();
-      setToken(null);
-      setUser(null);
-      setLoading(false);
-      console.log('✅ Logout exitoso');
+      setAuthState(prev => ({ ...prev, isLoading: true }));
+      
+      await authService.logout();
+      
+      setAuthState({
+        isAuthenticated: false,
+        isLoading: false,
+        user: null,
+        token: null,
+        error: null,
+      });
+      
+      console.log('✅ User logged out successfully');
       
       // Redirigir al login
       router.replace('/(auth)/login');
+    } catch (error: any) {
+      console.error('❌ Logout failed:', error);
+      // Aún si hay error, limpiar el estado local
+      setAuthState({
+        isAuthenticated: false,
+        isLoading: false,
+        user: null,
+        token: null,
+        error: null,
+      });
+      
+      router.replace('/(auth)/login');
     }
-  }, [token, router]);
+  };
 
-  const checkAuth = useCallback(async (): Promise<void> => {
+  // Función para actualizar perfil
+  const updateProfile = async (userData: Partial<User>) => {
     try {
-      const storedToken = await getAuthToken();
-      const storedUser = await getUserData();
+      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
-      if (storedToken && storedUser) {
-        // Verificar si el token es válido obteniendo el perfil actualizado
-        try {
-          const userProfile = await getUserProfile(storedToken);
-          setToken(storedToken);
-          setUser(userProfile);
-          console.log('✅ Sesión verificada correctamente');
-        } catch (error) {
-          // Token inválido, limpiamos todo
-          console.warn('Token inválido, limpiando sesión');
-          await clearAuthData();
-          setToken(null);
-          setUser(null);
-        }
-      } else {
-        // No hay token almacenado, asegurarse de que el estado esté limpio
-        setToken(null);
-        setUser(null);
+      if (!authState.user?.id) {
+        throw new Error('Usuario no encontrado');
       }
-    } catch (error) {
-      console.error('Error verificando autenticación:', error);
-      await clearAuthData();
-      setToken(null);
-      setUser(null);
+      
+      const updatedUser = await authService.updateProfile({
+        ...userData,
+        id: authState.user.id,
+      });
+      
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        user: updatedUser,
+        error: null,
+      }));
+      
+      console.log('✅ Profile updated successfully');
+    } catch (error: any) {
+      console.error('❌ Profile update failed:', error);
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: error.message || 'Error actualizando perfil',
+      }));
+      throw error;
     }
-  }, []);
+  };
 
-  // Verificar autenticación al cargar el hook
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  // Función para limpiar errores
+  const clearError = () => {
+    setAuthState(prev => ({ ...prev, error: null }));
+  };
 
-  // Efecto para redirigir si no está autenticado y está en una ruta protegida
-  useEffect(() => {
-    const checkRouteProtection = async () => {
-      const currentRoute = router;
-      
-      // Si no está autenticado y está intentando acceder a rutas de tabs, redirigir al login
-      if (!isAuthenticated && !loading) {
-        // Puedes agregar lógica adicional aquí para verificar rutas específicas
-        console.log('Usuario no autenticado, verificando ruta actual...');
-      }
-    };
-
-    checkRouteProtection();
-  }, [isAuthenticated, loading, router]);
-
-  return {
-    user,
-    token,
-    loading,
-    error,
-    isAuthenticated,
+  const value: AuthContextType = {
+    authState,
     login,
     register,
     logout,
+    updateProfile,
+    checkAuthStatus,
     clearError,
-    checkAuth,
   };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
+
+// Hook personalizado para usar el contexto de autenticación
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  
+  if (context === undefined) {
+    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+  }
+  
+  return context;
+};
+
+// Hook simplificado para componentes que solo necesitan el estado
+export const useAuthState = () => {
+  const { authState } = useAuth();
+  return authState;
+};
+
+// Hook para verificar si el usuario está autenticado
+export const useIsAuthenticated = () => {
+  const { authState } = useAuth();
+  return authState.isAuthenticated;
+};
+
+// Hook para obtener el usuario actual
+export const useCurrentUser = () => {
+  const { authState } = useAuth();
+  return authState.user;
+};
+
+export default useAuth;

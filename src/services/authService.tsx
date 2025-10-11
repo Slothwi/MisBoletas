@@ -1,310 +1,197 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ApiError, LoginResponse, RegisterResponse, User } from '../types/auth';
-import { api } from './api';
+import { ApiError, LoginResponse, RegisterResponse, User, LoginCredentials, RegisterData, AuthResponse } from '../types/auth';
+import { apiService } from './api';
+import { STORAGE_CONFIG, API_ENDPOINTS } from '../constants/config';
 
-const AUTH_TOKEN_KEY = '@MisBoletas:token';
-const USER_DATA_KEY = '@MisBoletas:userData';
+// Usar las mismas claves que en config.tsx para consistencia
+const AUTH_TOKEN_KEY = STORAGE_CONFIG.authTokenKey;
+const USER_DATA_KEY = STORAGE_CONFIG.userDataKey;
 
-/**
- * Registra un nuevo usuario en el backend
- */
-export const registerUser = async (user: User): Promise<RegisterResponse> => {
-  try {
-    console.log('🔄 Registrando usuario:', user.username);
-    
-    const response = await api.post<RegisterResponse>('auth/register', {
-      username: user.username,
-      password: user.password,
-      email: user.email || `${user.username}@ejemplo.com`
-    });
+class AuthService {
+  // Login de usuario
+  async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    try {
+      console.log('🔄 Iniciando sesión para usuario:', credentials.correo);
 
-    console.log('✅ Usuario registrado exitosamente');
-    return response.data;
+      // El backend espera JSON con correo y contrasena (ya coinciden)
+      const loginData = {
+        correo: credentials.correo,
+        contrasena: credentials.contrasena
+      };
 
-  } catch (error: any) {
-    console.error('❌ Error en registro:', error.response?.data || error.message);
-    
-    const apiError: ApiError = {
-      message: error.response?.data?.message || 
-               error.response?.data?.detail || 
-               'Error en el registro. Por favor intenta nuevamente.',
-      status: error.response?.status,
-      details: error.response?.data,
-    };
-    
-    throw apiError;
-  }
-};
+      const response = await apiService.post<AuthResponse>(API_ENDPOINTS.auth.login, loginData);
 
-/**
- * Inicia sesión de usuario en el backend
- */
-export const loginUser = async (credentials: Omit<User, 'email'>): Promise<LoginResponse> => {
-  try {
-    console.log('🔄 Iniciando sesión para usuario:', credentials.username);
+      if (response.access_token) {
+        await this.storeTokenAndUser(response.access_token, response.user);
+      }
 
-    // Para FastAPI (usando OAuth2 compatible)
-    const formData = new FormData();
-    formData.append('username', credentials.username);
-    formData.append('password', credentials.password);
+      console.log('✅ Login exitoso');
+      return response;
 
-    const response = await api.post<LoginResponse>('auth/login', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    } catch (error: any) {
+      console.error('❌ Error en login:', error.response?.data || error.message);
 
-    console.log('✅ Login exitoso');
-    return response.data;
+      let errorMessage = 'Error en el login. Por favor intenta nuevamente.';
+      
+      if (error.response?.status === 401) {
+        errorMessage = 'Credenciales incorrectas. Verifica tu correo y contraseña.';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Usuario no encontrado.';
+      } else if (error.response?.status === 422) {
+        errorMessage = 'Datos de entrada inválidos.';
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      }
 
-  } catch (error: any) {
-    console.error('❌ Error en login:', error.response?.data || error.message);
+      const apiError: ApiError = {
+        message: errorMessage,
+        status: error.response?.status,
+        details: error.response?.data,
+      };
 
-    // Mapeo de errores comunes de FastAPI
-    let errorMessage = 'Error en el login. Por favor intenta nuevamente.';
-    
-    if (error.response?.status === 401) {
-      errorMessage = 'Credenciales incorrectas. Verifica tu usuario y contraseña.';
-    } else if (error.response?.status === 404) {
-      errorMessage = 'Usuario no encontrado.';
-    } else if (error.response?.status === 422) {
-      errorMessage = 'Datos de entrada inválidos.';
-    } else if (error.response?.data?.detail) {
-      errorMessage = error.response.data.detail;
-    } else if (error.response?.data?.message) {
-      errorMessage = error.response.data.message;
-    } else if (error.code === 'NETWORK_ERROR') {
-      errorMessage = 'Error de conexión. Verifica tu internet.';
-    } else if (error.code === 'TIMEOUT_ERROR') {
-      errorMessage = 'Tiempo de espera agotado. Intenta nuevamente.';
+      throw apiError;
     }
-
-    const apiError: ApiError = {
-      message: errorMessage,
-      status: error.response?.status,
-      details: error.response?.data,
-    };
-
-    throw apiError;
   }
-};
 
-/**
- * Obtiene el perfil del usuario autenticado
- */
-export const getUserProfile = async (token: string): Promise<any> => {
-  try {
-    console.log('🔄 Obteniendo perfil de usuario');
+  // Registro de usuario
+  async register(userData: RegisterData): Promise<AuthResponse> {
+    try {
+      console.log('📝 Registrando usuario:', { ...userData, contrasena: '[HIDDEN]' });
+      
+      const registerData = {
+        nombre: userData.nombre,
+        correo: userData.correo,
+        contrasena: userData.contrasena,
+      };
 
-    const response = await api.get('auth/me', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      console.log('📤 Enviando datos de registro al servidor...');
+      const response = await apiService.post<AuthResponse>(API_ENDPOINTS.auth.register, registerData);
 
-    console.log('✅ Perfil obtenido exitosamente');
-    return response.data;
+      console.log('📥 Respuesta del servidor:', {
+        hasToken: !!response.access_token,
+        hasUser: !!response.user,
+        tokenPreview: response.access_token ? `${response.access_token.substring(0, 20)}...` : 'NULL',
+      });
 
-  } catch (error: any) {
-    console.error('❌ Error obteniendo perfil:', error.response?.data || error.message);
+      if (response.access_token) {
+        console.log('💾 Guardando token y usuario en AsyncStorage...');
+        await this.storeTokenAndUser(response.access_token, response.user);
+        console.log('✅ Token y usuario guardados correctamente');
+      } else {
+        console.warn('⚠️ El servidor no devolvió un token de acceso');
+      }
 
-    const apiError: ApiError = {
-      message: error.response?.data?.message || 
-               'Error obteniendo perfil de usuario',
-      status: error.response?.status,
-      details: error.response?.data,
-    };
+      console.log('✅ Registro exitoso');
+      return response;
 
-    throw apiError;
+    } catch (error: any) {
+      console.error('❌ Error en registro:', error.response?.data || error.message);
+
+      let errorMessage = 'Error en el registro. Por favor intenta nuevamente.';
+      
+      if (error.response?.status === 400) {
+        errorMessage = 'El correo ya está registrado o datos inválidos.';
+      } else if (error.response?.status === 422) {
+        errorMessage = 'Datos de entrada inválidos.';
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      }
+
+      throw new Error(errorMessage);
+    }
   }
-};
 
-/**
- * Cierra la sesión del usuario
- */
-export const logoutUser = async (token: string): Promise<void> => {
-  try {
-    console.log('🔄 Cerrando sesión en el servidor');
-
-    await api.post('auth/logout', {}, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    console.log('✅ Logout exitoso en servidor');
-
-  } catch (error: any) {
-    // Aún si hay error, consideramos el logout exitoso del lado del cliente
-    console.warn('⚠️ Warning durante logout en servidor:', error.response?.data || error.message);
-    
-    // No lanzamos error para no interrumpir el logout del cliente
-    // Solo log el warning y continuamos
+  // Logout
+  async logout(): Promise<void> {
+    try {
+      console.log('🚪 Cerrando sesión');
+      
+      await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, USER_DATA_KEY]);
+      
+      console.log('✅ Logout exitoso');
+    } catch (error) {
+      console.error('❌ Error en logout:', error);
+      throw error;
+    }
   }
-};
 
-/**
- * Verifica si el token es válido
- */
-export const verifyToken = async (token: string): Promise<boolean> => {
-  try {
-    await getUserProfile(token);
-    return true;
-  } catch (error) {
-    return false;
+  // Obtener token almacenado
+  async getToken(): Promise<string | null> {
+    try {
+      return await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+    } catch (error) {
+      console.error('❌ Error obteniendo token:', error);
+      return null;
+    }
   }
-};
 
-/**
- * Actualiza los datos del usuario
- */
-export const updateUserProfile = async (
-  userId: string, 
-  userData: Partial<User>, 
-  token: string
-): Promise<any> => {
-  try {
-    console.log('🔄 Actualizando perfil de usuario:', userId);
-
-    const response = await api.put(`auth/users/${userId}`, userData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    console.log('✅ Perfil actualizado exitosamente');
-    return response.data;
-
-  } catch (error: any) {
-    console.error('❌ Error actualizando perfil:', error.response?.data || error.message);
-
-    const apiError: ApiError = {
-      message: error.response?.data?.message || 
-               'Error actualizando perfil de usuario',
-      status: error.response?.status,
-      details: error.response?.data,
-    };
-
-    throw apiError;
+  // Obtener usuario almacenado
+  async getStoredUser(): Promise<User | null> {
+    try {
+      const userJson = await AsyncStorage.getItem(USER_DATA_KEY);
+      return userJson ? JSON.parse(userJson) : null;
+    } catch (error) {
+      console.error('❌ Error obteniendo usuario:', error);
+      return null;
+    }
   }
-};
 
-/**
- * Solicita restablecimiento de contraseña
- */
-export const requestPasswordReset = async (email: string): Promise<void> => {
-  try {
-    console.log('🔄 Solicitando restablecimiento de contraseña para:', email);
-
-    await api.post('auth/forgot-password', { email });
-
-    console.log('✅ Solicitud de restablecimiento enviada');
-
-  } catch (error: any) {
-    console.error('❌ Error solicitando restablecimiento:', error.response?.data || error.message);
-
-    const apiError: ApiError = {
-      message: error.response?.data?.message || 
-               'Error solicitando restablecimiento de contraseña',
-      status: error.response?.status,
-      details: error.response?.data,
-    };
-
-    throw apiError;
+  // Verificar si está autenticado
+  async isAuthenticated(): Promise<boolean> {
+    try {
+      const token = await this.getToken();
+      return !!token;
+    } catch (error) {
+      console.error('❌ Error verificando autenticación:', error);
+      return false;
+    }
   }
-};
 
-/**
- * Restablece la contraseña con token
- */
-export const resetPassword = async (
-  token: string, 
-  newPassword: string
-): Promise<void> => {
-  try {
-    console.log('🔄 Restableciendo contraseña');
-
-    await api.post('auth/reset-password', {
-      token,
-      new_password: newPassword
-    });
-
-    console.log('✅ Contraseña restablecida exitosamente');
-
-  } catch (error: any) {
-    console.error('❌ Error restableciendo contraseña:', error.response?.data || error.message);
-
-    const apiError: ApiError = {
-      message: error.response?.data?.message || 
-               'Error restableciendo contraseña',
-      status: error.response?.status,
-      details: error.response?.data,
-    };
-
-    throw apiError;
+  // Actualizar perfil
+  async updateProfile(userData: Partial<User>): Promise<User> {
+    try {
+      console.log('📝 Actualizando perfil');
+      
+      const response = await apiService.put<User>(`users/${userData.idUsuario}`, userData);
+      
+      // Actualizar en storage
+      await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(response));
+      
+      console.log('✅ Perfil actualizado');
+      return response;
+    } catch (error: any) {
+      console.error('❌ Error actualizando perfil:', error);
+      throw new Error('Error actualizando perfil');
+    }
   }
-};
 
-// Funciones de manejo de token
-export const saveAuthToken = async (token: string) => {
-  try {
-    await AsyncStorage.setItem(AUTH_TOKEN_KEY, token);
-  } catch (error) {
-    console.error('Error saving auth token:', error);
-    throw error;
+  // Limpiar datos de autenticación
+  async clearAuthData(): Promise<void> {
+    try {
+      await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, USER_DATA_KEY]);
+      console.log('🧹 Datos de autenticación limpiados');
+    } catch (error) {
+      console.error('❌ Error limpiando datos:', error);
+    }
   }
-};
 
-export const getAuthToken = async (): Promise<string | null> => {
-  try {
-    return await AsyncStorage.getItem(AUTH_TOKEN_KEY);
-  } catch (error) {
-    console.error('Error getting auth token:', error);
-    throw error;
+  // Función auxiliar para almacenar token y usuario
+  private async storeTokenAndUser(token: string, user: User): Promise<void> {
+    try {
+      await AsyncStorage.multiSet([
+        [AUTH_TOKEN_KEY, token],
+        [USER_DATA_KEY, JSON.stringify(user)],
+      ]);
+      console.log('💾 Token y usuario almacenados');
+    } catch (error) {
+      console.error('❌ Error almacenando datos:', error);
+      throw error;
+    }
   }
-};
+}
 
-// Función para guardar datos del usuario
-export const saveUserData = async (userData: any) => {
-  try {
-    await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
-  } catch (error) {
-    console.error('Error saving user data:', error);
-    throw error;
-  }
-};
+// Singleton instance
+const authService = new AuthService();
 
-// Función para obtener datos del usuario
-export const getUserData = async () => {
-  try {
-    const data = await AsyncStorage.getItem(USER_DATA_KEY);
-    return data ? JSON.parse(data) : null;
-  } catch (error) {
-    console.error('Error getting user data:', error);
-    throw error;
-  }
-};
-
-// Función para limpiar todos los datos de autenticación
-export const clearAuthData = async () => {
-  try {
-    await Promise.all([
-      AsyncStorage.removeItem(AUTH_TOKEN_KEY),
-      AsyncStorage.removeItem(USER_DATA_KEY),
-    ]);
-  } catch (error) {
-    console.error('Error clearing auth data:', error);
-    throw error;
-  }
-};
-
-export default {
-  registerUser,
-  loginUser,
-  getUserProfile,
-  logoutUser,
-  verifyToken,
-  updateUserProfile,
-  requestPasswordReset,
-  resetPassword,
-};
+export default authService;
+export { AuthService };

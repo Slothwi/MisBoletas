@@ -7,112 +7,145 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/src/hooks/useAuth";
 
 export default function LoginScreen() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [correo, setCorreo] = useState("");
+  const [contrasena, setContrasena] = useState("");
   
-  const { login, register, loading, error, clearError } = useAuth();
+  const { login, authState, clearError } = useAuth();
 
   useEffect(() => {
-    if (error) {
-      Alert.alert("❌ Error", error.message);
+    if (authState.error) {
+      Alert.alert("❌ Error", authState.error);
       clearError();
     }
-  }, [error, clearError]);
+  }, [authState.error, clearError]);
+
+  // Redirigir si ya está autenticado
+  useEffect(() => {
+    if (authState.isAuthenticated && !authState.isLoading) {
+      router.replace("/(tabs)");
+    }
+  }, [authState.isAuthenticated, authState.isLoading, router]);
 
   const handleRegister = async () => {
     router.push("/(auth)/register");
   };
 
   const handleLogin = async () => {
-    if (!username || !password) {
+    if (!correo || !contrasena) {
       Alert.alert("❌ Error", "Por favor completa todos los campos");
       return;
     }
 
+    // Validación básica del correo
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(correo)) {
+      Alert.alert("❌ Error", "Por favor ingresa un correo válido");
+      return;
+    }
+
     try {
-      await login({ username, password });
+      await login({ correo: correo.toLowerCase().trim(), contrasena });
       Alert.alert("✅ Login exitoso", "Bienvenido");
-      
-      // Navegar a la pantalla principal - Expo Router v54
-      router.replace("/(tabs)");
-    } catch (err) {
-      console.log("❌ Error en login");
+    } catch (err: any) {
+      console.log("❌ Error en login:", err.message);
+      // El error ya se muestra mediante el useEffect de authState.error
     }
   };
 
-  if (loading) {
+  if (authState.isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Cargando...</Text>
+        <Text style={styles.loadingText}>Verificando autenticación...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Image 
-        source={require('@/assets/images/logoMisBoletas.jpeg')} 
-        style={styles.imagenLogo} 
-      />
-      <Text style={styles.title}>Iniciar Sesión</Text>
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Usuario"
-        placeholderTextColor="#999"
-        value={username}
-        onChangeText={setUsername}
-        autoCapitalize="none"
-        editable={!loading}
-      />
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Contraseña"
-        placeholderTextColor="#999"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        editable={!loading}
-      />
-      
-      <TouchableOpacity 
-        style={[styles.button, styles.loginButton]} 
-        onPress={handleLogin}
-        disabled={loading}
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView 
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.loginButtonText}>
-          {loading ? "Cargando..." : "Iniciar Sesión"}
-        </Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity 
-        style={[styles.button, styles.registerButton]} 
-        onPress={handleRegister}
-        disabled={loading}
-      >
-        <Text style={styles.registerButtonText}>
-          {loading ? "Cargando..." : "Registrarse"}
-        </Text>
-      </TouchableOpacity>
-    </View>
+        <View style={styles.content}>
+          <Image 
+            source={require('@/assets/images/logoMisBoletas.jpeg')} 
+            style={styles.imagenLogo} 
+          />
+          <Text style={styles.title}>Iniciar Sesión</Text>
+          <Text style={styles.subtitle}>Ingresa a tu cuenta de Mis Boletas</Text>
+          
+          <TextInput
+            style={styles.input}
+            placeholder="Correo electrónico"
+            placeholderTextColor="#999"
+            value={correo}
+            onChangeText={setCorreo}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            autoCorrect={false}
+            editable={!authState.isLoading}
+          />
+          
+          <TextInput
+            style={styles.input}
+            placeholder="Contraseña"
+            placeholderTextColor="#999"
+            secureTextEntry
+            value={contrasena}
+            onChangeText={setContrasena}
+            editable={!authState.isLoading}
+          />
+          
+          <TouchableOpacity 
+            style={[styles.button, styles.loginButton]} 
+            onPress={handleLogin}
+            disabled={authState.isLoading}
+          >
+            <Text style={styles.loginButtonText}>
+              {authState.isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.button, styles.registerButton]} 
+            onPress={handleRegister}
+            disabled={authState.isLoading}
+          >
+            <Text style={styles.registerButtonText}>
+              Crear cuenta nueva
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
-    justifyContent: "center", 
-    padding: 20, 
     backgroundColor: "#a8cbf0" 
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: "center",
+  },
+  content: {
+    padding: 20,
   },
   loadingContainer: {
     flex: 1,
@@ -128,7 +161,7 @@ const styles = StyleSheet.create({
   imagenLogo: {
     width: 140,
     height: 140,
-    marginBottom: 30,
+    marginBottom: 20,
     alignSelf: 'center',
     borderRadius: 70,    
     resizeMode: 'cover',
@@ -136,9 +169,15 @@ const styles = StyleSheet.create({
   title: { 
     fontSize: 28, 
     fontWeight: "bold", 
-    marginBottom: 30, 
+    marginBottom: 10, 
     textAlign: "center",
     color: "#333"
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 30,
   },
   input: {
     borderWidth: 1,

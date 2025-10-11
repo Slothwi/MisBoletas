@@ -8,30 +8,46 @@ export const ENVIRONMENTS = {
 
 export type Environment = keyof typeof ENVIRONMENTS;
 
-export const CURRENT_ENV = (process.env.EXPO_PUBLIC_ENV || ENVIRONMENTS.DEV) as Environment;
+export const CURRENT_ENV = (process.env.EXPO_PUBLIC_ENV || ENVIRONMENTS.PROD) as Environment;
+
+// Leer URLs desde variables de entorno
+const getApiUrl = (): string => {
+  switch (CURRENT_ENV) {
+    case 'LOCAL':
+      return process.env.EXPO_PUBLIC_API_URL_LOCAL || 'http://192.168.88.3:8000/api/v1';
+    case 'DEV':
+      return process.env.EXPO_PUBLIC_API_URL_DEV || 'http://192.168.88.3:8000/api/v1';
+    case 'PROD':
+      return process.env.EXPO_PUBLIC_API_URL_PROD || 'https://misboletas-backend.onrender.com/api/v1';
+    default:
+      return 'https://misboletas-backend.onrender.com/api/v1';
+  }
+};
 
 // Configuración para diferentes entornos
 const API_CONFIG: Record<Environment, { baseURL: string; timeout: number }> = {
   LOCAL: {
-    baseURL: Platform.OS === 'android'
-      ? 'http://10.0.2.2:8000/api/'  // Android emulator
-      : Platform.OS === 'ios'
-      ? 'http://localhost:8000/api/'  // iOS simulator
-      : 'http://localhost:8000/api/', // Web
+    baseURL: getApiUrl(),
     timeout: 15000,
   },
   DEV: {
-    baseURL: '.env.BACKEND_URL',
+    baseURL: getApiUrl(),
     timeout: 15000,
   },
   PROD: {
-    baseURL: '.env.BACKEND_URL',
+    baseURL: getApiUrl(),
     timeout: 10000,
   },
 };
 
 export const BASE_URL = API_CONFIG[CURRENT_ENV].baseURL;
 export const API_TIMEOUT = API_CONFIG[CURRENT_ENV].timeout;
+
+// Log para debugging (solo en desarrollo)
+if (__DEV__) {
+  console.log('🌍 Environment:', CURRENT_ENV);
+  console.log('🔗 API URL:', BASE_URL);
+}
 
 // Configuración de la aplicación
 export const APP_CONFIG = {
@@ -41,7 +57,7 @@ export const APP_CONFIG = {
   
   // Features flags
   features: {
-    enableAnalytics: CURRENT_ENV === 'PROD', // Changed from 'production' to 'PROD'
+    enableAnalytics: CURRENT_ENV === 'PROD',
     enableDebugMenu: __DEV__,
     enableMockData: __DEV__,
   },
@@ -54,18 +70,57 @@ export const APP_CONFIG = {
   },
 };
 
-// Configuración de almacenamiento
+// Configuración de almacenamiento - Compatible con tu backend
 export const STORAGE_CONFIG = {
-  authTokenKey: 'auth_token',
-  userDataKey: 'user_data',
-  appSettingsKey: 'app_settings',
-  cacheKey: 'app_cache',
+  authTokenKey: '@MisBoletas:auth_token',
+  userDataKey: '@MisBoletas:user_data', 
+  appSettingsKey: '@MisBoletas:app_settings',
+  cacheKey: '@MisBoletas:app_cache',
+};
+
+// Endpoints específicos de tu backend FastAPI
+export const API_ENDPOINTS = {
+  // Autenticación
+  auth: {
+    register: '/users',           // ← POST /users (crear usuario)
+    login: '/auth/login',         // ← POST /auth/login (autenticar)
+    profile: '/users/me',
+    updateProfile: '/users/',
+  },
+  // Categorías
+  categorias: {
+    list: '/categorias/',
+    create: '/categorias/',
+    update: '/categorias/',
+    delete: '/categorias/',
+    search: '/categorias/buscar/nombre/',
+    colors: '/categorias/colores/predefinidos',
+    stats: '/categorias/estadisticas/resumen',
+  },
+  // Productos
+  productos: {
+    list: '/products/',
+    create: '/products/',
+    update: '/products/',
+    delete: '/products/',
+    categorias: '/products/:id/categorias',
+    addToCategory: '/products/:id/categorias/:categoryId',
+    removeFromCategory: '/products/:id/categorias/:categoryId',
+  },
+  // Documentos
+  documentos: {
+    upload: '/productos/:productoId/documentos',
+    list: '/productos/:productoId/documentos',
+    get: '/documentos/:documentoId',
+    delete: '/documentos/:documentoId',
+  },
 };
 
 export default {
   API_CONFIG,
   APP_CONFIG,
   STORAGE_CONFIG,
+  API_ENDPOINTS,
   BASE_URL,
   CURRENT_ENV,
 };

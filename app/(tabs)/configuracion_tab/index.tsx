@@ -1,16 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
-const user = {
-    name: 'Nombre Usuario',
-    photo: 'https://randomuser.me/api/portraits/lego/1.jpg',
-};
+import { useAuth } from '../../../src/hooks/useAuth';
 
 const Configuracion = () => {
     const router = useRouter();
+    const { logout, authState } = useAuth();
+    
+    // Usar los datos del usuario autenticado o datos por defecto
+    const userData = authState.user || {
+        nombre: 'Usuario',
+        email: 'usuario@ejemplo.com'
+    };
     
     const handleCerrarSesion = () => {
         Alert.alert(
@@ -32,19 +34,11 @@ const Configuracion = () => {
 
     const cerrarSesion = async () => {
         try {
-            // Eliminar el token de autenticación
-            await AsyncStorage.removeItem('token');
-            
-            // También puedes eliminar otros datos de usuario si los tienes
-            // await AsyncStorage.removeItem('userData');
-            
-            console.log('Sesión cerrada exitosamente');
-            
-            // Redirigir al login
-            router.replace('/login');
-            
+            console.log('🚪 Cerrando sesión...');
+            await logout();
+            console.log('✅ Sesión cerrada exitosamente');
         } catch (error) {
-            console.error('Error al cerrar sesión:', error);
+            console.error('❌ Error al cerrar sesión:', error);
             Alert.alert('Error', 'No se pudo cerrar sesión. Intenta nuevamente.');
         }
     };
@@ -55,8 +49,12 @@ const Configuracion = () => {
                 {/* Profile Section */}
                 <View style={styles.profileCard}>
                     <View style={styles.profileContainer}>
-                        <Image source={{ uri: user.photo }} style={styles.profileImage} />
-                        <Text style={styles.profileName}>{user.name}</Text>
+                        <Image 
+                            source={{ uri: 'https://randomuser.me/api/portraits/lego/1.jpg' }} 
+                            style={styles.profileImage} 
+                        />
+                        <Text style={styles.profileName}>{userData.nombre}</Text>
+                        <Text style={styles.profileEmail}>{userData.email}</Text>
                     </View>
                 </View>
 
@@ -88,6 +86,19 @@ const Configuracion = () => {
                         <Text style={styles.cardText}>Contacto</Text>
                         <Ionicons name="chevron-forward" size={24} color="#e77573" />
                     </TouchableOpacity>
+
+                    {/* Debug button - Desactivado (archivo eliminado)
+                    {__DEV__ && (
+                        <TouchableOpacity 
+                            style={[styles.card, { backgroundColor: '#ff6b6b' }]} 
+                            testID='card-debug' 
+                            onPress={() => router.push('/debug-auth')}
+                        >
+                            <Text style={[styles.cardText, { color: '#fff' }]}>🔧 Debug Auth</Text>
+                            <Ionicons name="chevron-forward" size={24} color="#fff" />
+                        </TouchableOpacity>
+                    )}
+                    */}
 
                     <TouchableOpacity 
                     style={styles.cardLogOut}
@@ -136,6 +147,12 @@ const styles = StyleSheet.create({
         fontSize: 22,
         fontWeight: 'bold',
         color: '#222',
+        marginBottom: 4,
+    },
+    profileEmail: {
+        fontSize: 16,
+        color: '#666',
+        fontStyle: 'italic',
     },
     cardsContainer: {
         width: '100%',
