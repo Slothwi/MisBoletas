@@ -11,7 +11,7 @@ const Configuracion = () => {
     // Usar los datos del usuario autenticado o datos por defecto
     const userData = authState.user || {
         nombre: 'Usuario',
-        email: 'usuario@ejemplo.com'
+        correo: 'usuario@ejemplo.com'
     };
     
     const handleCerrarSesion = () => {
@@ -54,7 +54,7 @@ const Configuracion = () => {
                             style={styles.profileImage} 
                         />
                         <Text style={styles.profileName}>{userData.nombre}</Text>
-                        <Text style={styles.profileEmail}>{userData.email}</Text>
+                        <Text style={styles.profileEmail}>{userData.correo}</Text>
                     </View>
                 </View>
 
@@ -101,12 +101,12 @@ const Configuracion = () => {
                     */}
 
                     <TouchableOpacity 
-                    style={styles.cardLogOut}
-                    testID='boton-cerrar-sesion'
+                    style={styles.cerrarSesionButton}
                     onPress={handleCerrarSesion}
-                >                    
-                    <Text style={styles.cardText}>Cerrar Sesión</Text>
-                    <Ionicons name="log-out-outline" size={24} color="#e77573" />
+                    testID='boton-cerrar-sesion'
+                >
+                    <Ionicons name="log-out-outline" size={24} color="#fff" />
+                    <Text style={styles.cerrarSesionText}>Cerrar Sesión</Text>
                 </TouchableOpacity>
                 </View>
             </ScrollView>
@@ -179,22 +179,26 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '600',
     },
-    cardLogOut: {
-        backgroundColor: '#f5f7fa',
+    cerrarSesionButton: {
+        backgroundColor: '#e77573',
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingVertical: 18,
-        paddingHorizontal: 20,
+        justifyContent: 'center',
+        paddingVertical: 16,
+        paddingHorizontal: 24,
         borderRadius: 12,
-        borderWidth: 2,
-        borderColor: "#e77573",
-        marginBottom: 8,
+        width: '100%',
+        gap: 12,
         shadowColor: '#000',
-        shadowOpacity: 0.04,
-        shadowRadius: 6,
-        shadowOffset: { width: 0, height: 1 },
-        elevation: 1,
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 3,
+    },
+    cerrarSesionText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: '600',
     },
 });
 

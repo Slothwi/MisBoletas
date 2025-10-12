@@ -15,7 +15,8 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: colorScheme === 'dark' ? '#000' : '#fff',
         },
-      }}>
+      }}
+      initialRouteName="home">
 
       {/* Pantalla de Categorías */}
       <Tabs.Screen

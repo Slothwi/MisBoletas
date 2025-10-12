@@ -2,13 +2,14 @@ import { ThemedText } from "@/components/ThemedText";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import {Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View,} from "react-native";
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, } from "react-native";
+import { BASE_URL } from "../../src/constants/config";
 import { useAuth } from "../../src/hooks/useAuth";
 import categoriaService, { Categoria } from "../../src/services/CategoriaServiceSimplified";
 import productoService, { Producto } from "../../src/services/ProductServiceSimplified";
-import { BASE_URL } from "../../src/constants/config";
 
 const Categorias = () => {
+  const router = useRouter();
   const { authState } = useAuth();
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -28,6 +29,12 @@ const Categorias = () => {
   // MOSTRAR PRODUCTO SELECCIONADO
   const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
 
+  // Función para navegar al formulario
+  const handleAgregarProducto = () => {
+    // Navegar al formulario usando type assertion
+    router.push('./formulario');
+  };
+
   // Cargar categorías del backend
   const cargarCategorias = async () => {
     if (!authState.isAuthenticated) {
@@ -38,7 +45,7 @@ const Categorias = () => {
 
     try {
       console.log('📂 Cargando categorías del servidor...');
-      console.log('🔐 Usuario autenticado:', authState.user?.email);
+      console.log('🔐 Usuario autenticado:', authState.user?.correo);
       console.log('🔗 Token disponible:', !!authState.token);
       console.log('🌐 Base URL:', BASE_URL);
       console.log('📍 Endpoint completo:', `${BASE_URL}/categorias/`);
@@ -307,6 +314,13 @@ const Categorias = () => {
                 <Ionicons name="chevron-forward" size={24} color="#ccc" />
               </TouchableOpacity>
             ))}
+            <TouchableOpacity 
+              style={styles.botonAgregarSecundario}
+              onPress={handleAgregarProducto}
+            >
+              <Ionicons name="add-circle-outline" size={24} color="#e77573" />
+              <Text style={styles.botonAgregarSecundarioTexto}>Agregar otro producto</Text>
+            </TouchableOpacity>
           </ScrollView>
         )}
       </View>
@@ -434,6 +448,26 @@ const styles = StyleSheet.create({
   sinCategoriasContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   sinCategoriasTexto: { fontSize: 18, color: '#666', marginTop: 16, textAlign: 'center' },
   sinCategoriasSubtexto: { fontSize: 14, color: '#999', marginTop: 8, textAlign: 'center' },
+   // NUEVO: Estilos para el botón agregar secundario
+  botonAgregarSecundario: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#e77573',
+    backgroundColor: '#fff',
+    marginTop: 16,
+    marginBottom: 20,
+  },
+  botonAgregarSecundarioTexto: {
+    color: '#222',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
 
 export default Categorias;

@@ -1,3 +1,5 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useState } from "react";
 import {
   Linking,
@@ -20,11 +22,16 @@ type FormData = {
 type FormField = keyof FormData;
 
 export default function Contacto() {
+  const router = useRouter();
   const [formData, setFormData] = useState<FormData>({
     nombre: "",
     email: "",
     mensaje: ""
   });
+
+  const handleVolverAConfiguracion = () => {
+    router.push('/configuracion_tab');
+  };
 
   const handleChange = (name: FormField, value: string) => {
     setFormData({
@@ -55,6 +62,14 @@ export default function Contacto() {
   };
 
   return (
+    <View style={styles.container}>
+      <TouchableOpacity 
+                style={styles.botonVolver}
+                onPress={handleVolverAConfiguracion}
+              >
+                <Ionicons name="arrow-back" size={24} color="#e77573" />
+                <Text style={styles.botonVolverTexto}>Volver a configuraciones</Text>
+              </TouchableOpacity>
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Contacto</Text>
       <Text style={styles.text}>
@@ -114,6 +129,7 @@ export default function Contacto() {
         </Text>
       </View>
     </ScrollView>
+    </View>
   );
 }
 
@@ -200,5 +216,17 @@ const styles = StyleSheet.create({
   },
   infoLink: {
     color: "#e77573",
+  },
+  botonVolver: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    padding: 10,
+  },
+  botonVolverTexto: {
+    color: '#e77573',
+    fontSize: 16,
+    marginLeft: 8,
+    fontWeight: '600'
   },
 });

@@ -1,9 +1,9 @@
+import { AuthProvider } from '@/src/hooks/useAuth';
 import { useColorScheme } from '@/src/hooks/useColorScheme';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { AuthProvider } from '@/src/hooks/useAuth';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -11,7 +11,7 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
+        <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen 
             name="index" 
             options={{ headerShown: false }}
