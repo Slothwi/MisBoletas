@@ -12,7 +12,10 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen 
           name="login" 
-          options={{ headerShown: false }}
+          options={{ 
+            headerShown: false,
+            title: 'Login'
+          }} 
         />
         <Stack.Screen 
           name="register" 
@@ -22,9 +25,12 @@ export default function RootLayout() {
           name="bienvenida" 
           options={{ headerShown: false }}
         />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen 
+          name="nosotros" 
+          options={{ headerShown: false }}
+        />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
+        <Stack.Screen name="+not-found" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>
