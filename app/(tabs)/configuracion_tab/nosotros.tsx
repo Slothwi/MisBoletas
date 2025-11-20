@@ -20,10 +20,21 @@ const Nosotros = () => (
         <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Sobre Nosotros</Text>
         <Text style={styles.paragraph}>
-            Somos un equipo apasionado de desarrolladores de aplicaciones móviles y web. Nos especializamos en crear soluciones digitales innovadoras que ayudan a nuestros clientes a alcanzar sus objetivos.
+            ¡Hola! Somos el equipo de MisBoletas.
         </Text>
         <Text style={styles.paragraph}>
-            ¡Gracias por confiar en nosotros para llevar tus ideas al siguiente nivel!
+            Este es nuestro primer proyecto conjunto como desarrolladores de aplicaciones móviles y estamos muy felices de que lo tengas en tus manos.
+            Somos cinco personas movidas por las soluciones que nos puede dar la tecnología a problemas de la vida diaria.
+        </Text>
+        <Text style={styles.subtitle}>¿Por qué creamos MisBoletas?</Text>
+        <Text style={styles.paragraph}>
+            Nos hemos enfrentado a situaciones que son comunes para muchos consumidores: compramos un producto, este se avería o necesitamos hacer uso de la garantía, y nos encontramos con el problema de no tener la boleta o documento de compra a mano.
+            
+            Hemos desarrollado esta herramienta para ayudarte a organizar tus productos de manera sencilla y eficiente.
+            Desde ahora puedes tener un respaldo de las boletas y documentos de compra digital, para facilitar el cumplimiento de tus derechos y deberes como consumidor.
+        </Text>
+        <Text style={styles.paragraph}>
+            Para que lo importante no se pierda.
         </Text>
         </ScrollView>
     </View>

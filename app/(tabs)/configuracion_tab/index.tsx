@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import React from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../../src/hooks/useAuth';
@@ -63,16 +63,25 @@ const Configuracion = () => {
                     <TouchableOpacity 
                         style={styles.card} 
                         testID='card-configuracion' 
-                        onPress={() => router.push('/configuracion_tab/detalle_configuracion')}
+                        onPress={() => router.push('/configuracion_tab/detalle_configuracion' as Href)}
                     >
                         <Text style={styles.cardText}>Configuración</Text>
+                        <Ionicons name="chevron-forward" size={24} color="#e77573" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                        style={styles.card} 
+                        testID='card-informacion' 
+                        onPress={() => router.push('/configuracion_tab/informacion' as Href)}
+                    >
+                        <Text style={styles.cardText}>Información</Text>
                         <Ionicons name="chevron-forward" size={24} color="#e77573" />
                     </TouchableOpacity>
                     
                     <TouchableOpacity 
                         style={styles.card} 
                         testID='card-nosotros' 
-                        onPress={() => router.push('/configuracion_tab/nosotros')}
+                        onPress={() => router.push('/configuracion_tab/nosotros' as Href)}
                     >
                         <Text style={styles.cardText}>Nosotros</Text>
                         <Ionicons name="chevron-forward" size={24} color="#e77573" />
@@ -81,7 +90,7 @@ const Configuracion = () => {
                     <TouchableOpacity 
                         style={styles.card} 
                         testID='card-contacto' 
-                        onPress={() => router.push('/configuracion_tab/contacto')}
+                        onPress={() => router.push('/configuracion_tab/contacto' as Href)}
                     >
                         <Text style={styles.cardText}>Contacto</Text>
                         <Ionicons name="chevron-forward" size={24} color="#e77573" />
