@@ -1,22 +1,23 @@
-import React, { useRef, useState, useEffect } from 'react';
+import { ThemedText } from '@/components/ThemedText';
+import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  Platform,
-  Alert
+  View
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import * as ImagePicker from 'expo-image-picker';
-import { useRouter } from 'expo-router';
 import { useAuth } from '../src/hooks/useAuth';
-import productoService from '../src/services/ProductServiceSimplified';
-import documentoService from '../src/services/DocumentoService';
 import categoriaService, { Categoria } from '../src/services/CategoriaServiceSimplified';
+import documentoService from '../src/services/DocumentoService';
+import productoService from '../src/services/ProductServiceSimplified';
 
 
 // Componente SelectCategoria - Carga categorías desde el backend
@@ -339,6 +340,13 @@ function BasicExample() {
   return (
     <ScrollView style={styles.scrollWrapper}>
       <View style={styles.formWrapper}>
+        <TouchableOpacity 
+          style={styles.botonVolver}
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={24} color="#e77573" />
+          <ThemedText style={styles.botonVolverTexto}>Volver</ThemedText>
+        </TouchableOpacity>
         <View style={styles.form}>
           <View style={styles.stepContainer}>
             <Text style={styles.titleText}>Nombre Producto</Text>
@@ -658,6 +666,18 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6,
+  },
+  botonVolver: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    padding: 10,
+  },
+  botonVolverTexto: {
+    color: '#e77573',
+    fontSize: 16,
+    marginLeft: 8,
+    fontWeight: '600',
   },
 });
 

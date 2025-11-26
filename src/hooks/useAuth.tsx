@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useContext, createContext, ReactNode } from 'react';
 import { useRouter } from 'expo-router';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import authService from '../services/authService';
-import { User, LoginCredentials, RegisterData, AuthState } from '../types/auth';
+import { AuthState, LoginCredentials, RegisterData, User } from '../types/auth';
 
 // Contexto de autenticación
 interface AuthContextType {
@@ -33,6 +33,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Verificar estado de autenticación al cargar la app
   useEffect(() => {
     checkAuthStatus();
+    
+    // Escuchar cambios en el almacenamiento (para detectar login local)
+    const interval = setInterval(() => {
+      checkAuthStatus();
+    }, 1000); // Verificar cada segundo
+    
+    return () => clearInterval(interval);
   }, []);
 
   // Función para verificar el estado de autenticación
@@ -44,10 +51,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const storedUser = await authService.getStoredUser();
       
       if (token && storedUser) {
-        // Verificar si el token sigue siendo válido
-        const isValid = await authService.isAuthenticated();
+        // Verificar si es un token local simulado
+        const isLocalToken = token.startsWith('local_token_');
         
-        if (isValid) {
+        if (isLocalToken) {
+          // Token local, aceptarlo directamente sin validación al servidor
+          console.log('✅ Autenticación local detectada');
           setAuthState({
             isAuthenticated: true,
             isLoading: false,
@@ -56,15 +65,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             error: null,
           });
         } else {
-          // Token inválido, limpiar datos
-          await authService.clearAuthData();
-          setAuthState({
-            isAuthenticated: false,
-            isLoading: false,
-            user: null,
-            token: null,
-            error: null,
-          });
+          // Token de backend, verificar si sigue siendo válido
+          const isValid = await authService.isAuthenticated();
+          
+          if (isValid) {
+            setAuthState({
+              isAuthenticated: true,
+              isLoading: false,
+              user: storedUser,
+              token,
+              error: null,
+            });
+          } else {
+            // Token inválido, limpiar datos
+            await authService.clearAuthData();
+            setAuthState({
+              isAuthenticated: false,
+              isLoading: false,
+              user: null,
+              token: null,
+              error: null,
+            });
+          }
         }
       } else {
         setAuthState({
@@ -186,13 +208,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
-      if (!authState.user?.id) {
+      if (!authState.user?.idUsuario) {
         throw new Error('Usuario no encontrado');
       }
       
       const updatedUser = await authService.updateProfile({
         ...userData,
-        id: authState.user.id,
+        idUsuario: authState.user.idUsuario,
       });
       
       setAuthState(prev => ({
