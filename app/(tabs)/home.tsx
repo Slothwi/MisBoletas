@@ -413,6 +413,15 @@ const Inicio = () => {
           </View>
 
           <View style={styles.accionesContainer}>
+             {/* Boton de Editar NUEVOOO REVISAR*/}
+            <TouchableOpacity 
+           style={styles.botonEliminar}
+           onPress={() => {}}
+           >
+           <Ionicons name="create" size={20} color="#fff" />
+           <Text style={styles.botonEliminarTexto}>Editar Producto</Text>
+           </TouchableOpacity>
+
             <TouchableOpacity 
               style={styles.botonEliminar}
               onPress={() => handleEliminarProducto(productoSeleccionado)}

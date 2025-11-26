@@ -110,6 +110,15 @@ const Configuracion = () => {
                     */}
 
                     <TouchableOpacity 
+                        style={styles.card} 
+                        testID='card-soporteAyuda' 
+                        onPress={() => router.push('/configuracion_tab/soporte' as Href)}
+                    >
+                        <Text style={styles.cardText}>Servicio al cliente</Text>
+                        <Ionicons name="chevron-forward" size={24} color="#e77573" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
                     style={styles.cerrarSesionButton}
                     onPress={handleCerrarSesion}
                     testID='boton-cerrar-sesion'
