@@ -55,6 +55,10 @@ const Configuracion = () => {
                         />
                         <Text style={styles.profileName}>{userData.nombre}</Text>
                         <Text style={styles.profileEmail}>{userData.correo}</Text>
+                        {/* BOTÓN PARA EDITAR PERFIL - AÚN NO FUNCIONAL*/}
+                        <TouchableOpacity style={styles.botonEditarPerfil} onPress={() => router.push('/configuracion_tab/editar_perfil' as Href)}>
+                            <Text style={styles.botonEditarPerfilText}>Editar Perfil</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
 
@@ -114,7 +118,7 @@ const Configuracion = () => {
                         testID='card-soporteAyuda' 
                         onPress={() => router.push('/configuracion_tab/soporte' as Href)}
                     >
-                        <Text style={styles.cardText}>Servicio al cliente</Text>
+                        <Text style={styles.cardText}>Ayuda</Text>
                         <Ionicons name="chevron-forward" size={24} color="#e77573" />
                     </TouchableOpacity>
 
@@ -216,6 +220,25 @@ const styles = StyleSheet.create({
     cerrarSesionText: {
         color: '#fff',
         fontSize: 18,
+        fontWeight: '600',
+    },
+    botonEditarPerfil: {
+        marginTop: 12,
+        backgroundColor: '#e77573',
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 2 },
+        elevation: 3,
+    },
+    botonEditarPerfilText: {
+        color: '#fff',
+        fontSize: 12,
         fontWeight: '600',
     },
 });

@@ -314,6 +314,15 @@ const Categorias = () => {
                 <Ionicons name="chevron-forward" size={24} color="#ccc" />
               </TouchableOpacity>
             ))}
+            {/* BOTÓN PARA ELIMINAR PRODUCTO DENTRO DE UNA CATEGORIA - AÚN NO FUNCIONAL*/}
+            <TouchableOpacity 
+              style={styles.botonEliminar}
+              onPress={() => {}}
+            >
+              <Ionicons name="trash" size={20} color="#fff" />
+              <Text style={styles.botonEliminarTexto}>Eliminar</Text>
+            </TouchableOpacity>
+
             <TouchableOpacity 
               style={styles.botonAgregarSecundario}
               onPress={handleAgregarProducto}
@@ -321,6 +330,7 @@ const Categorias = () => {
               <Ionicons name="add-circle-outline" size={24} color="#e77573" />
               <Text style={styles.botonAgregarSecundarioTexto}>Agregar otro producto</Text>
             </TouchableOpacity>
+         
           </ScrollView>
         )}
       </View>
@@ -367,7 +377,16 @@ const Categorias = () => {
                 </View>
                 <Ionicons name="chevron-forward" size={24} color="#e77573" />
               </TouchableOpacity>
+              
             ))}
+            {/* BOTÓN PARA ELIMINAR CATEGORÍA - AÚN NO FUNCIONAL */}
+            <TouchableOpacity 
+          onPress={() => {}}
+          style={styles.botonEliminar}
+        >
+          <Text style={styles.botonEliminarTexto}>Eliminar Categoría</Text>
+          <Ionicons name="trash-outline" size={20} color="#f44336" />
+        </TouchableOpacity>
           </View>
         )}
         
@@ -465,6 +484,21 @@ const styles = StyleSheet.create({
   },
   botonAgregarSecundarioTexto: {
     color: '#222',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  botonEliminar: {
+    backgroundColor: '#dc3545',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    gap: 8,
+  },
+  botonEliminarTexto: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },

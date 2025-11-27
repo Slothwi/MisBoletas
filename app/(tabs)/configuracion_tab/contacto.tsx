@@ -73,7 +73,7 @@ export default function Contacto() {
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Contacto</Text>
       <Text style={styles.text}>
-        ¿Tienes dudas, sugerencias o necesitas ayuda? ¡Contáctanos!
+         ¡Contáctanos!
       </Text>
       
       <View style={styles.form}>
