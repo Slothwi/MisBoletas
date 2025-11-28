@@ -99,13 +99,13 @@ export const API_ENDPOINTS = {
   },
   // Productos
   productos: {
-    list: '/products/',
-    create: '/products/',
-    update: '/products/',
-    delete: '/products/',
-    categorias: '/products/:id/categorias',
-    addToCategory: '/products/:id/categorias/:categoryId',
-    removeFromCategory: '/products/:id/categorias/:categoryId',
+    list: '/productos/',  // Cambio: Era "/products/" → Ahora "/productos/" (coincide con backend)
+    create: '/productos/',
+    update: '/productos/',
+    delete: '/productos/',
+    categorias: '/productos/:id/categorias',
+    addToCategory: '/productos/:id/categorias/:categoryId',
+    removeFromCategory: '/productos/:id/categorias/:categoryId',
   },
   // Documentos
   documentos: {

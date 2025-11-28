@@ -489,8 +489,9 @@ const Inicio = () => {
         <ScrollView style={styles.scrollContainer}>
           <View style={styles.cardsContainer}>
             {productos.map((producto) => (
+              // Cambio: Era "ProductoID" → Ahora "id_producto" (UUID)
               <TouchableOpacity 
-                key={producto.id_producto}  {/* Cambio: Era "ProductoID" → Ahora "id_producto" (UUID) */}
+                key={producto.id_producto}
                 style={styles.card}
                 onPress={() => handleVerProducto(producto)}
                 testID={`tarjeta-producto-${producto.id_producto}`}
@@ -501,7 +502,8 @@ const Inicio = () => {
                     size={24} 
                     color="#e77573" 
                   />
-                  <Text style={styles.cardText}>{producto.nombre}</Text>  {/* Cambio: Era "NombreProducto" → Ahora "nombre" */}
+                  {/* Cambio: Era "NombreProducto" → Ahora "nombre" */}
+                  <Text style={styles.cardText}>{producto.nombre}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={24} color="#e77573" />
               </TouchableOpacity>

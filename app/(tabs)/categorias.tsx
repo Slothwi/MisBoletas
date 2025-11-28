@@ -358,17 +358,20 @@ const Categorias = () => {
         ) : (
           <View style={styles.cardsContainer}>
             {categorias.map((categoria) => (
+              // Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID)
               <TouchableOpacity
-                key={categoria.id_categoria}  {/* Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID) */}
+                key={categoria.id_categoria}
                 style={styles.card}
                 onPress={() => handleVerCategoria(categoria)}
               >
                 <View style={styles.cardContent}>
-                  <View style={[styles.colorIndicator, { backgroundColor: categoria.color }]} />  {/* Cambio: Era "Color" → Ahora "color" */}
+                  {/* Cambio: Era "Color" → Ahora "color" */}
+                  <View style={[styles.colorIndicator, { backgroundColor: categoria.color }]} />
                   <MaterialCommunityIcons name="shape" size={32} color="#e77573" />
                   <View style={styles.cardTextContainer}>
+                    {/* Cambio: Era "NombreCategoria" → Ahora "nombre" */}
                     <Text style={styles.cardTitle}>
-                      {categoria.nombre}  {/* Cambio: Era "NombreCategoria" → Ahora "nombre" */}
+                      {categoria.nombre}
                     </Text>
                     <Text style={styles.cardSubtitle}>
                       Toca para ver productos

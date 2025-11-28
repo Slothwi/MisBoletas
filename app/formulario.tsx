@@ -83,11 +83,13 @@ const SelectCategoria = (props: {
         <View style={styles.opcionesContainer}>
           <ScrollView style={styles.opcionesScroll}>
             {props.categorias.map((categoria) => (
+              // Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID)
               <TouchableOpacity
-                key={categoria.id_categoria}  {/* Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID) */}
+                key={categoria.id_categoria}
                 style={[
                   styles.opcionItem,
-                  props.categoriaSeleccionada?.id_categoria === categoria.id_categoria && styles.opcionSeleccionada  {/* Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID) */}
+                  // Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID)
+                  props.categoriaSeleccionada?.id_categoria === categoria.id_categoria && styles.opcionSeleccionada
                 ]}
                 onPress={() => {
                   props.onChange(categoria);
@@ -95,20 +97,23 @@ const SelectCategoria = (props: {
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {/* Cambio: Era "Color" → Ahora "color" */}
                   <View 
                     style={{ 
                       width: 12, 
                       height: 12, 
                       borderRadius: 6, 
-                      backgroundColor: categoria.color,  {/* Cambio: Era "Color" → Ahora "color" */}
+                      backgroundColor: categoria.color,
                       marginRight: 10 
                     }} 
                   />
                   <Text style={[
                     styles.opcionText,
-                    props.categoriaSeleccionada?.id_categoria === categoria.id_categoria && styles.opcionTextSeleccionada  {/* Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID) */}
+                    // Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID)
+                    props.categoriaSeleccionada?.id_categoria === categoria.id_categoria && styles.opcionTextSeleccionada
                   ]}>
-                    {categoria.nombre}  {/* Cambio: Era "NombreCategoria" → Ahora "nombre" */}
+                    {/* Cambio: Era "NombreCategoria" → Ahora "nombre" */}
+                    {categoria.nombre}
                   </Text>
                 </View>
               </TouchableOpacity>
