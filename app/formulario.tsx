@@ -59,7 +59,7 @@ const SelectCategoria = (props: {
                   width: 12, 
                   height: 12, 
                   borderRadius: 6, 
-                  backgroundColor: props.categoriaSeleccionada.Color,
+                  backgroundColor: props.categoriaSeleccionada.color,  // Cambio: Era "Color" → Ahora "color"
                   marginRight: 8 
                 }} 
               />
@@ -68,7 +68,7 @@ const SelectCategoria = (props: {
               fontSize: 16, 
               color: props.categoriaSeleccionada ? '#000' : '#999' 
             }}>
-              {props.categoriaSeleccionada?.NombreCategoria || 'Seleccionar categoría...'}
+              {props.categoriaSeleccionada?.nombre || 'Seleccionar categoría...'}  {/* Cambio: Era "NombreCategoria" → Ahora "nombre" */}
             </Text>
           </View>
           <Ionicons 
@@ -84,10 +84,10 @@ const SelectCategoria = (props: {
           <ScrollView style={styles.opcionesScroll}>
             {props.categorias.map((categoria) => (
               <TouchableOpacity
-                key={categoria.CategoriaID}
+                key={categoria.id_categoria}  {/* Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID) */}
                 style={[
                   styles.opcionItem,
-                  props.categoriaSeleccionada?.CategoriaID === categoria.CategoriaID && styles.opcionSeleccionada
+                  props.categoriaSeleccionada?.id_categoria === categoria.id_categoria && styles.opcionSeleccionada  {/* Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID) */}
                 ]}
                 onPress={() => {
                   props.onChange(categoria);
@@ -100,15 +100,15 @@ const SelectCategoria = (props: {
                       width: 12, 
                       height: 12, 
                       borderRadius: 6, 
-                      backgroundColor: categoria.Color,
+                      backgroundColor: categoria.color,  {/* Cambio: Era "Color" → Ahora "color" */}
                       marginRight: 10 
                     }} 
                   />
                   <Text style={[
                     styles.opcionText,
-                    props.categoriaSeleccionada?.CategoriaID === categoria.CategoriaID && styles.opcionTextSeleccionada
+                    props.categoriaSeleccionada?.id_categoria === categoria.id_categoria && styles.opcionTextSeleccionada  {/* Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID) */}
                   ]}>
-                    {categoria.NombreCategoria}
+                    {categoria.nombre}  {/* Cambio: Era "NombreCategoria" → Ahora "nombre" */}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -246,21 +246,21 @@ function BasicExample() {
 
       // Preparar datos para el backend
       const productoData = {
-        NombreProducto: nombreProducto.trim(),
-        FechaCompra: fechaCompra ? formatDateForAPI(fechaCompra) : undefined,
-        DuracionGarantia: duracionGarantia ? parseInt(duracionGarantia) : undefined,
-        Marca: marca.trim() || undefined,
-        Modelo: modelo.trim() || undefined,
-        Tienda: tienda.trim() || undefined,
-        Notas: notas.trim() || undefined,
-        categoria_id: categoriaSeleccionada?.CategoriaID, // NUEVO: Enviar categoría
+        nombre: nombreProducto.trim(),  // Cambio: Era "NombreProducto" → Ahora "nombre"
+        fecha_compra: fechaCompra ? formatDateForAPI(fechaCompra) : undefined,  // Cambio: Era "FechaCompra" → Ahora "fecha_compra"
+        duracion_garantia_meses: duracionGarantia ? parseInt(duracionGarantia) : undefined,  // Cambio: Era "DuracionGarantia" en días → Ahora "duracion_garantia_meses"
+        marca: marca.trim() || undefined,  // Cambio: Era "Marca" PascalCase → Ahora "marca" snake_case
+        modelo: modelo.trim() || undefined,  // Cambio: Era "Modelo" → Ahora "modelo"
+        tienda: tienda.trim() || undefined,  // Cambio: Era "Tienda" → Ahora "tienda"
+        notas: notas.trim() || undefined,  // Cambio: Era "Notas" → Ahora "notas"
+        id_categoria: categoriaSeleccionada?.id_categoria,  // Cambio: Era "categoria_id" con "CategoriaID" → Ahora "id_categoria" (UUID)
       };
 
       console.log('📝 Creando producto:', productoData);
       console.log('🏷️ categoriaSeleccionada completa:', categoriaSeleccionada);
-      console.log('🏷️ categoria_id extraída:', categoriaSeleccionada?.CategoriaID);
+      console.log('🏷️ id_categoria extraída:', categoriaSeleccionada?.id_categoria);  // Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID)
       if (categoriaSeleccionada) {
-        console.log('🏷️ Con categoría:', categoriaSeleccionada.NombreCategoria);
+        console.log('🏷️ Con categoría:', categoriaSeleccionada.nombre);  // Cambio: Era "NombreCategoria" → Ahora "nombre"
       } else {
         console.log('⚠️ NO hay categoría seleccionada');
       }
@@ -271,12 +271,12 @@ function BasicExample() {
       console.log('✅ Producto creado exitosamente:', nuevoProducto);
 
       // Si hay un archivo seleccionado, subirlo
-      if (archivoSeleccionado && nuevoProducto.ProductoID) {
+      if (archivoSeleccionado && nuevoProducto.id_producto) {  // Cambio: Era "ProductoID" → Ahora "id_producto" (UUID)
         try {
           console.log('📎 Subiendo archivo asociado al producto...');
           
           await documentoService.upload(
-            nuevoProducto.ProductoID,
+            nuevoProducto.id_producto,  // Cambio: Era "ProductoID" → Ahora "id_producto" (UUID)
             {
               uri: archivoSeleccionado.uri,
               type: archivoSeleccionado.type,

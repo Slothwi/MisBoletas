@@ -62,8 +62,8 @@ const Inicio = () => {
 
   // Cargar documentos cuando se selecciona un producto
   useEffect(() => {
-    if (productoSeleccionado?.ProductoID) {
-      cargarDocumentos(productoSeleccionado.ProductoID);
+    if (productoSeleccionado?.id_producto) {  // Cambio: Era "ProductoID" → Ahora "id_producto" (UUID)
+      cargarDocumentos(productoSeleccionado.id_producto);
     } else {
       setDocumentos([]);
     }
@@ -92,7 +92,7 @@ const Inicio = () => {
   const handleEliminarProducto = async (producto: Producto) => {
     Alert.alert(
       'Eliminar Producto',
-      `¿Estás seguro de que quieres eliminar "${producto.NombreProducto}"?`,
+      `¿Estás seguro de que quieres eliminar "${producto.nombre}"?`,  // Cambio: Era "NombreProducto" → Ahora "nombre"
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -100,8 +100,8 @@ const Inicio = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              if (producto.ProductoID) {
-                await productoService.delete(producto.ProductoID);
+              if (producto.id_producto) {  // Cambio: Era "ProductoID" → Ahora "id_producto" (UUID)
+                await productoService.delete(producto.id_producto);
                 Alert.alert('Éxito', 'Producto eliminado correctamente');
                 cargarProductos(); // Recargar la lista
                 handleVolverALista();
@@ -116,7 +116,7 @@ const Inicio = () => {
   };
 
   // Cargar documentos de un producto
-  const cargarDocumentos = async (productoId: number) => {
+  const cargarDocumentos = async (productoId: string) => {  // Cambio: Era "number" → Ahora "string" (UUID)
     try {
       setCargandoDocumentos(true);
       console.log('📎 Cargando documentos del producto:', productoId);
@@ -278,7 +278,7 @@ const Inicio = () => {
               size={48} 
               color="#e77573" 
             />
-            <Text style={styles.detalleTitulo}>{productoSeleccionado.NombreProducto}</Text>
+            <Text style={styles.detalleTitulo}>{productoSeleccionado.nombre}</Text>  {/* Cambio: Era "NombreProducto" → Ahora "nombre" */}
           </View>
 
           <View style={styles.detalleInfo}>
@@ -305,10 +305,10 @@ const Inicio = () => {
               </View>
             )}
             
-            {productoSeleccionado.DuracionGarantia && (
+            {productoSeleccionado.duracion_garantia_meses && (
               <View key="garantia" style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Garantía (días):</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.DuracionGarantia}</Text>
+                <Text style={styles.infoLabel}>Garantía (meses):</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.duracion_garantia_meses}</Text>  {/* Cambio: Era "DuracionGarantia" en días → Ahora "duracion_garantia_meses" */}
               </View>
             )}
             
@@ -490,10 +490,10 @@ const Inicio = () => {
           <View style={styles.cardsContainer}>
             {productos.map((producto) => (
               <TouchableOpacity 
-                key={producto.ProductoID}
+                key={producto.id_producto}  {/* Cambio: Era "ProductoID" → Ahora "id_producto" (UUID) */}
                 style={styles.card}
                 onPress={() => handleVerProducto(producto)}
-                testID={`tarjeta-producto-${producto.ProductoID}`}
+                testID={`tarjeta-producto-${producto.id_producto}`}
               >
                 <View style={styles.cardContent}>
                   <MaterialCommunityIcons 
@@ -501,7 +501,7 @@ const Inicio = () => {
                     size={24} 
                     color="#e77573" 
                   />
-                  <Text style={styles.cardText}>{producto.NombreProducto}</Text>
+                  <Text style={styles.cardText}>{producto.nombre}</Text>  {/* Cambio: Era "NombreProducto" → Ahora "nombre" */}
                 </View>
                 <Ionicons name="chevron-forward" size={24} color="#e77573" />
               </TouchableOpacity>

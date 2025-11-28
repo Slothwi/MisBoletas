@@ -87,12 +87,12 @@ const Categorias = () => {
   }, [authState.isAuthenticated, authState.isLoading]);
 
   // Obtener productos por categoría
-  const obtenerProductosPorCategoria = async (categoriaId: number) => {
+  const obtenerProductosPorCategoria = async (categoriaId: string) => {  // Cambio: Era "number" → Ahora "string" (UUID)
     try {
       console.log(`📦 Cargando productos de categoría ${categoriaId}...`);
       const todosLosProductos = await productoService.getAll();
       const productosFiltrados = todosLosProductos.filter(producto => 
-        producto.categorias?.some(cat => cat.CategoriaID === categoriaId)
+        producto.categorias?.some(cat => cat.id_categoria === categoriaId)  // Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID)
       );
       setProductosDeCategoria(productosFiltrados);
       console.log(`✅ ${productosFiltrados.length} productos encontrados para la categoría`);
@@ -105,8 +105,8 @@ const Categorias = () => {
   // Muestra la lista de productos de la categoría seleccionada
   const handleVerCategoria = (categoria: Categoria) => {
     setCategoriaSeleccionada(categoria);
-    if (categoria.CategoriaID) {
-      obtenerProductosPorCategoria(categoria.CategoriaID);
+    if (categoria.id_categoria) {  // Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID)
+      obtenerProductosPorCategoria(categoria.id_categoria);
     }
   };
 
@@ -142,8 +142,8 @@ const Categorias = () => {
       console.log('💾 Guardando nueva categoría:', nombreLimpio);
       
       const nuevaCategoria = await categoriaService.create({
-        NombreCategoria: nombreLimpio,
-        Color: categoriaService.getRandomColor()
+        nombre: nombreLimpio,  // Cambio: Era "NombreCategoria" → Ahora "nombre"
+        color: categoriaService.getRandomColor()  // Cambio: Era "Color" → Ahora "color"
       });
 
       // Agregar a la lista local
@@ -288,7 +288,7 @@ const Categorias = () => {
         </TouchableOpacity>
 
         <ThemedText type="title" style={styles.titulo}>
-          Productos en {categoriaSeleccionada.NombreCategoria}
+          Productos en {categoriaSeleccionada.nombre}  {/* Cambio: Era "NombreCategoria" → Ahora "nombre" */}
         </ThemedText>
 
         {productosDeCategoria.length === 0 ? (
@@ -359,16 +359,16 @@ const Categorias = () => {
           <View style={styles.cardsContainer}>
             {categorias.map((categoria) => (
               <TouchableOpacity
-                key={categoria.CategoriaID}
+                key={categoria.id_categoria}  {/* Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID) */}
                 style={styles.card}
                 onPress={() => handleVerCategoria(categoria)}
               >
                 <View style={styles.cardContent}>
-                  <View style={[styles.colorIndicator, { backgroundColor: categoria.Color }]} />
+                  <View style={[styles.colorIndicator, { backgroundColor: categoria.color }]} />  {/* Cambio: Era "Color" → Ahora "color" */}
                   <MaterialCommunityIcons name="shape" size={32} color="#e77573" />
                   <View style={styles.cardTextContainer}>
                     <Text style={styles.cardTitle}>
-                      {categoria.NombreCategoria}
+                      {categoria.nombre}  {/* Cambio: Era "NombreCategoria" → Ahora "nombre" */}
                     </Text>
                     <Text style={styles.cardSubtitle}>
                       Toca para ver productos
