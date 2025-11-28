@@ -1,9 +1,9 @@
-// Interfaces que coinciden con tu backend FastAPI
+// Interfaces que coinciden con el schema Supabase (tabla perfiles)
 export interface User {
-  idUsuario: number;      // Backend: idUsuario (no 'id')
-  nombre: string;         // Backend: nombre ✓
-  correo: string;         // Backend: correo (no 'email')
-  fechaRegistro: string;  // Backend: fechaRegistro (no 'fecha_creacion')
+  id_usuario: string;      // UUID de Supabase
+  email: string;           // Email único
+  nombre_completo?: string; // Nombre del usuario
+  fecha_registro?: string;  // Timestamp de registro
 }
 
 export interface LoginCredentials {
@@ -58,7 +58,6 @@ export interface RegisterFormData {
   acceptTerms: boolean;
 }
 
-// Estados de autenticación
 export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;

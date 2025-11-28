@@ -1,42 +1,46 @@
 import { apiService } from './api';
 import { API_ENDPOINTS } from '../constants/config';
 
-// Interfaces para productos (basadas en tu backend real)
+// Interfaces para productos (Supabase schema)
 export interface Producto {
-  ProductoID?: number;
-  NombreProducto: string;
-  FechaCompra?: string;
-  DuracionGarantia?: number;
-  Marca?: string;
-  Modelo?: string;
-  Tienda?: string;
-  Notas?: string;
-  UsuarioID?: number;
+  id_producto: string;  // Cambio: Era "ProductoID: number" → Ahora UUID string
+  id_usuario: string;   // Cambio: Era "UsuarioID: number" → Ahora UUID string
+  nombre: string;       // Cambio: Era "NombreProducto" → Ahora "nombre"
+  fecha_compra?: string;
+  duracion_garantia_meses?: number; // Cambio: Era "DuracionGarantia" → Ahora "duracion_garantia_meses"
+  marca?: string;
+  modelo?: string;
+  tienda?: string;
+  notas?: string;
+  precio?: number;
+  fecha_creacion?: string;
   categorias?: Array<{
-    CategoriaID: number;
-    NombreCategoria: string;
-    Color?: string;
+    id_categoria: string;  // Cambio: Era "CategoriaID: number" → Ahora UUID string
+    nombre: string;        // Cambio: Era "NombreCategoria" → Ahora "nombre"
+    color?: string;
   }>;
 }
 
 export interface ProductoCreate {
-  NombreProducto: string;
-  FechaCompra?: string;
-  DuracionGarantia?: number;
-  Marca?: string;
-  Modelo?: string;
-  Tienda?: string;
-  Notas?: string;
+  nombre: string;       // Cambio: Era "NombreProducto" → Ahora "nombre"
+  fecha_compra?: string;
+  duracion_garantia_meses?: number; // Cambio: Era "DuracionGarantia" → Ahora "duracion_garantia_meses"
+  marca?: string;
+  modelo?: string;
+  tienda?: string;
+  notas?: string;
+  precio?: number;
 }
 
 export interface ProductoUpdate {
-  NombreProducto?: string;
-  FechaCompra?: string;
-  DuracionGarantia?: number;
-  Marca?: string;
-  Modelo?: string;
-  Tienda?: string;
-  Notas?: string;
+  nombre?: string;      // Cambio: Era "NombreProducto?" → Ahora "nombre?"
+  fecha_compra?: string;
+  duracion_garantia_meses?: number; // Cambio: Era "DuracionGarantia?" → Ahora "duracion_garantia_meses?"
+  marca?: string;
+  modelo?: string;
+  tienda?: string;
+  notas?: string;
+  precio?: number;
 }
 
 class ProductoService {
@@ -54,7 +58,7 @@ class ProductoService {
   }
 
   // Obtener producto por ID
-  async getById(id: number): Promise<Producto> {
+  async getById(id: string): Promise<Producto> { // Cambio: Era "id: number" → Ahora "id: string" (UUID)
     try {
       console.log('📦 Fetching product by ID:', id);
       const producto = await apiService.get<Producto>(`${API_ENDPOINTS.productos.list}${id}`);
@@ -69,7 +73,7 @@ class ProductoService {
   // Crear nuevo producto
   async create(productoData: ProductoCreate): Promise<Producto> {
     try {
-      console.log('📝 Creating new product:', productoData.NombreProducto);
+      console.log('📝 Creating new product:', productoData.nombre); // Cambio: Era "productoData.NombreProducto" → Ahora "productoData.nombre"
       const producto = await apiService.post<Producto>(
         API_ENDPOINTS.productos.create,
         productoData

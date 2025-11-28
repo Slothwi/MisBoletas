@@ -82,8 +82,8 @@ export const STORAGE_CONFIG = {
 export const API_ENDPOINTS = {
   // Autenticación
   auth: {
-    register: '/users',           // ← POST /users (crear usuario)
-    login: '/auth/login',         // ← POST /auth/login (autenticar)
+    register: '/users/register',  // ✅ CORREGIDO: POST /users/register
+    login: '/users/login',        // ✅ CORREGIDO: POST /users/login
     profile: '/users/me',
     updateProfile: '/users/',
   },

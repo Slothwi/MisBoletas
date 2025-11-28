@@ -34,12 +34,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     checkAuthStatus();
     
-    // Escuchar cambios en el almacenamiento (para detectar login local)
-    const interval = setInterval(() => {
-      checkAuthStatus();
-    }, 1000); // Verificar cada segundo
+    // Solo verificar autenticación al cargar, no continuamente
+    // Verificar continuamente causaba que los formularios se recarguen
     
-    return () => clearInterval(interval);
+    return () => {};
   }, []);
 
   // Función para verificar el estado de autenticación

@@ -5,26 +5,27 @@ import { API_ENDPOINTS } from '../constants/config';
 console.log('🔧 [CategoriaService] API_ENDPOINTS.categorias:', API_ENDPOINTS.categorias);
 console.log('🔧 [CategoriaService] API_ENDPOINTS.categorias.list:', API_ENDPOINTS.categorias.list);
 
-// Interfaces para categorías (basadas en el backend real)
+// Interfaces para categorías (Supabase schema)
 export interface Categoria {
-  CategoriaID?: number;
-  NombreCategoria: string;
-  Color: string;
-  UsuarioID?: number;
+  id_categoria: string;  // Cambio: Era "CategoriaID?: number" → Ahora UUID string
+  id_usuario: string;    // Cambio: Era "UsuarioID?: number" → Ahora UUID string
+  nombre: string;        // Cambio: Era "NombreCategoria" → Ahora "nombre"
+  color: string;
+  fecha_creacion?: string; // Nuevo campo agregado
 }
 
 export interface CategoriaCreate {
-  NombreCategoria: string;
-  Color: string;
+  nombre: string;      // Cambio: Era "NombreCategoria" → Ahora "nombre"
+  color: string;
 }
 
 export interface CategoriaUpdate {
-  NombreCategoria?: string;
-  Color?: string;
+  nombre?: string;     // Cambio: Era "NombreCategoria?" → Ahora "nombre?"
+  color?: string;
 }
 
 export interface CategoriaWithProducts extends Categoria {
-  TotalProductos: number;
+  total_productos: number; // Cambio: Era "TotalProductos" → Ahora "total_productos" (snake_case)
 }
 
 // Colores predefinidos que coinciden con el backend
@@ -131,7 +132,7 @@ class CategoriaServiceSimplified {
   }
 
   // Actualizar categoría
-  async update(id: number, categoriaData: CategoriaUpdate): Promise<Categoria> {
+  async update(id: string, categoriaData: CategoriaUpdate): Promise<Categoria> { // Cambio: Era "id: number" → Ahora "id: string" (UUID)
     try {
       console.log('📝 Updating category:', id);
       const categoria = await apiService.put<Categoria>(
@@ -147,7 +148,7 @@ class CategoriaServiceSimplified {
   }
 
   // Eliminar categoría
-  async delete(id: number): Promise<void> {
+  async delete(id: string): Promise<void> { // Cambio: Era "id: number" → Ahora "id: string" (UUID)
     try {
       console.log('🗑️ Deleting category:', id);
       await apiService.delete(`${API_ENDPOINTS.categorias.delete}${id}`);
