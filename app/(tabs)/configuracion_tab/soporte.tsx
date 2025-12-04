@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert,
 KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { Href, useRouter } from "expo-router";
-import { ThemedText } from '@/components/ThemedText';
+// Importar servicio de soporte 
 
 
 export default function Soporte() {
@@ -18,6 +18,88 @@ export default function Soporte() {
     const handleVolverAConfiguracion = () => {
     router.push('/configuracion_tab');
   };
+
+  // Función para validar email
+    const handleEmailValido = (email: string) => {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+       return emailRegex.test(email)
+    };
+
+    // Función para validar teléfono 
+    const handleTelefonoValido = (telefono: string) => {
+        const telefonoRegex = /^[0-9]{9,11}$/;
+        return telefonoRegex.test(telefono.replace(/\D/g, '')); // remueve todo lo que no sean números
+    };
+
+    // Función para validar todos los campos
+    const handleValidarCampos = () => {
+      if (!nombreUsuario.trim()) {
+        Alert.alert("Error", "Por favor ingresa tu nombre completo.");
+        return false;
+      }
+      if (!email.trim()) {
+        Alert.alert("Error", "Por favor ingresa tu correo electrónico.");
+        return false;
+      }
+      //agregar ejemplo de formato de correo valido
+      if (!handleEmailValido(email)) {
+        Alert.alert("Error", "Por favor ingresa un correo electrónico válido.");
+        return false;
+      }
+      if (!telefono.trim()) {
+        Alert.alert("Error", "Por favor ingresa tu teléfono de contacto.");
+        return false;
+      }
+      //agregar ejemplo de formato de telefono valido
+      if (!handleTelefonoValido(telefono)) {
+        Alert.alert("Error", "Por favor ingresa un teléfono válido.");
+        return false;
+      }
+      if (!mensaje.trim()) {
+        Alert.alert("Error", "Por favor ingresa un mensaje, queja o consulta.");
+        return false;
+      }
+      return true;
+    };
+
+    const handleEnviarSoporte = async () => {
+      if (!handleValidarCampos()) {
+        return;
+      }
+        // Aquí puedes agregar la lógica para enviar el formulario de soporte
+        Alert.alert("Éxito", "Tu mensaje ha sido enviado. ¡Gracias por contactarnos!");
+        // Limpiar formulario después del envío
+        setNombreUsuario("");
+        setEmail("");
+        setTelefono("");
+        setMensaje("");
+  }
+    
+  // Función para cancelar
+    const handleCancelar = () => {
+        if (nombreUsuario || email || telefono || mensaje) {
+            Alert.alert(
+                "Cancelar",
+                "¿Estás seguro? Se perderán los datos ingresados.",
+                [
+                    { text: "No", style: "cancel" },
+                    { 
+                        text: "Sí, cancelar", 
+                        style: "destructive",
+                        onPress: () => {
+                            setNombreUsuario("");
+                            setEmail("");
+                            setTelefono("");
+                            setMensaje("");
+                            handleVolverAConfiguracion();
+                        }
+                    }
+                ]
+            );
+        } else {
+            handleVolverAConfiguracion();
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -87,7 +169,7 @@ export default function Soporte() {
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.button, styles.saveButton,  styles.buttonDisabled]}
-              onPress={() => {}}
+              onPress={() => {handleCancelar}}
               disabled={false}
             >
               <Text style={styles.buttonText}>

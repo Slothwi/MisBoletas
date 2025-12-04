@@ -45,7 +45,7 @@ const Categorias = () => {
 
     try {
       console.log('📂 Cargando categorías del servidor...');
-      console.log('🔐 Usuario autenticado:', authState.user?.correo);
+      console.log('🔐 Usuario autenticado:', authState.user?.email);
       console.log('🔗 Token disponible:', !!authState.token);
       console.log('🌐 Base URL:', BASE_URL);
       console.log('📍 Endpoint completo:', `${BASE_URL}/categorias/`);
@@ -125,6 +125,66 @@ const Categorias = () => {
     setProductoSeleccionado(producto);
   };
 
+  // Función para eliminar un producto en una categoría
+const handleEliminarProductoEnCategoria = async (producto: Producto) => {
+  Alert.alert(
+    'Eliminar Producto',
+    `¿Estás seguro de que quieres eliminar "${producto.nombre}"?`,
+    [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            if (producto.id_producto) {
+              await productoService.delete(producto.id_producto);
+              Alert.alert('Éxito', 'Producto eliminado correctamente');
+              
+              // Recargar los productos de la categoría actual
+              if (categoriaSeleccionada?.id_categoria) {
+                obtenerProductosPorCategoria(categoriaSeleccionada.id_categoria);
+              }
+            }
+          } catch (error) {
+            Alert.alert('Error', 'No se pudo eliminar el producto');
+          }
+        }
+      }
+    ]
+  );
+};
+
+// Función para eliminar una categoría
+const handleEliminarCategoria = async (categoria: Categoria) => {
+  Alert.alert(
+    'Eliminar Categoría',
+    `¿Estás seguro de que quieres eliminar "${categoria.nombre}"?`,
+    [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            if (categoria.id_categoria) {
+              await categoriaService.delete(categoria.id_categoria);
+              Alert.alert('Éxito', 'Categoría eliminada correctamente');
+              
+              // Recargar los productos de la categoría actual
+              if (categoriaSeleccionada?.id_categoria) {
+                obtenerProductosPorCategoria(categoriaSeleccionada.id_categoria);
+              }
+            }
+          } catch (error) {
+            Alert.alert('Error', 'No se pudo eliminar la categoría');
+          }
+        }
+      }
+    ]
+  );
+};
+
   // Mostrar el formulario en lugar de navegar
   const handleMostrarFormulario = () => {
     setMostrandoFormulario(true);
@@ -160,6 +220,8 @@ const Categorias = () => {
       console.error('❌ Error creando categoría:', error);
       Alert.alert("Error", error.message || "No se pudo crear la categoría");
     }
+
+    
   };
 
   // --- LÓGICA DE RENDERIZADO ---
@@ -219,34 +281,34 @@ const Categorias = () => {
               size={48} 
               color="#e77573" 
             />
-            <Text style={styles.detalleTitulo}>{productoSeleccionado.NombreProducto}</Text>
+            <Text style={styles.detalleTitulo}>{productoSeleccionado.nombre}</Text>
           </View>
 
           <View style={styles.detalleInfo}>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Marca:</Text>
-              <Text style={styles.infoValue}>{productoSeleccionado.Marca || 'No especificada'}</Text>
+              <Text style={styles.infoValue}>{productoSeleccionado.marca || 'No especificada'}</Text>
             </View>
             
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Modelo:</Text>
-              <Text style={styles.infoValue}>{productoSeleccionado.Modelo || 'No especificado'}</Text>
+              <Text style={styles.infoValue}>{productoSeleccionado.modelo || 'No especificado'}</Text>
             </View>
             
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Fecha de compra:</Text>
               <Text style={styles.infoValue}>
-                {productoSeleccionado.FechaCompra ? 
-                  new Date(productoSeleccionado.FechaCompra).toLocaleDateString() : 
+                {productoSeleccionado.fecha_compra ? 
+                  new Date(productoSeleccionado.fecha_compra).toLocaleDateString() : 
                   'No especificada'
                 }
               </Text>
             </View>
             
-            {productoSeleccionado.DuracionGarantia && (
+            {productoSeleccionado.duracion_garantia_meses && (
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Garantía (días):</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.DuracionGarantia}</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.duracion_garantia_meses}</Text>
               </View>
             )}
             
@@ -254,22 +316,22 @@ const Categorias = () => {
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Categorías:</Text>
                 <Text style={styles.infoValue}>
-                  {productoSeleccionado.categorias.map(cat => cat.NombreCategoria).join(', ')}
+                  {productoSeleccionado.categorias.map(cat => cat.nombre).join(', ')}
                 </Text>
               </View>
             )}
 
-            {productoSeleccionado.Tienda && (
+            {productoSeleccionado.tienda && (
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Tienda:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.Tienda}</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.tienda}</Text>
               </View>
             )}
             
-            {productoSeleccionado.Notas && (
+            {productoSeleccionado.notas && (
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Notas:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.Notas}</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.notas }</Text>
               </View>
             )}
           </View>
@@ -302,22 +364,22 @@ const Categorias = () => {
           <ScrollView>
             {productosDeCategoria.map(producto => (
               <TouchableOpacity 
-                key={producto.ProductoID}
+                key={producto.id_producto}  // Cambio: Era "ProductoID" → Ahora "id_producto"
                 style={styles.cardProducto} 
                 onPress={() => handleVerProducto(producto)}
-                testID={`tarjeta-producto-${producto.ProductoID}`}
+                testID={`tarjeta-producto-${producto.id_producto}`}
               >
                 <View style={styles.cardContent}>
                   <MaterialCommunityIcons name="package-variant" size={24} color="#e77573"/>
-                  <Text style={styles.cardTitle}>{producto.NombreProducto}</Text>
+                  <Text style={styles.cardTitle}>{producto.nombre}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={24} color="#ccc" />
               </TouchableOpacity>
             ))}
-            {/* BOTÓN PARA ELIMINAR PRODUCTO DENTRO DE UNA CATEGORIA - AÚN NO FUNCIONAL*/}
+            {/* BOTÓN PARA ELIMINAR PRODUCTO DENTRO DE UNA CATEGORIA - AÚN NO FUNCIONA BIEN*/}
             <TouchableOpacity 
               style={styles.botonEliminar}
-              onPress={() => {}}
+              onPress={() => handleEliminarProductoEnCategoria(productosDeCategoria[0])} // Ejemplo con el primer producto
             >
               <Ionicons name="trash" size={20} color="#fff" />
               <Text style={styles.botonEliminarTexto}>Eliminar</Text>
@@ -382,9 +444,9 @@ const Categorias = () => {
               </TouchableOpacity>
               
             ))}
-            {/* BOTÓN PARA ELIMINAR CATEGORÍA - AÚN NO FUNCIONAL */}
+            {/* BOTÓN PARA ELIMINAR CATEGORÍA - AÚN NO FUNCIONA BIEN */}
             <TouchableOpacity 
-          onPress={() => {}}
+          onPress={() => {handleEliminarCategoria(categorias[0])}} // Ejemplo con la primera categoría
           style={styles.botonEliminar}
         >
           <Text style={styles.botonEliminarTexto}>Eliminar Categoría</Text>

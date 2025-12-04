@@ -140,7 +140,7 @@ const Inicio = () => {
 
   // Subir nuevo documento
   const handleSubirDocumento = async () => {
-    if (!productoSeleccionado?.ProductoID) return;
+    if (!productoSeleccionado?.id_producto) return;
 
     try {
       // Solicitar permisos
@@ -181,7 +181,7 @@ const Inicio = () => {
         );
         
         Alert.alert('Éxito', 'Documento subido correctamente');
-        cargarDocumentos(productoSeleccionado.ProductoID);
+        cargarDocumentos(productoSeleccionado.id_producto);
       }
     } catch (error) {
       console.error('Error subiendo documento:', error);
@@ -209,8 +209,8 @@ const Inicio = () => {
             try {
               await documentoService.delete(documentoId);
               Alert.alert('Éxito', 'Documento eliminado correctamente');
-              if (productoSeleccionado?.ProductoID) {
-                cargarDocumentos(productoSeleccionado.ProductoID);
+              if (productoSeleccionado?.id_producto) {  // Cambio: Era "ProductoID" → Ahora "id_producto" (UUID)
+                cargarDocumentos(productoSeleccionado.id_producto);
               }
             } catch (error) {
               Alert.alert('Error', 'No se pudo eliminar el documento');
@@ -282,25 +282,25 @@ const Inicio = () => {
           </View>
 
           <View style={styles.detalleInfo}>
-            {productoSeleccionado.Marca && (
+            {productoSeleccionado.marca && (
               <View key="marca" style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Marca:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.Marca}</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.marca}</Text>
               </View>
             )}
             
-            {productoSeleccionado.Modelo && (
+            {productoSeleccionado.modelo && (
               <View key="modelo" style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Modelo:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.Modelo}</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.modelo}</Text>
               </View>
             )}
             
-            {productoSeleccionado.FechaCompra && (
+            {productoSeleccionado.fecha_compra && (
               <View key="fechaCompra" style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Fecha de compra:</Text>
                 <Text style={styles.infoValue}>
-                  {new Date(productoSeleccionado.FechaCompra).toLocaleDateString()}
+                  {new Date(productoSeleccionado.fecha_compra).toLocaleDateString()}
                 </Text>
               </View>
             )}
@@ -316,22 +316,22 @@ const Inicio = () => {
               <View key="categorias" style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Categorías:</Text>
                 <Text style={styles.infoValue}>
-                  {productoSeleccionado.categorias.map(cat => cat.NombreCategoria).join(', ')}
+                  {productoSeleccionado.categorias.map(cat => cat.nombre).join(', ')}
                 </Text>
               </View>
             )}
 
-            {productoSeleccionado.Tienda && (
+            {productoSeleccionado.tienda && (
               <View key="tienda" style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Tienda:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.Tienda}</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.tienda}</Text>
               </View>
             )}
             
-            {productoSeleccionado.Notas && (
+            {productoSeleccionado.notas && (
               <View key="notas" style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Notas:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.Notas}</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.notas}</Text>
               </View>
             )}
           </View>
