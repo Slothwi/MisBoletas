@@ -125,6 +125,10 @@ const Categorias = () => {
     setProductoSeleccionado(producto);
   };
 
+  // Estados para editar categoría
+  const [categoriaEditando, setCategoriaEditando] = useState<Categoria | null>(null);
+  const [nuevoNombreEditado, setNuevoNombreEditado] = useState("");
+
   // Función para eliminar un producto en una categoría
 const handleEliminarProductoEnCategoria = async (producto: Producto) => {
   Alert.alert(
@@ -184,6 +188,56 @@ const handleEliminarCategoria = async (categoria: Categoria) => {
     ]
   );
 };
+  
+  // FUNCIÓN PARA INICIAR LA EDICIÓN DE UNA CATEGORÍA
+  const handleEditarCategoria = (categoria: Categoria) => {
+  setCategoriaEditando(categoria);
+  setNuevoNombreEditado(categoria.nombre);
+};
+
+ // FUNCIÓN PARA CANCELAR LA EDICIÓN
+const handleCancelarEdicion = () => {
+  setCategoriaEditando(null);
+  setNuevoNombreEditado("");
+};
+
+  // Función para guardar la edición de una categoría
+  const handleGuardarEdicion = async () => {
+    const nombreLimpio = nuevoNombreEditado.trim();
+  
+  if (!nombreLimpio) {
+    Alert.alert("Error", "El nombre de la categoría no puede estar vacío.");
+    return;
+  }
+
+  if (!categoriaEditando?.id_categoria) {
+    Alert.alert("Error", "No se puede editar la categoría.");
+    return;
+  }
+
+  try {
+    await categoriaService.update(categoriaEditando.id_categoria, {
+      nombre: nombreLimpio,
+      color: categoriaEditando.color
+    });
+
+    // Actualizar lista local
+    const categoriasActualizadas = categorias.map(cat =>
+      cat.id_categoria === categoriaEditando.id_categoria
+        ? { ...cat, nombre: nombreLimpio }
+        : cat
+    );
+    
+    setCategorias(categoriasActualizadas);
+    setCategoriaEditando(null);
+    setNuevoNombreEditado("");
+    
+    Alert.alert("Éxito", "Categoría actualizada correctamente");
+    
+  } catch (error: any) {
+    Alert.alert("Error", error.message || "No se pudo actualizar la categoría");
+  }
+  };
 
   // Mostrar el formulario en lugar de navegar
   const handleMostrarFormulario = () => {
@@ -431,6 +485,16 @@ const handleEliminarCategoria = async (categoria: Categoria) => {
                   <View style={[styles.colorIndicator, { backgroundColor: categoria.color }]} />
                   <MaterialCommunityIcons name="shape" size={32} color="#e77573" />
                   <View style={styles.cardTextContainer}>
+                    {/* SI ESTÁ EDITANDO ESTA CATEGORÍA, MUESTRA INPUT */}
+                    {categoriaEditando?.id_categoria === categoria.id_categoria ? (
+                      <TextInput
+                        style={styles.input}
+                        value={nuevoNombreEditado}
+                        onChangeText={setNuevoNombreEditado}
+                        onSubmitEditing={handleGuardarEdicion}
+                        placeholder="Nuevo nombre"
+                      />
+                    ) : null} 
                     {/* Cambio: Era "NombreCategoria" → Ahora "nombre" */}
                     <Text style={styles.cardTitle}>
                       {categoria.nombre}
@@ -440,13 +504,19 @@ const handleEliminarCategoria = async (categoria: Categoria) => {
                     </Text>
                   </View>
                 </View>
+
+                
                 <Ionicons name="chevron-forward" size={24} color="#e77573" />
               </TouchableOpacity>
               
+              
+              
             ))}
+
+
             {/* BOTÓN PARA ELIMINAR CATEGORÍA - AÚN NO FUNCIONA BIEN */}
             <TouchableOpacity 
-          onPress={() => {handleEliminarCategoria(categorias[0])}} // Ejemplo con la primera categoría
+          onPress={() => {handleEliminarCategoria(categoriaSeleccionada!);}} // Ejemplo con la categoría seleccionada
           style={styles.botonEliminar}
         >
           <Text style={styles.botonEliminarTexto}>Eliminar Categoría</Text>
@@ -567,6 +637,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  botonEditar: {
+    backgroundColor: '#1b23faff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    gap: 8,
+  },
+  botonEditarTexto: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  botonIconoEdicion: {
+    padding: 8,
+  },
+  botonesEdicion: {
+  flexDirection: 'row',
+  gap: 4,
+},
 });
 
 export default Categorias;

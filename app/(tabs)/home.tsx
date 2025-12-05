@@ -115,6 +115,26 @@ const Inicio = () => {
     );
   };
 
+  // FUNCIÓN PARA EDITAR UN PRODUCTO
+const handleEditarProducto = (producto: Producto) => {
+  // Verificar que el producto tiene ID
+  if (!producto.id_producto) {
+    Alert.alert('Error', 'No se puede editar este producto');
+    return;
+  }
+  
+  console.log('✏️ Editando producto:', producto.nombre);
+  
+  // Navegar al formulario con los datos del producto
+  router.push({
+    pathname: '/formulario' as Href,
+    params: { 
+      producto: JSON.stringify(producto),
+      modoEdicion: 'true'
+    }
+  } as any );
+};
+
   // Cargar documentos de un producto
   const cargarDocumentos = async (productoId: string) => {  // Cambio: Era "number" → Ahora "string" (UUID)
     try {
@@ -415,11 +435,11 @@ const Inicio = () => {
           <View style={styles.accionesContainer}>
              {/* Boton de Editar NUEVOOO REVISAR*/}
             <TouchableOpacity 
-           style={styles.botonEliminar}
-           onPress={() => {}}
+           style={styles.botonEditar}
+           onPress={() => {handleEditarProducto(productoSeleccionado);}}
            >
            <Ionicons name="create" size={20} color="#fff" />
-           <Text style={styles.botonEliminarTexto}>Editar Producto</Text>
+           <Text style={styles.botonEditarTexto}>Editar Producto</Text>
            </TouchableOpacity>
 
             <TouchableOpacity 
@@ -777,6 +797,21 @@ const styles = StyleSheet.create({
   },
   botonAgregarSecundarioTexto: {
     color: '#222',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  botonEditar: {
+    backgroundColor: '#1b23faff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    gap: 8,
+  },
+  botonEditarTexto: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
