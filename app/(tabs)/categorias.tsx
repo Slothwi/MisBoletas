@@ -91,11 +91,12 @@ const Categorias = () => {
     try {
       console.log(`📦 Cargando productos de categoría ${categoriaId}...`);
       const todosLosProductos = await productoService.getAll();
-      const productosFiltrados = todosLosProductos.filter(producto => 
-        producto.categorias?.some(cat => cat.id_categoria === categoriaId)  // Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID)
-      );
-      setProductosDeCategoria(productosFiltrados);
-      console.log(`✅ ${productosFiltrados.length} productos encontrados para la categoría`);
+      
+      // NOTA: El backend no devuelve categorías en cada producto aún.
+      // Por ahora, mostrar todos los productos del usuario
+      // TODO: Implementar endpoint GET /productos?categoria={id} en el backend
+      setProductosDeCategoria(todosLosProductos);
+      console.log(`✅ ${todosLosProductos.length} productos encontrados`);
     } catch (error: any) {
       console.error('❌ Error cargando productos de categoría:', error);
       Alert.alert('Error', 'No se pudieron cargar los productos de la categoría');
@@ -302,14 +303,14 @@ const Categorias = () => {
           <ScrollView>
             {productosDeCategoria.map(producto => (
               <TouchableOpacity 
-                key={producto.ProductoID}
+                key={producto.id_producto}
                 style={styles.cardProducto} 
                 onPress={() => handleVerProducto(producto)}
-                testID={`tarjeta-producto-${producto.ProductoID}`}
+                testID={`tarjeta-producto-${producto.id_producto}`}
               >
                 <View style={styles.cardContent}>
                   <MaterialCommunityIcons name="package-variant" size={24} color="#e77573"/>
-                  <Text style={styles.cardTitle}>{producto.NombreProducto}</Text>
+                  <Text style={styles.cardTitle}>{producto.nombre}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={24} color="#ccc" />
               </TouchableOpacity>

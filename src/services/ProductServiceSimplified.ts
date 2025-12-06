@@ -30,6 +30,7 @@ export interface ProductoCreate {
   tienda?: string;
   notas?: string;
   precio?: number;
+  categoria_ids?: string[]; // Cambio: Agregar categorías (array de UUIDs)
 }
 
 export interface ProductoUpdate {

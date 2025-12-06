@@ -1,105 +1,153 @@
-import React, {useEffect, useState} from "react";
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert,
-KeyboardAvoidingView, Platform, ScrollView } from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
-import { Href, useRouter } from "expo-router";
-import { ThemedText } from '@/components/ThemedText';
-
+import { useRouter } from "expo-router";
+import { useAuth } from '@/src/hooks/useAuth';
+import { ticketService } from '@/src/services/TicketService';
 
 export default function Soporte() {
     const router = useRouter();
+    const { authState } = useAuth();
 
-// Estados del formulario
-    const [nombreUsuario, setNombreUsuario] = useState("");
-    const [email, setEmail] = useState("");
-    const [telefono, setTelefono] = useState("");
+    // Estados del formulario
+    const [asunto, setAsunto] = useState("");
     const [mensaje, setMensaje] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleVolverAConfiguracion = () => {
-    router.push('/configuracion_tab');
-  };
+        router.push('/configuracion_tab');
+    };
+
+    const handleLimpiar = () => {
+        setAsunto("");
+        setMensaje("");
+    };
+
+    const handleEnviar = async () => {
+        // Validaciones
+        if (!asunto.trim()) {
+            Alert.alert("Error", "Por favor ingresa un asunto");
+            return;
+        }
+
+        if (!mensaje.trim()) {
+            Alert.alert("Error", "Por favor ingresa tu mensaje");
+            return;
+        }
+
+        if (asunto.trim().length < 5) {
+            Alert.alert("Error", "El asunto debe tener al menos 5 caracteres");
+            return;
+        }
+
+        if (mensaje.trim().length < 20) {
+            Alert.alert("Error", "El mensaje debe tener al menos 20 caracteres");
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            console.log('📝 Enviando ticket:', { asunto, mensaje });
+            await ticketService.createTicket(asunto, mensaje);
+
+            Alert.alert(
+                "Éxito",
+                "Tu ticket de soporte ha sido creado. Nos pondremos en contacto pronto.",
+                [
+                    {
+                        text: "OK",
+                        onPress: () => {
+                            handleLimpiar();
+                            router.push('/configuracion_tab');
+                        }
+                    }
+                ]
+            );
+        } catch (error: any) {
+            console.error('❌ Error creando ticket:', error);
+            Alert.alert(
+                "Error",
+                error.message || "No se pudo enviar tu ticket. Intenta de nuevo."
+            );
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <View style={styles.container}>
             <TouchableOpacity 
-            style={styles.botonVolver}
-            onPress={handleVolverAConfiguracion}
-         >
-            <Ionicons name="arrow-back" size={24} color="#e77573" />
-            <Text style={styles.botonVolverTexto}>Volver a configuraciones</Text>
+                style={styles.botonVolver}
+                onPress={handleVolverAConfiguracion}
+            >
+                <Ionicons name="arrow-back" size={24} color="#e77573" />
+                <Text style={styles.botonVolverTexto}>Volver a configuraciones</Text>
             </TouchableOpacity>
 
-    <ScrollView style={styles.container}>
-      <View style={styles.formWrapper}>
-        <View style={styles.form}>
-          <View style={styles.stepContainer}>
-            <Text style={styles.titleText}>Nombre completo</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ingrese su nombre completo"
-              placeholderTextColor="#999"
-              value={nombreUsuario}
-              onChangeText={setNombreUsuario}
-            />
-          </View>
+            <ScrollView style={styles.scrollWrapper} contentContainerStyle={{ paddingBottom: 20 }}>
+                <View style={styles.formWrapper}>
+                    <View style={styles.form}>
+                        <View style={styles.stepContainer}>
+                            <Text style={styles.titleText}>Asunto</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Ej: Problema con garantía"
+                                placeholderTextColor="#999"
+                                value={asunto}
+                                onChangeText={setAsunto}
+                                editable={!isLoading}
+                                maxLength={100}
+                            />
+                            <Text style={styles.charCounter}>
+                                {asunto.length}/100 caracteres
+                            </Text>
+                        </View>
 
-          <View style={styles.stepContainer}>
-            <Text style={styles.titleText}>Correo electronico</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ingrese su correo electronico"
-              placeholderTextColor="#999"
-              value={email}
-              onChangeText={setEmail}
-            />
-          </View>
-          
-          <View style={styles.stepContainer}>
-            <Text style={styles.titleText}>Telefono</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ingrese su telefono de contacto"
-              placeholderTextColor="#999"
-              value={telefono}
-              onChangeText={setTelefono}
-            />
-          </View>
-          
-          <View style={styles.stepContainer}>
-            <Text style={styles.titleText}>Mensaje</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ingrese su mensaje, queja o consulta"
-              placeholderTextColor="#999"
-              value={mensaje}
-              onChangeText={setMensaje}
-            />
-          </View>
-          
-          <View style={styles.buttonRow}>
-            {/* BOTONES PARA CANCELAR Y GUARDAR - AÚN NO FUNCIONAL*/}
-            <TouchableOpacity 
-              style={[styles.button, styles.cancelButton]}
-              onPress={() => {}}
-              disabled={false}
-            >
-              <Text style={styles.buttonText}>Cancelar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.button, styles.saveButton,  styles.buttonDisabled]}
-              onPress={() => {}}
-              disabled={false}
-            >
-              <Text style={styles.buttonText}>
-                { false ? 'Guardando...' : 'Guardar'}
-              </Text>
-            </TouchableOpacity>
-          </View>
+                        <View style={styles.stepContainer}>
+                            <Text style={styles.titleText}>Mensaje</Text>
+                            <TextInput
+                                style={[styles.input, styles.textArea]}
+                                placeholder="Describe tu consulta, queja o problema detalladamente..."
+                                placeholderTextColor="#999"
+                                value={mensaje}
+                                onChangeText={setMensaje}
+                                multiline
+                                numberOfLines={6}
+                                editable={!isLoading}
+                                maxLength={500}
+                            />
+                            <Text style={styles.charCounter}>
+                                {mensaje.length}/500 caracteres
+                            </Text>
+                        </View>
+
+                        <View style={styles.buttonRow}>
+                            <TouchableOpacity 
+                                style={[styles.button, styles.cancelButton]}
+                                onPress={handleLimpiar}
+                                disabled={isLoading}
+                            >
+                                <Text style={styles.buttonText}>Limpiar</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity 
+                                style={[styles.button, styles.saveButton, isLoading && styles.buttonDisabled]}
+                                onPress={handleEnviar}
+                                disabled={isLoading}
+                            >
+                                {isLoading ? (
+                                    <ActivityIndicator color="white" size="small" />
+                                ) : (
+                                    <Text style={styles.buttonText}>Enviar</Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </ScrollView>
         </View>
-      </View>
-    </ScrollView>
-    </View>
-  );
+    );
 }
 
 const styles = StyleSheet.create({

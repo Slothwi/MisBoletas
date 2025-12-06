@@ -3,10 +3,12 @@ import { API_ENDPOINTS } from '../constants/config';
 
 // Interfaces para documentos (basadas en tu backend real)
 export interface Documento {
-  documentoid?: number;  // Opcional para manejar ambos formatos
-  DocumentoID?: number;  // Backend puede devolver en mayúsculas
+  id_documento?: string;  // UUID del documento (desde backend)
+  id?: string;            // Alternativo
+  documentoid?: number;   // Opcional para manejar ambos formatos
+  DocumentoID?: number;   // Backend puede devolver en mayúsculas
   productoid: number;
-  ProductoID?: number;   // También manejar ProductoID en mayúsculas
+  ProductoID?: number;    // También manejar ProductoID en mayúsculas
   nombrearchivo: string;
   NombreArchivo?: string; // Backend puede devolver en mayúsculas
   url_gcs?: string;       // Minúsculas
@@ -15,28 +17,45 @@ export interface Documento {
   BlobName?: string;      // Mayúsculas
   content_type?: string;
   ContentType?: string;   // Mayúsculas
+  tipo_documento?: string; // 'boleta', 'factura', 'garantia', 'manual', 'otro'
   size_bytes?: number;
   SizeBytes?: number;     // Mayúsculas
   fecha_subida: string;
   FechaSubida?: string;   // Mayúsculas
+  estado_ocr?: string;    // 'pendiente' | 'procesando' | 'completado' | 'error'
+  metadata_ocr?: any;     // Datos extraídos por OCR
+  numero_boleta?: string; // Número de boleta extraído
+  fecha_emision?: string; // Fecha de emisión extraída
 }
 
 export interface DocumentoUploadResponse {
   message: string;
   documento: {
-    documentoid: number;
+    id_documento?: string;
+    id?: string;
+    documentoid?: number;
     nombrearchivo: string;
     url_gcs: string;
     content_type: string;
-    size_bytes: number;
+    size_bytes?: number;
     fecha_subida: string;
+    estado_ocr?: string;
   };
+}
+
+export interface OCRData {
+  full_text?: string;
+  numero_boleta?: string;
+  fecha_emision?: string;
+  monto?: string;
+  vendedor?: string;
+  [key: string]: any;
 }
 
 class DocumentoService {
   // Subir documento a un producto
   async upload(
-    productoId: number, 
+    productoId: string | number, 
     file: { uri: string; type?: string; name: string }
   ): Promise<DocumentoUploadResponse> {
     try {
@@ -65,7 +84,7 @@ class DocumentoService {
   }
 
   // Obtener todos los documentos de un producto
-  async getByProducto(productoId: number): Promise<Documento[]> {
+  async getByProducto(productoId: string | number): Promise<Documento[]> {
     try {
       console.log('📎 Fetching documents for product:', productoId);
       
@@ -197,6 +216,136 @@ class DocumentoService {
     }
 
     return { isValid: true };
+  }
+
+  // Obtener documento por ID
+  async getDocumentoById(documentoId: string): Promise<Documento> {
+    try {
+      console.log('📎 Obteniendo documento:', documentoId);
+      
+      const url = `/documentos/${documentoId}`;
+      const documento = await apiService.get<Documento>(url);
+      
+      console.log('✅ Documento obtenido:', documento);
+      return documento;
+    } catch (error) {
+      console.error('❌ Error obteniendo documento:', error);
+      throw error;
+    }
+  }
+
+  // Esperar a que OCR complete y retornar datos extraídos
+  async waitForOCRCompletion(
+    documentoId: string,
+    maxWaitMs: number = 120000, // 2 minutos máximo
+    intervalMs: number = 3000   // Verificar cada 3 segundos
+  ): Promise<OCRData> {
+    const startTime = Date.now();
+    
+    while (Date.now() - startTime < maxWaitMs) {
+      try {
+        const documento = await this.getDocumentoById(documentoId);
+        
+        const estado = documento.estado_ocr;
+        console.log(`🔄 Estado OCR: ${estado}`);
+        
+        if (estado === 'completado') {
+          console.log('✅ OCR completado');
+          return {
+            full_text: documento.metadata_ocr?.full_text,
+            numero_boleta: documento.numero_boleta,
+            fecha_emision: documento.fecha_emision,
+            ...documento.metadata_ocr,
+          };
+        }
+        
+        if (estado === 'error') {
+          throw new Error(`OCR error: ${documento.metadata_ocr?.error || 'Error desconocido'}`);
+        }
+        
+        // Esperar antes de siguiente intento
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+      } catch (error) {
+        console.error('❌ Error esperando OCR:', error);
+        throw error;
+      }
+    }
+    
+    throw new Error('OCR timeout: excedió tiempo máximo de espera');
+  }
+
+  // Subir documento con tipo específico
+  async uploadWithType(
+    productoId: string | number, 
+    file: { uri: string; type?: string; name: string },
+    tipoDocumento: 'boleta' | 'garantia' | 'manual' | 'otro' = 'boleta'
+  ): Promise<DocumentoUploadResponse> {
+    try {
+      console.log('📎 Uploading document:', productoId, 'tipo:', tipoDocumento);
+      
+      const formData = new FormData();
+      formData.append('file', {
+        uri: file.uri,
+        type: file.type || 'image/jpeg',
+        name: file.name,
+      } as any);
+
+      const url = API_ENDPOINTS.documentos.upload.replace(':productoId', productoId.toString());
+      
+      // Agregar tipo_documento como query parameter
+      const urlWithType = `${url}?tipo_documento=${tipoDocumento}`;
+      
+      const response = await apiService.uploadFile<DocumentoUploadResponse>(urlWithType, formData);
+      
+      console.log('✅ Document uploaded:', response.documento.nombrearchivo);
+      return response;
+    } catch (error) {
+      console.error('❌ Failed to upload document:', error);
+      throw error;
+    }
+  }
+
+  // Subir documento y esperar OCR (flujo completo)
+  async uploadAndWaitOCR(
+    productoId: string | number,
+    file: { uri: string; type?: string; name: string },
+    tipoDocumento: 'boleta' | 'garantia' | 'manual' | 'otro' = 'boleta'
+  ): Promise<{ documento: Documento; ocrData: OCRData }> {
+    try {
+      console.log('📎 Iniciando upload para:', productoId, 'tipo:', tipoDocumento);
+      
+      // 1. Subir documento con tipo_documento
+      const uploadResponse = await this.uploadWithType(productoId, file, tipoDocumento);
+      const documentoId = uploadResponse.documento.id_documento || uploadResponse.documento.id || uploadResponse.documento.documentoid;
+      
+      if (!documentoId) {
+        console.error('❌ DEBUG - uploadResponse:', JSON.stringify(uploadResponse, null, 2));
+        throw new Error('No se obtuvo ID del documento subido');
+      }
+      
+      console.log('✅ Documento subido con ID:', documentoId);
+      
+      // 2. Esperar OCR solo si es boleta
+      let ocrData = {};
+      if (tipoDocumento === 'boleta') {
+        console.log('⏳ Esperando OCR...');
+        ocrData = await this.waitForOCRCompletion(String(documentoId));
+        console.log('✅ OCR completado con datos:', ocrData);
+      } else {
+        console.log('ℹ️  OCR deshabilitado para tipo:', tipoDocumento);
+      }
+      
+      // 3. Obtener documento completo con datos finales
+      const documentoFinal = await this.getDocumentoById(String(documentoId));
+      
+      return {
+        documento: documentoFinal,
+        ocrData,
+      };
+    } catch (error) {
+      console.error('❌ Error en uploadAndWaitOCR:', error);
+      throw error;
+    }
   }
 }
 

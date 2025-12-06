@@ -109,10 +109,16 @@ export const API_ENDPOINTS = {
   },
   // Documentos
   documentos: {
-    upload: '/productos/:productoId/documentos',
-    list: '/productos/:productoId/documentos',
+    upload: '/documentos/upload/:productoId',
+    list: '/documentos/by-product/:productoId',
     get: '/documentos/:documentoId',
     delete: '/documentos/:documentoId',
+  },
+  // Tickets de Soporte
+  tickets: {
+    create: '/tickets',
+    list: '/tickets',
+    detail: '/tickets/{id}',
   },
 };
 

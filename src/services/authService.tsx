@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ApiError, LoginResponse, RegisterResponse, User, LoginCredentials, RegisterData, AuthResponse } from '../types/auth';
+import { ApiError, User, LoginCredentials, RegisterData, AuthResponse } from '../types/auth';
 import { apiService } from './api';
 import { STORAGE_CONFIG, API_ENDPOINTS } from '../constants/config';
 
@@ -58,13 +58,17 @@ class AuthService {
     try {
       console.log('📝 Registrando usuario:', { ...userData, contrasena: '[HIDDEN]' });
       
+      // Generar URL de deep linking dinámicamente
+      const deepLinkUrl = 'misboletas://auth-callback';
+      
       const registerData = {
         nombre: userData.nombre,
         correo: userData.correo,
         contrasena: userData.contrasena,
+        redirect_to: deepLinkUrl,
       };
 
-      console.log('📤 Enviando datos de registro al servidor...');
+      console.log('📤 Enviando datos de registro al servidor con deep link:', deepLinkUrl);
       const response = await apiService.post<AuthResponse>(API_ENDPOINTS.auth.register, registerData);
 
       console.log('📥 Respuesta del servidor:', {

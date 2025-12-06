@@ -1,5 +1,6 @@
 import { ThemedText } from "@/components/ThemedText";
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
 import { Href, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, Linking } from 'react-native';
@@ -138,50 +139,37 @@ const Inicio = () => {
     }
   };
 
-  // Subir nuevo documento
+  // Subir nuevo documento (Imágenes o PDFs)
   const handleSubirDocumento = async () => {
-    if (!productoSeleccionado?.ProductoID) return;
+    if (!productoSeleccionado?.id_producto) return;
 
     try {
-      // Solicitar permisos
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permisos necesarios',
-          'Se requieren permisos para acceder a tus fotos y documentos'
-        );
-        return;
-      }
-
-      // Abrir selector de imágenes
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: false,
-        quality: 0.8,
-        allowsMultipleSelection: false,
+      // Usar DocumentPicker para seleccionar cualquier tipo de archivo
+      // Esto abre un selector que permite: imágenes, PDFs, documentos, etc.
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',  // Permite TODOS los tipos de archivo
+        copyToCacheDirectory: true,  // Importante: copia a cache para leer
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
+        const fileName = asset.name || asset.uri.split('/').pop() || 'documento';
+        const mimeType = asset.mimeType || 'application/octet-stream';
         
-        // Extraer nombre del archivo
-        const uriParts = asset.uri.split('/');
-        const fileName = uriParts[uriParts.length - 1];
-        
-        console.log('📎 Subiendo documento:', fileName);
+        console.log('📎 Archivo seleccionado:', fileName);
+        console.log('📝 Tipo MIME:', mimeType);
         
         await documentoService.upload(
-          productoSeleccionado.ProductoID,
+          productoSeleccionado.id_producto,
           {
             uri: asset.uri,
-            type: asset.type === 'image' ? 'image/jpeg' : undefined,
-            name: fileName || 'documento.jpg',
+            type: mimeType,
+            name: fileName,
           }
         );
         
         Alert.alert('Éxito', 'Documento subido correctamente');
-        cargarDocumentos(productoSeleccionado.ProductoID);
+        cargarDocumentos(productoSeleccionado.id_producto);
       }
     } catch (error) {
       console.error('Error subiendo documento:', error);
@@ -209,8 +197,8 @@ const Inicio = () => {
             try {
               await documentoService.delete(documentoId);
               Alert.alert('Éxito', 'Documento eliminado correctamente');
-              if (productoSeleccionado?.ProductoID) {
-                cargarDocumentos(productoSeleccionado.ProductoID);
+              if (productoSeleccionado?.id_producto) {
+                cargarDocumentos(productoSeleccionado.id_producto);
               }
             } catch (error) {
               Alert.alert('Error', 'No se pudo eliminar el documento');
@@ -278,29 +266,29 @@ const Inicio = () => {
               size={48} 
               color="#e77573" 
             />
-            <Text style={styles.detalleTitulo}>{productoSeleccionado.nombre}</Text>  {/* Cambio: Era "NombreProducto" → Ahora "nombre" */}
+            <Text style={styles.detalleTitulo}>{productoSeleccionado.nombre}</Text>
           </View>
 
           <View style={styles.detalleInfo}>
-            {productoSeleccionado.Marca && (
+            {productoSeleccionado.marca && (
               <View key="marca" style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Marca:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.Marca}</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.marca}</Text>
               </View>
             )}
             
-            {productoSeleccionado.Modelo && (
+            {productoSeleccionado.modelo && (
               <View key="modelo" style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Modelo:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.Modelo}</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.modelo}</Text>
               </View>
             )}
             
-            {productoSeleccionado.FechaCompra && (
+            {productoSeleccionado.fecha_compra && (
               <View key="fechaCompra" style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Fecha de compra:</Text>
                 <Text style={styles.infoValue}>
-                  {new Date(productoSeleccionado.FechaCompra).toLocaleDateString()}
+                  {new Date(productoSeleccionado.fecha_compra).toLocaleDateString()}
                 </Text>
               </View>
             )}
@@ -308,7 +296,7 @@ const Inicio = () => {
             {productoSeleccionado.duracion_garantia_meses && (
               <View key="garantia" style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Garantía (meses):</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.duracion_garantia_meses}</Text>  {/* Cambio: Era "DuracionGarantia" en días → Ahora "duracion_garantia_meses" */}
+                <Text style={styles.infoValue}>{productoSeleccionado.duracion_garantia_meses}</Text>
               </View>
             )}
             
@@ -316,22 +304,22 @@ const Inicio = () => {
               <View key="categorias" style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Categorías:</Text>
                 <Text style={styles.infoValue}>
-                  {productoSeleccionado.categorias.map(cat => cat.NombreCategoria).join(', ')}
+                  {productoSeleccionado.categorias.map(cat => cat.nombre).join(', ')}
                 </Text>
               </View>
             )}
 
-            {productoSeleccionado.Tienda && (
+            {productoSeleccionado.tienda && (
               <View key="tienda" style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Tienda:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.Tienda}</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.tienda}</Text>
               </View>
             )}
             
-            {productoSeleccionado.Notas && (
+            {productoSeleccionado.notas && (
               <View key="notas" style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Notas:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.Notas}</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.notas}</Text>
               </View>
             )}
           </View>
@@ -413,14 +401,14 @@ const Inicio = () => {
           </View>
 
           <View style={styles.accionesContainer}>
-             {/* Boton de Editar NUEVOOO REVISAR*/}
+            {/* Boton de Editar */}
             <TouchableOpacity 
-           style={styles.botonEliminar}
-           onPress={() => {}}
-           >
-           <Ionicons name="create" size={20} color="#fff" />
-           <Text style={styles.botonEliminarTexto}>Editar Producto</Text>
-           </TouchableOpacity>
+              style={styles.botonEliminar}
+              onPress={() => {}}
+            >
+              <Ionicons name="create" size={20} color="#fff" />
+              <Text style={styles.botonEliminarTexto}>Editar Producto</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity 
               style={styles.botonEliminar}
@@ -502,7 +490,6 @@ const Inicio = () => {
                     size={24} 
                     color="#e77573" 
                   />
-                  {/* Cambio: Era "NombreProducto" → Ahora "nombre" */}
                   <Text style={styles.cardText}>{producto.nombre}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={24} color="#e77573" />

@@ -25,6 +25,10 @@ export default function RootLayout() {
             options={{ headerShown: false }}
           />
           <Stack.Screen 
+            name="auth-callback" 
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
             name="(auth)" 
             options={{ headerShown: false }}
           />

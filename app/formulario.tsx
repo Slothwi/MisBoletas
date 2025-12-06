@@ -1,6 +1,7 @@
 import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
@@ -141,11 +142,14 @@ function BasicExample() {
   const [notas, setNotas] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isProcessingOCR, setIsProcessingOCR] = useState(false);
+  const [ocrStatus, setOcrStatus] = useState<string>('');
   const [archivoSeleccionado, setArchivoSeleccionado] = useState<{
     uri: string;
     name: string;
     type?: string;
     size?: number;
+    tipoDocumento?: 'boleta' | 'garantia' | 'manual' | 'otro';
   } | null>(null);
   
   // Estados para categorías
@@ -177,44 +181,38 @@ function BasicExample() {
     }
   }, [authState.isAuthenticated]);
 
-  const handleFileClick = async () => {
+  const handleFileClick = async (tipoDocumento: 'boleta' | 'garantia' | 'manual') => {
     try {
-      // Solicitar permisos
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permisos necesarios',
-          'Se requieren permisos para acceder a tus fotos y documentos'
-        );
-        return;
-      }
-
-      // Abrir selector de imágenes
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: false,
-        quality: 0.8,
-        allowsMultipleSelection: false,
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
+        const fileName = asset.name || asset.uri.split('/').pop() || 'documento';
+        const mimeType = asset.mimeType || 'application/octet-stream';
         
-        // Extraer nombre del archivo de la URI
-        const uriParts = asset.uri.split('/');
-        const fileName = uriParts[uriParts.length - 1];
-        
-        setArchivoSeleccionado({
+        const file = {
           uri: asset.uri,
-          name: fileName || 'documento.jpg',
-          type: asset.type === 'image' ? 'image/jpeg' : undefined,
-          size: asset.fileSize,
-        });
+          name: fileName,
+          type: mimeType,
+          size: asset.size,
+          tipoDocumento: tipoDocumento,
+        };
+        
+        setArchivoSeleccionado(file);
+        
+        const tipoLabel = {
+          'boleta': 'Boleta',
+          'garantia': 'Póliza de Garantía',
+          'manual': 'Manual'
+        }[tipoDocumento];
         
         Alert.alert(
-          'Archivo seleccionado',
-          `${fileName}\n${documentoService.formatFileSize(asset.fileSize)}`
+          '📎 Archivo seleccionado',
+          `${tipoLabel}\n${fileName}\n${documentoService.formatFileSize(asset.fileSize)}`,
+          [{ text: 'OK' }]
         );
       }
     } catch (error) {
@@ -251,65 +249,80 @@ function BasicExample() {
 
       // Preparar datos para el backend
       const productoData = {
-        nombre: nombreProducto.trim(),  // Cambio: Era "NombreProducto" → Ahora "nombre"
-        fecha_compra: fechaCompra ? formatDateForAPI(fechaCompra) : undefined,  // Cambio: Era "FechaCompra" → Ahora "fecha_compra"
-        duracion_garantia_meses: duracionGarantia ? parseInt(duracionGarantia) : undefined,  // Cambio: Era "DuracionGarantia" en días → Ahora "duracion_garantia_meses"
-        marca: marca.trim() || undefined,  // Cambio: Era "Marca" PascalCase → Ahora "marca" snake_case
-        modelo: modelo.trim() || undefined,  // Cambio: Era "Modelo" → Ahora "modelo"
-        tienda: tienda.trim() || undefined,  // Cambio: Era "Tienda" → Ahora "tienda"
-        notas: notas.trim() || undefined,  // Cambio: Era "Notas" → Ahora "notas"
-        id_categoria: categoriaSeleccionada?.id_categoria,  // Cambio: Era "categoria_id" con "CategoriaID" → Ahora "id_categoria" (UUID)
+        nombre: nombreProducto.trim(),
+        fecha_compra: fechaCompra ? formatDateForAPI(fechaCompra) : undefined,
+        duracion_garantia_meses: duracionGarantia ? parseInt(duracionGarantia) : undefined,
+        marca: marca.trim() || undefined,
+        modelo: modelo.trim() || undefined,
+        tienda: tienda.trim() || undefined,
+        notas: notas.trim() || undefined,
+        categoria_ids: categoriaSeleccionada ? [categoriaSeleccionada.id_categoria] : [],
       };
 
       console.log('📝 Creando producto:', productoData);
-      console.log('🏷️ categoriaSeleccionada completa:', categoriaSeleccionada);
-      console.log('🏷️ id_categoria extraída:', categoriaSeleccionada?.id_categoria);  // Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID)
-      if (categoriaSeleccionada) {
-        console.log('🏷️ Con categoría:', categoriaSeleccionada.nombre);  // Cambio: Era "NombreCategoria" → Ahora "nombre"
-      } else {
-        console.log('⚠️ NO hay categoría seleccionada');
-      }
 
-      // Enviar al backend
+      // 1. Crear producto
       const nuevoProducto = await productoService.create(productoData);
-      
-      console.log('✅ Producto creado exitosamente:', nuevoProducto);
+      console.log('✅ Producto creado:', nuevoProducto);
 
-      // Si hay un archivo seleccionado, subirlo
-      if (archivoSeleccionado && nuevoProducto.id_producto) {  // Cambio: Era "ProductoID" → Ahora "id_producto" (UUID)
+      // 2. Si hay archivo, subirlo y procesar OCR (solo si es boleta)
+      if (archivoSeleccionado && nuevoProducto.id_producto) {
         try {
-          console.log('📎 Subiendo archivo asociado al producto...');
+          setIsProcessingOCR(true);
+          setOcrStatus('Subiendo archivo...');
+          console.log('📎 Subiendo archivo...');
           
-          await documentoService.upload(
-            nuevoProducto.id_producto,  // Cambio: Era "ProductoID" → Ahora "id_producto" (UUID)
+          const tipoDocumento = archivoSeleccionado.tipoDocumento || 'boleta';
+          
+          // Subir documento
+          const { documento, ocrData } = await documentoService.uploadAndWaitOCR(
+            nuevoProducto.id_producto,
             {
               uri: archivoSeleccionado.uri,
               type: archivoSeleccionado.type,
               name: archivoSeleccionado.name,
-            }
+            },
+            tipoDocumento
           );
           
-          console.log('✅ Archivo subido exitosamente');
-        } catch (uploadError) {
-          console.error('⚠️ Error subiendo archivo:', uploadError);
-          // No bloquear el flujo si falla el upload del archivo
+          setOcrStatus('');
+          setIsProcessingOCR(false);
+          
+          console.log('✅ Archivo guardado:', documento);
+          
+          // Mostrar datos extraídos solo si hay OCR (boleta)
+          if (tipoDocumento === 'boleta' && ocrData) {
+            const datosExtraidos = Object.entries(ocrData)
+              .filter(([key, value]) => value && key !== 'full_text')
+              .map(([key, value]) => `${key}: ${value}`)
+              .join('\n');
+            
+            if (datosExtraidos) {
+              Alert.alert(
+                '✅ OCR Procesado',
+                `Datos extraídos:\n\n${datosExtraidos}`,
+                [{ text: 'OK' }]
+              );
+            }
+          }
+        } catch (ocrError) {
+          console.error('⚠️ Error subiendo archivo:', ocrError);
+          setOcrStatus('');
+          setIsProcessingOCR(false);
           Alert.alert(
             'Advertencia',
-            'El producto se guardó correctamente, pero hubo un error al subir el archivo. Puedes intentar subirlo después.'
+            'El producto se guardó, pero hubo un error al guardar el archivo.'
           );
         }
       }
 
       Alert.alert(
         'Éxito', 
-        archivoSeleccionado 
-          ? 'Producto y documento guardados correctamente'
-          : 'Producto guardado correctamente',
+        'Producto guardado correctamente',
         [
           {
             text: 'OK',
             onPress: () => {
-              // Navegar específicamente a la pantalla de productos
               router.replace('/(tabs)/home');
             }
           }
@@ -318,9 +331,11 @@ function BasicExample() {
 
     } catch (error: any) {
       console.error('❌ Error guardando producto:', error);
+      setIsProcessingOCR(false);
+      setOcrStatus('');
       Alert.alert(
         'Error', 
-        error.message || 'No se pudo guardar el producto. Verifica tu conexión e intenta nuevamente.'
+        error.message || 'No se pudo guardar el producto. Verifica tu conexión.'
       );
     } finally {
       setIsLoading(false);
@@ -474,49 +489,101 @@ function BasicExample() {
           </View>
           
           <View style={styles.stepContainer}>
-            <Text style={styles.titleText}>Archivo</Text>
-            <TouchableOpacity
-              onPress={handleFileClick}
-              style={[
-                styles.fileButton,
-                archivoSeleccionado && styles.fileButtonSelected
-              ]}
-            >
-              <Ionicons 
-                name={archivoSeleccionado ? "checkmark-circle" : "cloud-upload-outline"} 
-                size={20} 
-                color={archivoSeleccionado ? "#4CAF50" : "#e77573"} 
-                style={{ marginRight: 8 }}
-              />
-              <Text style={[
-                styles.fileButtonText,
-                archivoSeleccionado && styles.fileButtonTextSelected
-              ]}>
-                {archivoSeleccionado ? archivoSeleccionado.name : 'Subir archivo'}
-              </Text>
-            </TouchableOpacity>
+            <Text style={styles.titleText}>Documentos</Text>
+            
+            <View style={styles.documentSection}>
+              <Text style={styles.sectionLabel}>Boleta</Text>
+              <TouchableOpacity
+                onPress={() => handleFileClick('boleta')}
+                style={[
+                  styles.docButton,
+                  archivoSeleccionado?.tipoDocumento === 'boleta' && styles.docButtonSelected
+                ]}
+              >
+                <Ionicons 
+                  name="receipt-outline" 
+                  size={18} 
+                  color={archivoSeleccionado?.tipoDocumento === 'boleta' ? "#4CAF50" : "#999"} 
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={styles.docButtonText}>
+                  {archivoSeleccionado?.tipoDocumento === 'boleta' ? archivoSeleccionado.name : 'Subir boleta'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.documentSection}>
+              <Text style={styles.sectionLabel}>Garantía</Text>
+              <TouchableOpacity
+                onPress={() => handleFileClick('garantia')}
+                style={[
+                  styles.docButton,
+                  archivoSeleccionado?.tipoDocumento === 'garantia' && styles.docButtonSelected
+                ]}
+              >
+                <Ionicons 
+                  name="shield-checkmark-outline" 
+                  size={18} 
+                  color={archivoSeleccionado?.tipoDocumento === 'garantia' ? "#4CAF50" : "#999"} 
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={styles.docButtonText}>
+                  {archivoSeleccionado?.tipoDocumento === 'garantia' ? archivoSeleccionado.name : 'Subir póliza'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.documentSection}>
+              <Text style={styles.sectionLabel}>Manual/Otro</Text>
+              <TouchableOpacity
+                onPress={() => handleFileClick('manual')}
+                style={[
+                  styles.docButton,
+                  archivoSeleccionado?.tipoDocumento === 'manual' && styles.docButtonSelected
+                ]}
+              >
+                <Ionicons 
+                  name="document-outline" 
+                  size={18} 
+                  color={archivoSeleccionado?.tipoDocumento === 'manual' ? "#4CAF50" : "#999"} 
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={styles.docButtonText}>
+                  {archivoSeleccionado?.tipoDocumento === 'manual' ? archivoSeleccionado.name : 'Subir documento'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             {archivoSeleccionado && (
               <Text style={styles.fileInfo}>
                 {documentoService.formatFileSize(archivoSeleccionado.size)}
               </Text>
             )}
           </View>
+
+          {/* Indicador de OCR procesándose */}
+          {isProcessingOCR && (
+            <View style={styles.ocrIndicator}>
+              <Ionicons name="hourglass-outline" size={20} color="#e77573" />
+              <Text style={styles.ocrStatusText}>{ocrStatus || 'Procesando OCR...'}</Text>
+            </View>
+          )}
           
           <View style={styles.buttonRow}>
             <TouchableOpacity 
               style={[styles.button, styles.cancelButton]}
               onPress={handleCancelar}
-              disabled={isLoading}
+              disabled={isLoading || isProcessingOCR}
             >
               <Text style={styles.buttonText}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={[styles.button, styles.saveButton, isLoading && styles.buttonDisabled]}
+              style={[styles.button, styles.saveButton, (isLoading || isProcessingOCR) && styles.buttonDisabled]}
               onPress={handleGuardar}
-              disabled={isLoading}
+              disabled={isLoading || isProcessingOCR}
             >
               <Text style={styles.buttonText}>
-                {isLoading ? 'Guardando...' : 'Guardar'}
+                {isLoading ? 'Guardando...' : isProcessingOCR ? 'Procesando OCR...' : 'Guardar'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -619,6 +686,35 @@ const styles = StyleSheet.create({
     color: '#1976d2',
     fontWeight: '600',
   },
+  documentSection: {
+    marginBottom: 12,
+  },
+  sectionLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 6,
+    fontWeight: '600',
+  },
+  docButton: {
+    backgroundColor: '#f5f5f5',
+    padding: 10,
+    borderRadius: 6,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  docButtonSelected: {
+    backgroundColor: '#e8f5e9',
+    borderColor: '#4CAF50',
+    borderWidth: 2,
+  },
+  docButtonText: {
+    color: '#333',
+    fontSize: 14,
+    flex: 1,
+  },
   fileButton: {
     backgroundColor: '#e77573',
     padding: 12,
@@ -683,6 +779,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 8,
     fontWeight: '600',
+  },
+  ocrIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    backgroundColor: '#FFF3CD',
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#e77573',
+  },
+  ocrStatusText: {
+    marginLeft: 10,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#856404',
   },
 });
 

@@ -4,11 +4,12 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-const router = useRouter();
-const handleVolverAConfiguracion = () => {
+const Nosotros = () => {
+  const router = useRouter();
+  const handleVolverAConfiguracion = () => {
     router.push('/configuracion_tab');
   };
-const Nosotros = () => (
+  return (
     <View style={styles.container}>
         <TouchableOpacity 
                 style={styles.botonVolver}
@@ -38,7 +39,8 @@ const Nosotros = () => (
         </Text>
         </ScrollView>
     </View>
-);
+  );
+};
 
 const styles = StyleSheet.create({
     container: {
