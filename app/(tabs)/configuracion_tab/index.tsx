@@ -3,11 +3,17 @@ import { useRouter, type Href } from 'expo-router';
 import React from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../../src/hooks/useAuth';
+import { Linking } from "react-native";
 
 const Configuracion = () => {
     const router = useRouter();
     const { logout, authState } = useAuth();
-    
+
+//Función para abrir URL externa Youtube
+  const handleAbrirYoutube = () => {
+    Linking.openURL('https://www.youtube.com/@misBoletas-App');
+  };
+   
     // Usar los datos del usuario autenticado o datos por defecto
     const userData = authState.user || {
         nombre: 'Usuario',
@@ -131,7 +137,18 @@ const Configuracion = () => {
                     <Text style={styles.cerrarSesionText}>Cerrar Sesión</Text>
                 </TouchableOpacity>
                 </View>
-            </ScrollView>
+
+                 {/* BOTÓN PARA ABRIR YOUTUBE */}
+                <Text style={styles.textoYoutube}>
+                    Suscríbete a nuestro canal.
+                </Text>
+                    <TouchableOpacity 
+                    style={styles.botonYoutube} 
+                    onPress={handleAbrirYoutube}
+                    >
+                        <Ionicons name="logo-youtube" size={40} color="#fff" />            
+                    </TouchableOpacity>
+            </ScrollView>       
         </View>
     );
 };
@@ -240,6 +257,25 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontSize: 12,
         fontWeight: '600',
+    },
+
+    textoYoutube: {
+    textAlign: "center",
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#ffffffff",
+    marginTop: 40,   // espacio respecto al botón anterior
+    marginBottom: 12 // espacio respecto al botón de YouTube
+    },
+    botonYoutube: {
+    alignSelf: "center",
+    backgroundColor: "#FF0000", // rojo oficial YouTube
+    paddingVertical: 12,
+    paddingHorizontal: 60,
+    borderRadius: 12,        
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",           
     },
 });
 

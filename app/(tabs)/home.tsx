@@ -8,6 +8,7 @@ import { useAuth } from '../../src/hooks/useAuth';
 import productoService, { Producto } from '../../src/services/ProductServiceSimplified';
 import documentoService, { Documento } from '../../src/services/DocumentoService';
 
+
 const Inicio = () => {
   const router = useRouter();
   const { authState } = useAuth();
@@ -17,6 +18,11 @@ const Inicio = () => {
   const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
   const [documentos, setDocumentos] = useState<Documento[]>([]);
   const [cargandoDocumentos, setCargandoDocumentos] = useState(false);
+
+  //Función para abrir URL externa (video tutorial).
+  const handleAbrirTutorial = () => {
+    Linking.openURL('https://www.youtube.com/@misBoletas-App');
+  }
 
   // Cargar productos del backend
   const cargarProductos = async () => {
@@ -539,6 +545,15 @@ const handleEditarProducto = (producto: Producto) => {
           </TouchableOpacity>
         </ScrollView>
       )}
+
+      {/* BOTÓN DE AYUDA - TUTORIAL */}
+      <TouchableOpacity
+        style={styles.botonAyuda}
+        onPress={handleAbrirTutorial}
+        >
+          <Ionicons name="help" size={40} color="#fff" />
+        </TouchableOpacity>
+
     </View>
   );
 };
@@ -815,6 +830,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  //Botón ayuda
+botonAyuda: {
+  position: "absolute",
+  right: 20,
+  bottom: 20,
+  backgroundColor: "#e77573",
+  width: 60,
+  height: 60,
+  borderRadius: 50,
+  justifyContent: "center",
+  alignItems: "center",
+  elevation: 8,
+  shadowColor: "#000",
+  shadowOpacity: 0.3,
+  shadowRadius: 4,
+  shadowOffset: { width: 0, height: 2 },
+}
 });
 
 export default Inicio;
