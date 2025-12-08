@@ -144,6 +144,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       const response = await authService.register(userData);
       
+      // Si no hay token, el usuario debe confirmar email primero
+      if (!response.access_token) {
+        console.log('⏳ Email confirmation pending');
+        setAuthState({
+          isAuthenticated: false,
+          isLoading: false,
+          user: response.user,
+          token: null,
+          error: null,
+        });
+        // No redirigir, mostrar mensaje en pantalla de registro
+        return;
+      }
+      
+      // Si hay token, es autenticado
       setAuthState({
         isAuthenticated: true,
         isLoading: false,

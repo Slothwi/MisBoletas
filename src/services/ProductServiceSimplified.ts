@@ -14,11 +14,11 @@ export interface Producto {
   notas?: string;
   precio?: number;
   fecha_creacion?: string;
-  categorias?: Array<{
+  categorias?: {
     id_categoria: string;  // Cambio: Era "CategoriaID: number" → Ahora UUID string
     nombre: string;        // Cambio: Era "NombreCategoria" → Ahora "nombre"
     color?: string;
-  }>;
+  }[];
 }
 
 export interface ProductoCreate {
@@ -71,6 +71,19 @@ class ProductoService {
     }
   }
 
+  // Obtener productos por categoría
+  async getByCategory(categoryId: string): Promise<Producto[]> {
+    try {
+      console.log('📦 Fetching products by category:', categoryId);
+      const productos = await apiService.get<Producto[]>(`${API_ENDPOINTS.productos.list}?categoria=${categoryId}`);
+      console.log(`✅ ${productos.length} products found for category`);
+      return productos;
+    } catch (error) {
+      console.error('❌ Failed to fetch products by category:', error);
+      throw error;
+    }
+  }
+
   // Crear nuevo producto
   async create(productoData: ProductoCreate): Promise<Producto> {
     try {
@@ -104,7 +117,7 @@ class ProductoService {
   }
 
   // Eliminar producto
-  async delete(id: number): Promise<void> {
+  async delete(id: string): Promise<void> {
     try {
       console.log('🗑️ Deleting product:', id);
       await apiService.delete(`${API_ENDPOINTS.productos.delete}${id}`);
@@ -119,19 +132,19 @@ class ProductoService {
   validateProductoData(data: ProductoCreate | ProductoUpdate): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
-    if ('NombreProducto' in data && (!data.NombreProducto || data.NombreProducto.trim().length === 0)) {
+    if ('nombre' in data && (!data.nombre || data.nombre.trim().length === 0)) {
       errors.push('El nombre del producto es requerido');
     }
 
-    if ('NombreProducto' in data && data.NombreProducto && data.NombreProducto.length > 200) {
+    if ('nombre' in data && data.nombre && data.nombre.length > 200) {
       errors.push('El nombre no puede exceder 200 caracteres');
     }
 
-    if (data.Notas && data.Notas.length > 500) {
+    if (data.notas && data.notas.length > 500) {
       errors.push('Las notas no pueden exceder 500 caracteres');
     }
 
-    if (data.DuracionGarantia !== undefined && data.DuracionGarantia < 0) {
+    if (data.duracion_garantia_meses !== undefined && data.duracion_garantia_meses < 0) {
       errors.push('La duración de garantía no puede ser negativa');
     }
 

@@ -101,7 +101,7 @@ class CategoriaServiceSimplified {
   // Crear nueva categoría
   async create(categoriaData: CategoriaCreate): Promise<Categoria> {
     try {
-      console.log('📝 Creating new category:', categoriaData.NombreCategoria);
+      console.log('📝 Creating new category:', categoriaData.nombre);
       console.log('🔗 POST endpoint:', API_ENDPOINTS.categorias.create);
       
       const categoria = await apiService.post<Categoria>(
@@ -163,15 +163,15 @@ class CategoriaServiceSimplified {
   validateCategoriaData(data: CategoriaCreate | CategoriaUpdate): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
-    if ('NombreCategoria' in data && (!data.NombreCategoria || data.NombreCategoria.trim().length === 0)) {
+    if ('nombre' in data && (!data.nombre || data.nombre.trim().length === 0)) {
       errors.push('El nombre de la categoría es requerido');
     }
 
-    if ('NombreCategoria' in data && data.NombreCategoria && data.NombreCategoria.length > 50) {
+    if ('nombre' in data && data.nombre && data.nombre.length > 50) {
       errors.push('El nombre no puede exceder 50 caracteres');
     }
 
-    if ('Color' in data && data.Color && !/^#[0-9A-F]{6}$/i.test(data.Color)) {
+    if ('color' in data && data.color && !/^#[0-9A-F]{6}$/i.test(data.color)) {
       errors.push('El color debe ser un código hexadecimal válido (ej: #FF0000)');
     }
 
@@ -188,7 +188,7 @@ class CategoriaServiceSimplified {
   }
 
   // Obtener colores disponibles
-  getAvailableColors(): Array<{name: string, value: string}> {
+  getAvailableColors(): {name: string, value: string}[] {
     return Object.entries(PREDEFINED_COLORS).map(([name, value]) => ({
       name: name.charAt(0).toUpperCase() + name.slice(1),
       value

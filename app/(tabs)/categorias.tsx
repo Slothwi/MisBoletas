@@ -90,13 +90,9 @@ const Categorias = () => {
   const obtenerProductosPorCategoria = async (categoriaId: string) => {  // Cambio: Era "number" → Ahora "string" (UUID)
     try {
       console.log(`📦 Cargando productos de categoría ${categoriaId}...`);
-      const todosLosProductos = await productoService.getAll();
-      
-      // NOTA: El backend no devuelve categorías en cada producto aún.
-      // Por ahora, mostrar todos los productos del usuario
-      // TODO: Implementar endpoint GET /productos?categoria={id} en el backend
-      setProductosDeCategoria(todosLosProductos);
-      console.log(`✅ ${todosLosProductos.length} productos encontrados`);
+      const productosFiltrados = await productoService.getByCategory(categoriaId);
+      setProductosDeCategoria(productosFiltrados);
+      console.log(`✅ ${productosFiltrados.length} productos encontrados`);
     } catch (error: any) {
       console.error('❌ Error cargando productos de categoría:', error);
       Alert.alert('Error', 'No se pudieron cargar los productos de la categoría');
@@ -124,6 +120,70 @@ const Categorias = () => {
 
   const handleVerProducto = (producto: Producto) => {
     setProductoSeleccionado(producto);
+  };
+
+  // Eliminar producto de la categoría
+  const handleEliminarProducto = async (producto: Producto) => {
+    Alert.alert(
+      'Eliminar Producto',
+      `¿Estás seguro de que quieres eliminar "${producto.nombre}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              console.log('🗑️ Eliminando producto:', producto.id_producto);
+              await productoService.delete(producto.id_producto);
+              console.log('✅ Producto eliminado exitosamente');
+              
+              // Actualizar la lista local
+              setProductosDeCategoria(
+                productosDeCategoria.filter(p => p.id_producto !== producto.id_producto)
+              );
+              
+              Alert.alert('Éxito', 'Producto eliminado correctamente');
+            } catch (error: any) {
+              console.error('❌ Error eliminando producto:', error);
+              Alert.alert('Error', error.message || 'No se pudo eliminar el producto');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // Eliminar categoría
+  const handleEliminarCategoria = async (categoria: Categoria) => {
+    Alert.alert(
+      'Eliminar Categoría',
+      `¿Estás seguro de que quieres eliminar "${categoria.nombre}"?\nEsto no eliminará los productos en ella.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              console.log('🗑️ Eliminando categoría:', categoria.id_categoria);
+              await categoriaService.delete(categoria.id_categoria);
+              console.log('✅ Categoría eliminada exitosamente');
+              
+              // Actualizar la lista local
+              setCategorias(
+                categorias.filter(c => c.id_categoria !== categoria.id_categoria)
+              );
+              
+              Alert.alert('Éxito', 'Categoría eliminada correctamente');
+            } catch (error: any) {
+              console.error('❌ Error eliminando categoría:', error);
+              Alert.alert('Error', error.message || 'No se pudo eliminar la categoría');
+            }
+          }
+        }
+      ]
+    );
   };
 
   // Mostrar el formulario en lugar de navegar
@@ -220,34 +280,34 @@ const Categorias = () => {
               size={48} 
               color="#e77573" 
             />
-            <Text style={styles.detalleTitulo}>{productoSeleccionado.NombreProducto}</Text>
+            <Text style={styles.detalleTitulo}>{productoSeleccionado.nombre}</Text>
           </View>
 
           <View style={styles.detalleInfo}>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Marca:</Text>
-              <Text style={styles.infoValue}>{productoSeleccionado.Marca || 'No especificada'}</Text>
+              <Text style={styles.infoValue}>{productoSeleccionado.marca || 'No especificada'}</Text>
             </View>
             
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Modelo:</Text>
-              <Text style={styles.infoValue}>{productoSeleccionado.Modelo || 'No especificado'}</Text>
+              <Text style={styles.infoValue}>{productoSeleccionado.modelo || 'No especificado'}</Text>
             </View>
             
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Fecha de compra:</Text>
               <Text style={styles.infoValue}>
-                {productoSeleccionado.FechaCompra ? 
-                  new Date(productoSeleccionado.FechaCompra).toLocaleDateString() : 
+                {productoSeleccionado.fecha_compra ? 
+                  new Date(productoSeleccionado.fecha_compra).toLocaleDateString() : 
                   'No especificada'
                 }
               </Text>
             </View>
             
-            {productoSeleccionado.DuracionGarantia && (
+            {productoSeleccionado.duracion_garantia_meses && (
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Garantía (días):</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.DuracionGarantia}</Text>
+                <Text style={styles.infoLabel}>Garantía (meses):</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.duracion_garantia_meses}</Text>
               </View>
             )}
             
@@ -255,22 +315,22 @@ const Categorias = () => {
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Categorías:</Text>
                 <Text style={styles.infoValue}>
-                  {productoSeleccionado.categorias.map(cat => cat.NombreCategoria).join(', ')}
+                  {productoSeleccionado.categorias.map(cat => cat.nombre).join(', ')}
                 </Text>
               </View>
             )}
 
-            {productoSeleccionado.Tienda && (
+            {productoSeleccionado.tienda && (
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Tienda:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.Tienda}</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.tienda}</Text>
               </View>
             )}
             
-            {productoSeleccionado.Notas && (
+            {productoSeleccionado.notas && (
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Notas:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.Notas}</Text>
+                <Text style={styles.infoValue}>{productoSeleccionado.notas}</Text>
               </View>
             )}
           </View>
@@ -302,27 +362,28 @@ const Categorias = () => {
         ) : (
           <ScrollView>
             {productosDeCategoria.map(producto => (
-              <TouchableOpacity 
-                key={producto.id_producto}
-                style={styles.cardProducto} 
-                onPress={() => handleVerProducto(producto)}
-                testID={`tarjeta-producto-${producto.id_producto}`}
-              >
-                <View style={styles.cardContent}>
-                  <MaterialCommunityIcons name="package-variant" size={24} color="#e77573"/>
-                  <Text style={styles.cardTitle}>{producto.nombre}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={24} color="#ccc" />
-              </TouchableOpacity>
+              <View key={producto.id_producto}>
+                <TouchableOpacity 
+                  style={styles.cardProducto} 
+                  onPress={() => handleVerProducto(producto)}
+                  testID={`tarjeta-producto-${producto.id_producto}`}
+                >
+                  <View style={styles.cardContent}>
+                    <MaterialCommunityIcons name="package-variant" size={24} color="#e77573"/>
+                    <Text style={styles.cardTitle}>{producto.nombre}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={24} color="#ccc" />
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.botonEliminar}
+                  onPress={() => handleEliminarProducto(producto)}
+                >
+                  <Ionicons name="trash" size={20} color="#fff" />
+                  <Text style={styles.botonEliminarTexto}>Eliminar</Text>
+                </TouchableOpacity>
+              </View>
             ))}
-            {/* BOTÓN PARA ELIMINAR PRODUCTO DENTRO DE UNA CATEGORIA - AÚN NO FUNCIONAL*/}
-            <TouchableOpacity 
-              style={styles.botonEliminar}
-              onPress={() => {}}
-            >
-              <Ionicons name="trash" size={20} color="#fff" />
-              <Text style={styles.botonEliminarTexto}>Eliminar</Text>
-            </TouchableOpacity>
 
             <TouchableOpacity 
               style={styles.botonAgregarSecundario}
@@ -359,38 +420,38 @@ const Categorias = () => {
         ) : (
           <View style={styles.cardsContainer}>
             {categorias.map((categoria) => (
-              // Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID)
-              <TouchableOpacity
-                key={categoria.id_categoria}
-                style={styles.card}
-                onPress={() => handleVerCategoria(categoria)}
-              >
-                <View style={styles.cardContent}>
-                  {/* Cambio: Era "Color" → Ahora "color" */}
-                  <View style={[styles.colorIndicator, { backgroundColor: categoria.color }]} />
-                  <MaterialCommunityIcons name="shape" size={32} color="#e77573" />
-                  <View style={styles.cardTextContainer}>
-                    {/* Cambio: Era "NombreCategoria" → Ahora "nombre" */}
-                    <Text style={styles.cardTitle}>
-                      {categoria.nombre}
-                    </Text>
-                    <Text style={styles.cardSubtitle}>
-                      Toca para ver productos
-                    </Text>
+              <View key={categoria.id_categoria}>
+                {/* Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID) */}
+                <TouchableOpacity
+                  style={styles.card}
+                  onPress={() => handleVerCategoria(categoria)}
+                >
+                  <View style={styles.cardContent}>
+                    {/* Cambio: Era "Color" → Ahora "color" */}
+                    <View style={[styles.colorIndicator, { backgroundColor: categoria.color }]} />
+                    <MaterialCommunityIcons name="shape" size={32} color="#e77573" />
+                    <View style={styles.cardTextContainer}>
+                      {/* Cambio: Era "NombreCategoria" → Ahora "nombre" */}
+                      <Text style={styles.cardTitle}>
+                        {categoria.nombre}
+                      </Text>
+                      <Text style={styles.cardSubtitle}>
+                        Toca para ver productos
+                      </Text>
+                    </View>
                   </View>
-                </View>
-                <Ionicons name="chevron-forward" size={24} color="#e77573" />
-              </TouchableOpacity>
-              
+                  <Ionicons name="chevron-forward" size={24} color="#e77573" />
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  onPress={() => handleEliminarCategoria(categoria)}
+                  style={styles.botonEliminar}
+                >
+                  <Ionicons name="trash-outline" size={20} color="#fff" />
+                  <Text style={styles.botonEliminarTexto}>Eliminar Categoría</Text>
+                </TouchableOpacity>
+              </View>
             ))}
-            {/* BOTÓN PARA ELIMINAR CATEGORÍA - AÚN NO FUNCIONAL */}
-            <TouchableOpacity 
-          onPress={() => {}}
-          style={styles.botonEliminar}
-        >
-          <Text style={styles.botonEliminarTexto}>Eliminar Categoría</Text>
-          <Ionicons name="trash-outline" size={20} color="#f44336" />
-        </TouchableOpacity>
           </View>
         )}
         

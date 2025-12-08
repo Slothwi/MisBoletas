@@ -289,6 +289,13 @@ export default function LoginScreen() {
               {usarBackend ? "Crear cuenta nueva" : "Registrarse (Local)"}
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.forgotPasswordButton}
+            onPress={() => router.push('/forgot-password')}
+          >
+            <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -406,6 +413,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 15,
     alignItems: 'center'
+  },
+  forgotPasswordButton: {
+    marginTop: 15,
+    alignItems: 'center',
+  },
+  forgotPasswordText: {
+    color: '#667eea',
+    fontSize: 14,
+    fontWeight: '500',
   },
   infoButtonText: {
     color: '#fff',

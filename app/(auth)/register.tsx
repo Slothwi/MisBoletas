@@ -71,7 +71,19 @@ export default function RegisterScreen() {
         contrasena: formData.contrasena,
       });
       
-      Alert.alert('✅ ¡Registro exitoso!', 'Tu cuenta ha sido creada correctamente');
+      // Si llegamos aquí sin token, es que está pendiente confirmación
+      if (!authState.token) {
+        Alert.alert(
+          '✅ ¡Cuenta creada!',
+          'Te hemos enviado un email de confirmación. Por favor verifica tu correo y haz click en el link para confirmar tu cuenta.',
+          [{ 
+            text: 'OK',
+            onPress: () => router.replace('/(auth)/login')
+          }]
+        );
+      } else {
+        Alert.alert('✅ ¡Registro exitoso!', 'Tu cuenta ha sido creada correctamente');
+      }
     } catch (err: any) {
       console.log('❌ Error en registro:', err.message);
       // El error ya se muestra mediante el useEffect de authState.error
