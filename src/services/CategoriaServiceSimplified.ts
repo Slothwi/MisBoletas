@@ -86,7 +86,7 @@ class CategoriaServiceSimplified {
   }
 
   // Obtener categoría por ID
-  async getById(id: number): Promise<Categoria> {
+  async getById(id: string): Promise<Categoria> {
     try {
       console.log('📂 Fetching category by ID:', id);
       const categoria = await apiService.get<Categoria>(`${API_ENDPOINTS.categorias.list}${id}`);

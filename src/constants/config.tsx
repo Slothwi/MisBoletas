@@ -1,5 +1,3 @@
-import { Platform } from 'react-native';
-
 export const ENVIRONMENTS = {
   LOCAL: 'LOCAL',
   DEV: 'DEV',

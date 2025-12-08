@@ -2,9 +2,8 @@ import { ThemedText } from "@/components/ThemedText";
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { Href, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View, Linking } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, Linking, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../src/hooks/useAuth';
 import productoService, { Producto } from '../../src/services/ProductServiceSimplified';
 import documentoService, { Documento } from '../../src/services/DocumentoService';
@@ -26,7 +25,7 @@ const Inicio = () => {
   }
 
   // Cargar productos del backend
-  const cargarProductos = async () => {
+  const cargarProductos = useCallback(async () => {
     // Verificar autenticación antes de hacer la petición
     if (!authState.isAuthenticated) {
       console.log('❌ No se puede cargar productos: usuario no autenticado');
@@ -53,7 +52,7 @@ const Inicio = () => {
       setCargando(false);
       setRefreshing(false);
     }
-  };
+  }, [authState.isAuthenticated]);
 
   // Cargar productos al inicializar
   useEffect(() => {
@@ -65,7 +64,7 @@ const Inicio = () => {
       setProductos([]);
       setCargando(false);
     }
-  }, [authState.isAuthenticated, authState.isLoading]);
+  }, [authState.isAuthenticated, authState.isLoading, cargarProductos]);
 
   // Cargar documentos cuando se selecciona un producto
   useEffect(() => {
@@ -77,12 +76,12 @@ const Inicio = () => {
   }, [productoSeleccionado]);
 
   // Función para refrescar
-  const onRefresh = React.useCallback(() => {
+  const onRefresh = useCallback(() => {
     if (authState.isAuthenticated && !authState.isLoading) {
       setRefreshing(true);
       cargarProductos();
     }
-  }, [authState.isAuthenticated, authState.isLoading]);
+  }, [authState.isAuthenticated, authState.isLoading, cargarProductos]);
 
   const handleAgregarProducto = () => {
     router.push('/formulario' as Href);
@@ -113,7 +112,7 @@ const Inicio = () => {
                 cargarProductos(); // Recargar la lista
                 handleVolverALista();
               }
-            } catch (error) {
+            } catch {
               Alert.alert('Error', 'No se pudo eliminar el producto');
             }
           }
@@ -223,14 +222,10 @@ const handleEditarProducto = (producto: Producto) => {
             try {
               await documentoService.delete(documentoId);
               Alert.alert('Éxito', 'Documento eliminado correctamente');
-<<<<<<< HEAD
-              if (productoSeleccionado?.id_producto) {
-=======
               if (productoSeleccionado?.id_producto) {  // Cambio: Era "ProductoID" → Ahora "id_producto" (UUID)
->>>>>>> afcb93142fdd73af54c987df45631f548d8b183e
                 cargarDocumentos(productoSeleccionado.id_producto);
               }
-            } catch (error) {
+            } catch {
               Alert.alert('Error', 'No se pudo eliminar el documento');
             }
           }
@@ -433,21 +428,12 @@ const handleEditarProducto = (producto: Producto) => {
           <View style={styles.accionesContainer}>
             {/* Boton de Editar */}
             <TouchableOpacity 
-<<<<<<< HEAD
-              style={styles.botonEliminar}
-              onPress={() => {}}
+              style={styles.botonEditar}
+              onPress={() => {handleEditarProducto(productoSeleccionado);}}
             >
               <Ionicons name="create" size={20} color="#fff" />
-              <Text style={styles.botonEliminarTexto}>Editar Producto</Text>
+              <Text style={styles.botonEditarTexto}>Editar Producto</Text>
             </TouchableOpacity>
-=======
-           style={styles.botonEditar}
-           onPress={() => {handleEditarProducto(productoSeleccionado);}}
-           >
-           <Ionicons name="create" size={20} color="#fff" />
-           <Text style={styles.botonEditarTexto}>Editar Producto</Text>
-           </TouchableOpacity>
->>>>>>> afcb93142fdd73af54c987df45631f548d8b183e
 
             <TouchableOpacity 
               style={styles.botonEliminar}

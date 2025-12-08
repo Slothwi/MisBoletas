@@ -2,9 +2,8 @@ import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
-import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Platform,
@@ -129,7 +128,6 @@ const SelectCategoria = (props: {
 function BasicExample() {
   const router = useRouter();
   const { authState } = useAuth();
-  const fileInputRef = useRef(null);
   
   // Estados del formulario
   const [nombreProducto, setNombreProducto] = useState('');
