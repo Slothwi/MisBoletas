@@ -7,6 +7,7 @@ import { BASE_URL } from "../../src/constants/config";
 import { useAuth } from "../../src/hooks/useAuth";
 import categoriaService, { Categoria } from "../../src/services/CategoriaServiceSimplified";
 import productoService, { Producto } from "../../src/services/ProductServiceSimplified";
+import { Linking } from "react-native";
 
 const Categorias = () => {
   const router = useRouter();
@@ -29,6 +30,11 @@ const Categorias = () => {
   // MOSTRAR PRODUCTO SELECCIONADO
   const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
 
+  //Función para abrir URL externa (video tutorial).
+  const handleAbrirTutorial = () => {
+    Linking.openURL('https://www.youtube.com/@misBoletas-App');
+  }
+
   // Función para navegar al formulario
   const handleAgregarProducto = () => {
     // Navegar al formulario usando type assertion
@@ -45,7 +51,7 @@ const Categorias = () => {
 
     try {
       console.log('📂 Cargando categorías del servidor...');
-      console.log('🔐 Usuario autenticado:', authState.user?.correo);
+      console.log('🔐 Usuario autenticado:', authState.user?.email);
       console.log('🔗 Token disponible:', !!authState.token);
       console.log('🌐 Base URL:', BASE_URL);
       console.log('📍 Endpoint completo:', `${BASE_URL}/categorias/`);
@@ -122,6 +128,7 @@ const Categorias = () => {
     setProductoSeleccionado(producto);
   };
 
+<<<<<<< HEAD
   // Eliminar producto de la categoría
   const handleEliminarProducto = async (producto: Producto) => {
     Alert.alert(
@@ -184,6 +191,120 @@ const Categorias = () => {
         }
       ]
     );
+=======
+  // Estados para editar categoría
+  const [categoriaEditando, setCategoriaEditando] = useState<Categoria | null>(null);
+  const [nuevoNombreEditado, setNuevoNombreEditado] = useState("");
+
+  // Función para eliminar un producto en una categoría
+const handleEliminarProductoEnCategoria = async (producto: Producto) => {
+  Alert.alert(
+    'Eliminar Producto',
+    `¿Estás seguro de que quieres eliminar "${producto.nombre}"?`,
+    [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            if (producto.id_producto) {
+              await productoService.delete(producto.id_producto);
+              Alert.alert('Éxito', 'Producto eliminado correctamente');
+              
+              // Recargar los productos de la categoría actual
+              if (categoriaSeleccionada?.id_categoria) {
+                obtenerProductosPorCategoria(categoriaSeleccionada.id_categoria);
+              }
+            }
+          } catch (error) {
+            Alert.alert('Error', 'No se pudo eliminar el producto');
+          }
+        }
+      }
+    ]
+  );
+};
+
+// Función para eliminar una categoría
+const handleEliminarCategoria = async (categoria: Categoria) => {
+  Alert.alert(
+    'Eliminar Categoría',
+    `¿Estás seguro de que quieres eliminar "${categoria.nombre}"?`,
+    [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            if (categoria.id_categoria) {
+              await categoriaService.delete(categoria.id_categoria);
+              Alert.alert('Éxito', 'Categoría eliminada correctamente');
+              
+              // Recargar los productos de la categoría actual
+              if (categoriaSeleccionada?.id_categoria) {
+                obtenerProductosPorCategoria(categoriaSeleccionada.id_categoria);
+              }
+            }
+          } catch (error) {
+            Alert.alert('Error', 'No se pudo eliminar la categoría');
+          }
+        }
+      }
+    ]
+  );
+};
+  
+  // FUNCIÓN PARA INICIAR LA EDICIÓN DE UNA CATEGORÍA
+  const handleEditarCategoria = (categoria: Categoria) => {
+  setCategoriaEditando(categoria);
+  setNuevoNombreEditado(categoria.nombre);
+};
+
+ // FUNCIÓN PARA CANCELAR LA EDICIÓN
+const handleCancelarEdicion = () => {
+  setCategoriaEditando(null);
+  setNuevoNombreEditado("");
+};
+
+  // Función para guardar la edición de una categoría
+  const handleGuardarEdicion = async () => {
+    const nombreLimpio = nuevoNombreEditado.trim();
+  
+  if (!nombreLimpio) {
+    Alert.alert("Error", "El nombre de la categoría no puede estar vacío.");
+    return;
+  }
+
+  if (!categoriaEditando?.id_categoria) {
+    Alert.alert("Error", "No se puede editar la categoría.");
+    return;
+  }
+
+  try {
+    await categoriaService.update(categoriaEditando.id_categoria, {
+      nombre: nombreLimpio,
+      color: categoriaEditando.color
+    });
+
+    // Actualizar lista local
+    const categoriasActualizadas = categorias.map(cat =>
+      cat.id_categoria === categoriaEditando.id_categoria
+        ? { ...cat, nombre: nombreLimpio }
+        : cat
+    );
+    
+    setCategorias(categoriasActualizadas);
+    setCategoriaEditando(null);
+    setNuevoNombreEditado("");
+    
+    Alert.alert("Éxito", "Categoría actualizada correctamente");
+    
+  } catch (error: any) {
+    Alert.alert("Error", error.message || "No se pudo actualizar la categoría");
+  }
+>>>>>>> afcb93142fdd73af54c987df45631f548d8b183e
   };
 
   // Mostrar el formulario en lugar de navegar
@@ -221,6 +342,8 @@ const Categorias = () => {
       console.error('❌ Error creando categoría:', error);
       Alert.alert("Error", error.message || "No se pudo crear la categoría");
     }
+
+    
   };
 
   // --- LÓGICA DE RENDERIZADO ---
@@ -306,7 +429,11 @@ const Categorias = () => {
             
             {productoSeleccionado.duracion_garantia_meses && (
               <View style={styles.infoRow}>
+<<<<<<< HEAD
                 <Text style={styles.infoLabel}>Garantía (meses):</Text>
+=======
+                <Text style={styles.infoLabel}>Garantía (días):</Text>
+>>>>>>> afcb93142fdd73af54c987df45631f548d8b183e
                 <Text style={styles.infoValue}>{productoSeleccionado.duracion_garantia_meses}</Text>
               </View>
             )}
@@ -330,7 +457,11 @@ const Categorias = () => {
             {productoSeleccionado.notas && (
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Notas:</Text>
+<<<<<<< HEAD
                 <Text style={styles.infoValue}>{productoSeleccionado.notas}</Text>
+=======
+                <Text style={styles.infoValue}>{productoSeleccionado.notas }</Text>
+>>>>>>> afcb93142fdd73af54c987df45631f548d8b183e
               </View>
             )}
           </View>
@@ -362,6 +493,7 @@ const Categorias = () => {
         ) : (
           <ScrollView>
             {productosDeCategoria.map(producto => (
+<<<<<<< HEAD
               <View key={producto.id_producto}>
                 <TouchableOpacity 
                   style={styles.cardProducto} 
@@ -384,6 +516,29 @@ const Categorias = () => {
                 </TouchableOpacity>
               </View>
             ))}
+=======
+              <TouchableOpacity 
+                key={producto.id_producto}  // Cambio: Era "ProductoID" → Ahora "id_producto"
+                style={styles.cardProducto} 
+                onPress={() => handleVerProducto(producto)}
+                testID={`tarjeta-producto-${producto.id_producto}`}
+              >
+                <View style={styles.cardContent}>
+                  <MaterialCommunityIcons name="package-variant" size={24} color="#e77573"/>
+                  <Text style={styles.cardTitle}>{producto.nombre}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color="#ccc" />
+              </TouchableOpacity>
+            ))}
+            {/* BOTÓN PARA ELIMINAR PRODUCTO DENTRO DE UNA CATEGORIA - AÚN NO FUNCIONA BIEN*/}
+            <TouchableOpacity 
+              style={styles.botonEliminar}
+              onPress={() => handleEliminarProductoEnCategoria(productosDeCategoria[0])} // Ejemplo con el primer producto
+            >
+              <Ionicons name="trash" size={20} color="#fff" />
+              <Text style={styles.botonEliminarTexto}>Eliminar</Text>
+            </TouchableOpacity>
+>>>>>>> afcb93142fdd73af54c987df45631f548d8b183e
 
             <TouchableOpacity 
               style={styles.botonAgregarSecundario}
@@ -420,6 +575,7 @@ const Categorias = () => {
         ) : (
           <View style={styles.cardsContainer}>
             {categorias.map((categoria) => (
+<<<<<<< HEAD
               <View key={categoria.id_categoria}>
                 {/* Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID) */}
                 <TouchableOpacity
@@ -452,6 +608,56 @@ const Categorias = () => {
                 </TouchableOpacity>
               </View>
             ))}
+=======
+              // Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID)
+              <TouchableOpacity
+                key={categoria.id_categoria}
+                style={styles.card}
+                onPress={() => handleVerCategoria(categoria)}
+              >
+                <View style={styles.cardContent}>
+                  {/* Cambio: Era "Color" → Ahora "color" */}
+                  <View style={[styles.colorIndicator, { backgroundColor: categoria.color }]} />
+                  <MaterialCommunityIcons name="shape" size={32} color="#e77573" />
+                  <View style={styles.cardTextContainer}>
+                    {/* SI ESTÁ EDITANDO ESTA CATEGORÍA, MUESTRA INPUT */}
+                    {categoriaEditando?.id_categoria === categoria.id_categoria ? (
+                      <TextInput
+                        style={styles.input}
+                        value={nuevoNombreEditado}
+                        onChangeText={setNuevoNombreEditado}
+                        onSubmitEditing={handleGuardarEdicion}
+                        placeholder="Nuevo nombre"
+                      />
+                    ) : null} 
+                    {/* Cambio: Era "NombreCategoria" → Ahora "nombre" */}
+                    <Text style={styles.cardTitle}>
+                      {categoria.nombre}
+                    </Text>
+                    <Text style={styles.cardSubtitle}>
+                      Toca para ver productos
+                    </Text>
+                  </View>
+                </View>
+
+                
+                <Ionicons name="chevron-forward" size={24} color="#e77573" />
+              </TouchableOpacity>
+              
+              
+              
+            ))}
+
+
+            {/* BOTÓN PARA ELIMINAR CATEGORÍA - AÚN NO FUNCIONA BIEN */}
+            <TouchableOpacity 
+          onPress={() => {handleEliminarCategoria(categoriaSeleccionada!);}} // Ejemplo con la categoría seleccionada
+          style={styles.botonEliminar}
+        >
+          <Text style={styles.botonEliminarTexto}>Eliminar Categoría</Text>
+          <Ionicons name="trash-outline" size={20} color="#f44336" />
+        </TouchableOpacity>
+>>>>>>> afcb93142fdd73af54c987df45631f548d8b183e
           </View>
         )}
         
@@ -484,8 +690,15 @@ const Categorias = () => {
             <Ionicons name="add-circle-outline" size={24} color="#e77573" />
             <Text style={styles.botonAgregarTexto}>Crear Nueva Categoría</Text>
           </TouchableOpacity>
-        )}
+        )}        
       </ScrollView>
+       {/* BOTÓN DE AYUDA - TUTORIAL */}
+      <TouchableOpacity
+        style={styles.botonAyuda}
+        onPress={handleAbrirTutorial}
+        >
+          <Ionicons name="help" size={40} color="#fff" />
+        </TouchableOpacity>
     </View>
   );
 };
@@ -567,6 +780,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  botonEditar: {
+    backgroundColor: '#1b23faff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    gap: 8,
+  },
+  botonEditarTexto: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  botonIconoEdicion: {
+    padding: 8,
+  },
+  botonesEdicion: {
+  flexDirection: 'row',
+  gap: 4,
+},
+//Botón ayuda
+botonAyuda: {
+  position: "absolute",
+  right: 20,
+  bottom: 20,
+  backgroundColor: "#e77573",
+  width: 60,
+  height: 60,
+  borderRadius: 50,
+  justifyContent: "center",
+  alignItems: "center",
+  elevation: 8,
+  shadowColor: "#000",
+  shadowOpacity: 0.3,
+  shadowRadius: 4,
+  shadowOffset: { width: 0, height: 2 },
+}
+
 });
 
 export default Categorias;

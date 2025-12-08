@@ -9,6 +9,7 @@ import { useAuth } from '../../src/hooks/useAuth';
 import productoService, { Producto } from '../../src/services/ProductServiceSimplified';
 import documentoService, { Documento } from '../../src/services/DocumentoService';
 
+
 const Inicio = () => {
   const router = useRouter();
   const { authState } = useAuth();
@@ -18,6 +19,11 @@ const Inicio = () => {
   const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
   const [documentos, setDocumentos] = useState<Documento[]>([]);
   const [cargandoDocumentos, setCargandoDocumentos] = useState(false);
+
+  //Función para abrir URL externa (video tutorial).
+  const handleAbrirTutorial = () => {
+    Linking.openURL('https://www.youtube.com/@misBoletas-App');
+  }
 
   // Cargar productos del backend
   const cargarProductos = async () => {
@@ -116,6 +122,26 @@ const Inicio = () => {
     );
   };
 
+  // FUNCIÓN PARA EDITAR UN PRODUCTO
+const handleEditarProducto = (producto: Producto) => {
+  // Verificar que el producto tiene ID
+  if (!producto.id_producto) {
+    Alert.alert('Error', 'No se puede editar este producto');
+    return;
+  }
+  
+  console.log('✏️ Editando producto:', producto.nombre);
+  
+  // Navegar al formulario con los datos del producto
+  router.push({
+    pathname: '/formulario' as Href,
+    params: { 
+      producto: JSON.stringify(producto),
+      modoEdicion: 'true'
+    }
+  } as any );
+};
+
   // Cargar documentos de un producto
   const cargarDocumentos = async (productoId: string) => {  // Cambio: Era "number" → Ahora "string" (UUID)
     try {
@@ -197,7 +223,11 @@ const Inicio = () => {
             try {
               await documentoService.delete(documentoId);
               Alert.alert('Éxito', 'Documento eliminado correctamente');
+<<<<<<< HEAD
               if (productoSeleccionado?.id_producto) {
+=======
+              if (productoSeleccionado?.id_producto) {  // Cambio: Era "ProductoID" → Ahora "id_producto" (UUID)
+>>>>>>> afcb93142fdd73af54c987df45631f548d8b183e
                 cargarDocumentos(productoSeleccionado.id_producto);
               }
             } catch (error) {
@@ -403,12 +433,21 @@ const Inicio = () => {
           <View style={styles.accionesContainer}>
             {/* Boton de Editar */}
             <TouchableOpacity 
+<<<<<<< HEAD
               style={styles.botonEliminar}
               onPress={() => {}}
             >
               <Ionicons name="create" size={20} color="#fff" />
               <Text style={styles.botonEliminarTexto}>Editar Producto</Text>
             </TouchableOpacity>
+=======
+           style={styles.botonEditar}
+           onPress={() => {handleEditarProducto(productoSeleccionado);}}
+           >
+           <Ionicons name="create" size={20} color="#fff" />
+           <Text style={styles.botonEditarTexto}>Editar Producto</Text>
+           </TouchableOpacity>
+>>>>>>> afcb93142fdd73af54c987df45631f548d8b183e
 
             <TouchableOpacity 
               style={styles.botonEliminar}
@@ -506,6 +545,15 @@ const Inicio = () => {
           </TouchableOpacity>
         </ScrollView>
       )}
+
+      {/* BOTÓN DE AYUDA - TUTORIAL */}
+      <TouchableOpacity
+        style={styles.botonAyuda}
+        onPress={handleAbrirTutorial}
+        >
+          <Ionicons name="help" size={40} color="#fff" />
+        </TouchableOpacity>
+
     </View>
   );
 };
@@ -767,6 +815,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  botonEditar: {
+    backgroundColor: '#1b23faff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    gap: 8,
+  },
+  botonEditarTexto: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  //Botón ayuda
+botonAyuda: {
+  position: "absolute",
+  right: 20,
+  bottom: 20,
+  backgroundColor: "#e77573",
+  width: 60,
+  height: 60,
+  borderRadius: 50,
+  justifyContent: "center",
+  alignItems: "center",
+  elevation: 8,
+  shadowColor: "#000",
+  shadowOpacity: 0.3,
+  shadowRadius: 4,
+  shadowOffset: { width: 0, height: 2 },
+}
 });
 
 export default Inicio;

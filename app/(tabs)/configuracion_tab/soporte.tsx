@@ -1,9 +1,15 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView, ActivityIndicator } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
+<<<<<<< HEAD
 import { useRouter } from "expo-router";
 import { useAuth } from '@/src/hooks/useAuth';
 import { ticketService } from '@/src/services/TicketService';
+=======
+import { Href, useRouter } from "expo-router";
+// Importar servicio de soporte 
+
+>>>>>>> afcb93142fdd73af54c987df45631f548d8b183e
 
 export default function Soporte() {
     const router = useRouter();
@@ -75,6 +81,88 @@ export default function Soporte() {
         }
     };
 
+  // Función para validar email
+    const handleEmailValido = (email: string) => {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+       return emailRegex.test(email)
+    };
+
+    // Función para validar teléfono 
+    const handleTelefonoValido = (telefono: string) => {
+        const telefonoRegex = /^[0-9]{9,11}$/;
+        return telefonoRegex.test(telefono.replace(/\D/g, '')); // remueve todo lo que no sean números
+    };
+
+    // Función para validar todos los campos
+    const handleValidarCampos = () => {
+      if (!nombreUsuario.trim()) {
+        Alert.alert("Error", "Por favor ingresa tu nombre completo.");
+        return false;
+      }
+      if (!email.trim()) {
+        Alert.alert("Error", "Por favor ingresa tu correo electrónico.");
+        return false;
+      }
+      //agregar ejemplo de formato de correo valido
+      if (!handleEmailValido(email)) {
+        Alert.alert("Error", "Por favor ingresa un correo electrónico válido.");
+        return false;
+      }
+      if (!telefono.trim()) {
+        Alert.alert("Error", "Por favor ingresa tu teléfono de contacto.");
+        return false;
+      }
+      //agregar ejemplo de formato de telefono valido
+      if (!handleTelefonoValido(telefono)) {
+        Alert.alert("Error", "Por favor ingresa un teléfono válido.");
+        return false;
+      }
+      if (!mensaje.trim()) {
+        Alert.alert("Error", "Por favor ingresa un mensaje, queja o consulta.");
+        return false;
+      }
+      return true;
+    };
+
+    const handleEnviarSoporte = async () => {
+      if (!handleValidarCampos()) {
+        return;
+      }
+        // Aquí puedes agregar la lógica para enviar el formulario de soporte
+        Alert.alert("Éxito", "Tu mensaje ha sido enviado. ¡Gracias por contactarnos!");
+        // Limpiar formulario después del envío
+        setNombreUsuario("");
+        setEmail("");
+        setTelefono("");
+        setMensaje("");
+  }
+    
+  // Función para cancelar
+    const handleCancelar = () => {
+        if (nombreUsuario || email || telefono || mensaje) {
+            Alert.alert(
+                "Cancelar",
+                "¿Estás seguro? Se perderán los datos ingresados.",
+                [
+                    { text: "No", style: "cancel" },
+                    { 
+                        text: "Sí, cancelar", 
+                        style: "destructive",
+                        onPress: () => {
+                            setNombreUsuario("");
+                            setEmail("");
+                            setTelefono("");
+                            setMensaje("");
+                            handleVolverAConfiguracion();
+                        }
+                    }
+                ]
+            );
+        } else {
+            handleVolverAConfiguracion();
+        }
+    };
+
     return (
         <View style={styles.container}>
             <TouchableOpacity 
@@ -104,6 +192,7 @@ export default function Soporte() {
                             </Text>
                         </View>
 
+<<<<<<< HEAD
                         <View style={styles.stepContainer}>
                             <Text style={styles.titleText}>Mensaje</Text>
                             <TextInput
@@ -146,6 +235,60 @@ export default function Soporte() {
                     </View>
                 </View>
             </ScrollView>
+=======
+          <View style={styles.stepContainer}>
+            <Text style={styles.titleText}>Correo electronico</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ingrese su correo electronico"
+              placeholderTextColor="#999"
+              value={email}
+              onChangeText={setEmail}
+            />
+          </View>
+          
+          <View style={styles.stepContainer}>
+            <Text style={styles.titleText}>Telefono</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ingrese su telefono de contacto"
+              placeholderTextColor="#999"
+              value={telefono}
+              onChangeText={setTelefono}
+            />
+          </View>
+          
+          <View style={styles.stepContainer}>
+            <Text style={styles.titleText}>Mensaje</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ingrese su mensaje, queja o consulta"
+              placeholderTextColor="#999"
+              value={mensaje}
+              onChangeText={setMensaje}
+            />
+          </View>
+          
+          <View style={styles.buttonRow}>
+            {/* BOTONES PARA CANCELAR Y GUARDAR - AÚN NO FUNCIONAL*/}
+            <TouchableOpacity 
+              style={[styles.button, styles.cancelButton]}
+              onPress={() => {}}
+              disabled={false}
+            >
+              <Text style={styles.buttonText}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.button, styles.saveButton,  styles.buttonDisabled]}
+              onPress={() => {handleCancelar}}
+              disabled={false}
+            >
+              <Text style={styles.buttonText}>
+                { false ? 'Guardando...' : 'Guardar'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+>>>>>>> afcb93142fdd73af54c987df45631f548d8b183e
         </View>
     );
 }
