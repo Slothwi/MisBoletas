@@ -2,7 +2,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
@@ -128,6 +128,7 @@ const SelectCategoria = (props: {
 function BasicExample() {
   const router = useRouter();
   const { authState } = useAuth();
+  const params = useLocalSearchParams();
   
   // Estados del formulario
   const [nombreProducto, setNombreProducto] = useState('');
@@ -154,7 +155,43 @@ function BasicExample() {
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [cargandoCategorias, setCargandoCategorias] = useState(true);
   
+  // Estados para edición
+  const [modoEdicion, setModoEdicion] = useState(false);
+  const [productoEditando, setProductoEditando] = useState<any>(null);
+  
   const MAX_LENGTH = 200;
+
+  // Cargar parámetros y producto si está en modo edición
+  useEffect(() => {
+    if (params.producto && params.modoEdicion) {
+      try {
+        console.log('✏️ Detectado modo edición');
+        const producto = JSON.parse(params.producto as string);
+        setProductoEditando(producto);
+        setModoEdicion(true);
+        
+        // Llenar el formulario con los datos del producto
+        setNombreProducto(producto.nombre || '');
+        setMarca(producto.marca || '');
+        setModelo(producto.modelo || '');
+        setTienda(producto.tienda || '');
+        setNotas(producto.notas || '');
+        
+        if (producto.duracion_garantia_meses) {
+          setDuracionGarantia(producto.duracion_garantia_meses.toString());
+        }
+        
+        if (producto.fecha_compra) {
+          const fecha = new Date(producto.fecha_compra);
+          setFechaCompra(fecha);
+        }
+        
+        console.log('✅ Producto cargado en el formulario:', producto.nombre);
+      } catch (error) {
+        console.error('❌ Error parseando producto:', error);
+      }
+    }
+  }, [params.producto, params.modoEdicion]);
 
   // Cargar categorías al montar el componente
   useEffect(() => {
@@ -165,6 +202,15 @@ function BasicExample() {
         const categoriasDelServidor = await categoriaService.getAll();
         setCategorias(categoriasDelServidor);
         console.log(`✅ ${categoriasDelServidor.length} categorías cargadas`);
+        
+        // Si estamos editando, establecer la categoría
+        if (productoEditando && productoEditando.categoria_ids && productoEditando.categoria_ids.length > 0) {
+          const categoriaId = productoEditando.categoria_ids[0];
+          const categoria = categoriasDelServidor.find(c => c.id_categoria === categoriaId);
+          if (categoria) {
+            setCategoriaSeleccionada(categoria);
+          }
+        }
       } catch (error) {
         console.error('❌ Error cargando categorías:', error);
         // No bloquear el formulario si falla la carga de categorías
@@ -257,14 +303,23 @@ function BasicExample() {
         categoria_ids: categoriaSeleccionada ? [categoriaSeleccionada.id_categoria] : [],
       };
 
-      console.log('📝 Creando producto:', productoData);
+      let productoGuardado;
 
-      // 1. Crear producto
-      const nuevoProducto = await productoService.create(productoData);
-      console.log('✅ Producto creado:', nuevoProducto);
+      // MODO EDICIÓN
+      if (modoEdicion && productoEditando?.id_producto) {
+        console.log('✏️ Actualizando producto:', productoEditando.id_producto);
+        productoGuardado = await productoService.update(productoEditando.id_producto, productoData);
+        console.log('✅ Producto actualizado:', productoGuardado);
+      } 
+      // MODO CREACIÓN
+      else {
+        console.log('📝 Creando producto:', productoData);
+        productoGuardado = await productoService.create(productoData);
+        console.log('✅ Producto creado:', productoGuardado);
+      }
 
       // 2. Si hay archivo, subirlo y procesar OCR (solo si es boleta)
-      if (archivoSeleccionado && nuevoProducto.id_producto) {
+      if (archivoSeleccionado && productoGuardado.id_producto) {
         try {
           setIsProcessingOCR(true);
           setOcrStatus('Subiendo archivo...');
@@ -274,7 +329,7 @@ function BasicExample() {
           
           // Subir documento
           const { documento, ocrData } = await documentoService.uploadAndWaitOCR(
-            nuevoProducto.id_producto,
+            productoGuardado.id_producto,
             {
               uri: archivoSeleccionado.uri,
               type: archivoSeleccionado.type,
@@ -316,7 +371,7 @@ function BasicExample() {
 
       Alert.alert(
         'Éxito', 
-        'Producto guardado correctamente',
+        modoEdicion ? 'Producto actualizado correctamente' : 'Producto guardado correctamente',
         [
           {
             text: 'OK',
@@ -367,7 +422,9 @@ function BasicExample() {
         </TouchableOpacity>
         <View style={styles.form}>
           <View style={styles.stepContainer}>
-            <Text style={styles.titleText}>Nombre Producto</Text>
+            <Text style={styles.titleText}>
+              {modoEdicion ? '✏️ Editar Producto' : 'Nombre Producto'}
+            </Text>
             <TextInput
               style={styles.input}
               placeholder="Ingrese nombre del producto"
