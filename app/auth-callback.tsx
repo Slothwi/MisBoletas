@@ -24,9 +24,44 @@ export default function AuthCallback() {
       const token = Array.isArray(searchParams.token) ? searchParams.token[0] : searchParams.token;
       const type = Array.isArray(searchParams.type) ? searchParams.type[0] : searchParams.type;
       const email = Array.isArray(searchParams.email) ? searchParams.email[0] : searchParams.email;
+      const accessToken = Array.isArray(searchParams.access_token) ? searchParams.access_token[0] : searchParams.access_token;
+      const refreshToken = Array.isArray(searchParams.refresh_token) ? searchParams.refresh_token[0] : searchParams.refresh_token;
+      const userId = Array.isArray(searchParams.user_id) ? searchParams.user_id[0] : searchParams.user_id;
 
-      console.log('🔗 Deep Link Callback recibido:', { token, type, email });
+      console.log('🔗 Deep Link Callback recibido:', { accessToken: !!accessToken, token: !!token, type, email });
 
+      // ✅ FLUJO NUEVO: Si el backend envió el access_token directamente
+      if (accessToken && refreshToken) {
+        console.log('✅ Access token recibido del puente. Autenticando...');
+        
+        try {
+          // Guardar tokens directamente
+          await AsyncStorage.setItem(STORAGE_CONFIG.authTokenKey, accessToken);
+          if (refreshToken) {
+            await AsyncStorage.setItem('refresh_token', refreshToken);
+          }
+          if (userId) {
+            await AsyncStorage.setItem(STORAGE_CONFIG.userDataKey, JSON.stringify({
+              id_usuario: userId,
+              email: email || '',
+            }));
+          }
+          console.log('💾 Tokens y usuario guardados en AsyncStorage');
+
+          // Verificar estado de autenticación
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          await checkAuthStatus();
+          
+          console.log('✅ Usuario autenticado correctamente');
+          router.replace('/(tabs)');
+        } catch (storageError) {
+          console.error('❌ Error guardando tokens:', storageError);
+          router.replace('/(auth)/login');
+        }
+        return;
+      }
+
+      // ✅ FLUJO LEGACY: Si solo tenemos el OTP token (fallback)
       if (!token || !email) {
         console.error('❌ Token o email no proporcionado en deep link');
         router.replace('/bienvenida');
@@ -35,11 +70,9 @@ export default function AuthCallback() {
 
       // Si es confirmación de email (signup)
       if (type === 'signup') {
-        console.log('📧 Email ya verificado por el puente. Procesando...');
+        console.log('📧 Verificando OTP recibido...');
         
-        // El backend ya verificó el OTP en /confirm
-        // Solo necesitamos guardar el token y autenticar
-        // Hacer un pequeño llamado al backend para obtener la sesión
+        // Hacer llamado al backend para obtener la sesión
         const response = await fetch(`${BASE_URL}${API_ENDPOINTS.auth.verifyOTP}`, {
           method: 'POST',
           headers: {
