@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, type Href } from 'expo-router';
 import React from 'react';
-import { Alert, Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Linking, ScrollView, TouchableOpacity, View } from 'react-native';
+import { AppStyles, ThemedText } from '../../../components';
 import { useAuth } from '../../../src/hooks/useAuth';
 
 const Configuracion = () => {
@@ -14,7 +15,7 @@ const Configuracion = () => {
   };
    
     // Usar los datos del usuario autenticado o datos por defecto
-    const userData = authState.user || {
+    const userData = (authState.user as any) || {
         nombre: 'Usuario',
         correo: 'usuario@ejemplo.com'
     };
@@ -49,233 +50,94 @@ const Configuracion = () => {
     };
 
     return (
-        <View style={styles.container}>
-            <ScrollView style={{ width: '100%' }} contentContainerStyle={{ alignItems: 'center' }}>
+        <View style={AppStyles.containers.page}>
+            <ScrollView style={{ width: '100%' }} contentContainerStyle={AppStyles.containers.scrollContent}>
                 {/* Profile Section */}
-                <View style={styles.profileCard}>
-                    <View style={styles.profileContainer}>
+                <View style={AppStyles.cards.profile}>
+                    <View style={AppStyles.containers.centered}>
                         <Image 
                             source={{ uri: 'https://randomuser.me/api/portraits/lego/1.jpg' }} 
-                            style={styles.profileImage} 
+                            style={AppStyles.misc.logo}
                         />
-                        <Text style={styles.profileName}>{userData.nombre}</Text>
-                        <Text style={styles.profileEmail}>{userData.correo}</Text>
+                        <ThemedText style={AppStyles.text.profileName}>{userData.nombre}</ThemedText>
+                        <ThemedText style={AppStyles.text.profileEmail}>{userData.correo}</ThemedText>
                         {/* BOTÓN PARA EDITAR PERFIL - AÚN NO FUNCIONAL*/}
-                        <TouchableOpacity style={styles.botonEditarPerfil} onPress={() => router.push('/configuracion_tab/editar_perfil' as Href)}>
-                            <Text style={styles.botonEditarPerfilText}>Editar Perfil</Text>
+                        <TouchableOpacity style={AppStyles.buttons.small} onPress={() => router.push('/configuracion_tab/editar_perfil' as Href)}>
+                            <ThemedText style={AppStyles.text.buttonTextSmall}>Editar Perfil</ThemedText>
                         </TouchableOpacity>
                     </View>
                 </View>
 
                 {/* Cards Section */}
-                <View style={styles.cardsContainer}>
+                <View style={{ width: '100%', gap: AppStyles.spacing.lg, marginBottom: AppStyles.spacing.xxl }}>
                     <TouchableOpacity 
-                        style={styles.card} 
+                        style={AppStyles.cards.interactive} 
                         testID='card-configuracion' 
                         onPress={() => router.push('/configuracion_tab/detalle_configuracion' as Href)}
                     >
-                        <Text style={styles.cardText}>Configuración</Text>
-                        <Ionicons name="chevron-forward" size={24} color="#e77573" />
+                        <ThemedText style={AppStyles.text.cardText}>Configuración</ThemedText>
+                        <Ionicons name="chevron-forward" size={24} color={AppStyles.colors.primary} />
                     </TouchableOpacity>
 
                     <TouchableOpacity 
-                        style={styles.card} 
+                        style={AppStyles.cards.interactive} 
                         testID='card-informacion' 
                         onPress={() => router.push('/configuracion_tab/informacion' as Href)}
                     >
-                        <Text style={styles.cardText}>Información</Text>
-                        <Ionicons name="chevron-forward" size={24} color="#e77573" />
+                        <ThemedText style={AppStyles.text.cardText}>Información</ThemedText>
+                        <Ionicons name="chevron-forward" size={24} color={AppStyles.colors.primary} />
                     </TouchableOpacity>
                     
                     <TouchableOpacity 
-                        style={styles.card} 
+                        style={AppStyles.cards.interactive} 
                         testID='card-nosotros' 
                         onPress={() => router.push('/configuracion_tab/nosotros' as Href)}
                     >
-                        <Text style={styles.cardText}>Nosotros</Text>
-                        <Ionicons name="chevron-forward" size={24} color="#e77573" />
+                        <ThemedText style={AppStyles.text.cardText}>Nosotros</ThemedText>
+                        <Ionicons name="chevron-forward" size={24} color={AppStyles.colors.primary} />
                     </TouchableOpacity>
                     
                     <TouchableOpacity 
-                        style={styles.card} 
+                        style={AppStyles.cards.interactive} 
                         testID='card-contacto' 
                         onPress={() => router.push('/configuracion_tab/contacto' as Href)}
                     >
-                        <Text style={styles.cardText}>Contacto</Text>
-                        <Ionicons name="chevron-forward" size={24} color="#e77573" />
+                        <ThemedText style={AppStyles.text.cardText}>Contacto</ThemedText>
+                        <Ionicons name="chevron-forward" size={24} color={AppStyles.colors.primary} />
                     </TouchableOpacity>
 
-                    {/* Debug button - Desactivado (archivo eliminado)
-                    {__DEV__ && (
-                        <TouchableOpacity 
-                            style={[styles.card, { backgroundColor: '#ff6b6b' }]} 
-                            testID='card-debug' 
-                            onPress={() => router.push('/debug-auth')}
-                        >
-                            <Text style={[styles.cardText, { color: '#fff' }]}>🔧 Debug Auth</Text>
-                            <Ionicons name="chevron-forward" size={24} color="#fff" />
-                        </TouchableOpacity>
-                    )}
-                    */}
-
                     <TouchableOpacity 
-                        style={styles.card} 
+                        style={AppStyles.cards.interactive} 
                         testID='card-soporteAyuda' 
                         onPress={() => router.push('/configuracion_tab/soporte' as Href)}
                     >
-                        <Text style={styles.cardText}>Ayuda</Text>
-                        <Ionicons name="chevron-forward" size={24} color="#e77573" />
+                        <ThemedText style={AppStyles.text.cardText}>Ayuda</ThemedText>
+                        <Ionicons name="chevron-forward" size={24} color={AppStyles.colors.primary} />
                     </TouchableOpacity>
 
                     <TouchableOpacity 
-                    style={styles.cerrarSesionButton}
-                    onPress={handleCerrarSesion}
-                    testID='boton-cerrar-sesion'
-                >
-                    <Ionicons name="log-out-outline" size={24} color="#fff" />
-                    <Text style={styles.cerrarSesionText}>Cerrar Sesión</Text>
-                </TouchableOpacity>
+                        style={AppStyles.buttons.primaryRow}
+                        onPress={handleCerrarSesion}
+                        testID='boton-cerrar-sesion'
+                    >
+                        <Ionicons name="log-out-outline" size={24} color={AppStyles.colors.textLight} />
+                        <ThemedText style={AppStyles.text.buttonText}>Cerrar Sesión</ThemedText>
+                    </TouchableOpacity>
                 </View>
 
-                 {/* BOTÓN PARA ABRIR YOUTUBE */}
-                <Text style={styles.textoYoutube}>
+                {/* BOTÓN PARA ABRIR YOUTUBE */}
+                <ThemedText style={AppStyles.text.youtubeLabel}>
                     Suscríbete a nuestro canal.
-                </Text>
-                    <TouchableOpacity 
-                    style={styles.botonYoutube} 
+                </ThemedText>
+                <TouchableOpacity 
+                    style={{ backgroundColor: '#FF0000', paddingVertical: AppStyles.spacing.md, paddingHorizontal: AppStyles.spacing.xl, borderRadius: AppStyles.borderRadius.md, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}
                     onPress={handleAbrirYoutube}
-                    >
-                        <Ionicons name="logo-youtube" size={40} color="#fff" />            
-                    </TouchableOpacity>
+                >
+                    <Ionicons name="logo-youtube" size={40} color={AppStyles.colors.textLight} />            
+                </TouchableOpacity>
             </ScrollView>       
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#a8cbf0',
-        padding: 24,
-        alignItems: 'center',
-    },
-    profileCard: {
-        width: '100%',
-        backgroundColor: '#f5f7fa',
-        borderRadius: 16,
-        padding: 24,
-        marginBottom: 32,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: 2,
-    },
-    profileContainer: {
-        alignItems: 'center',
-    },
-    profileImage: {
-        width: 96,
-        height: 96,
-        borderRadius: 48,
-        marginBottom: 12,
-    },
-    profileName: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#222',
-        marginBottom: 4,
-    },
-    profileEmail: {
-        fontSize: 16,
-        color: '#666',
-        fontStyle: 'italic',
-    },
-    cardsContainer: {
-        width: '100%',
-        gap: 16,
-        marginBottom: 32,
-    },
-    card: {
-        backgroundColor: '#f5f7fa',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingVertical: 18,
-        paddingHorizontal: 20,
-        borderRadius: 12,
-        marginBottom: 8,
-        shadowColor: '#000',
-        shadowOpacity: 0.04,
-        shadowRadius: 6,
-        shadowOffset: { width: 0, height: 1 },
-        elevation: 1,
-    },
-    cardText: {
-        color: '#222',
-        fontSize: 18,
-        fontWeight: '600',
-    },
-    cerrarSesionButton: {
-        backgroundColor: '#e77573',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 16,
-        paddingHorizontal: 24,
-        borderRadius: 12,
-        width: '100%',
-        gap: 12,
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: 3,
-    },
-    cerrarSesionText: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: '600',
-    },
-    botonEditarPerfil: {
-        marginTop: 12,
-        backgroundColor: '#e77573',
-        paddingVertical: 12,
-        paddingHorizontal: 24,
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        shadowOffset: { width: 0, height: 2 },
-        elevation: 3,
-    },
-    botonEditarPerfilText: {
-        color: '#fff',
-        fontSize: 12,
-        fontWeight: '600',
-    },
-
-    textoYoutube: {
-    textAlign: "center",
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#ffffffff",
-    marginTop: 40,   // espacio respecto al botón anterior
-    marginBottom: 12 // espacio respecto al botón de YouTube
-    },
-    botonYoutube: {
-    alignSelf: "center",
-    backgroundColor: "#FF0000", // rojo oficial YouTube
-    paddingVertical: 12,
-    paddingHorizontal: 60,
-    borderRadius: 12,        
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",           
-    },
-});
 
 export default Configuracion;

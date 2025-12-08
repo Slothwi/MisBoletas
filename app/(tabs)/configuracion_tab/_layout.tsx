@@ -19,11 +19,19 @@ export default function RootLayout() {
           options={{ headerShown: false }}
         />
         <Stack.Screen 
+          name="informacion" 
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
           name="nosotros" 
           options={{ headerShown: false }}
         />
         <Stack.Screen 
           name="contacto" 
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="soporte" 
           options={{ headerShown: false }}
         />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

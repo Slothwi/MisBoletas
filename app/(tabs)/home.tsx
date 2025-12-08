@@ -1,12 +1,12 @@
-import { ThemedText } from "@/components/ThemedText";
+import { AppStyles, ThemedText } from "@/components";
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { Href, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Linking, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Linking, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../src/hooks/useAuth';
-import productoService, { Producto } from '../../src/services/ProductServiceSimplified';
 import documentoService, { Documento } from '../../src/services/DocumentoService';
+import productoService, { Producto } from '../../src/services/ProductServiceSimplified';
 
 
 const Inicio = () => {
@@ -257,12 +257,12 @@ const handleEditarProducto = (producto: Producto) => {
 
   if (cargando) {
     return (
-      <View style={styles.container}>
-        <ThemedText type="title" style={styles.titulo}>
+      <View style={AppStyles.containers.page}>
+        <ThemedText type="title" style={{ fontSize: 20, textAlign: 'center', marginTop: 40, marginBottom: 24 }}>
           Tus Productos
         </ThemedText>
-        <View style={styles.centeredContainer}>
-          <Text style={styles.cargandoTexto}>Cargando productos...</Text>
+        <View style={AppStyles.containers.centered}>
+          <Text style={AppStyles.misc.loadingText}>Cargando productos...</Text>
         </View>
       </View>
     );
@@ -270,142 +270,136 @@ const handleEditarProducto = (producto: Producto) => {
 
   if (productoSeleccionado) {
     return (
-      <View style={styles.container}>
+      <View style={AppStyles.containers.page}>
         <TouchableOpacity 
-          style={styles.botonVolver}
+          style={AppStyles.misc.backButton}
           onPress={handleVolverALista}
         >
-          <Ionicons name="arrow-back" size={24} color="#e77573" />
-          <Text style={styles.botonVolverTexto}>Volver a la lista</Text>
+          <Ionicons name="arrow-back" size={24} color={AppStyles.colors.primary} />
+          <Text style={AppStyles.misc.backButtonText}>Volver a la lista</Text>
         </TouchableOpacity>
 
         <ScrollView 
-          style={styles.detalleContainer}
+          style={{ flex: 1 }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          <View style={styles.detalleHeader}>
+          <View style={{ alignItems: 'center', marginBottom: 30 }}>
             <MaterialCommunityIcons 
               name="package-variant" 
               size={48} 
-              color="#e77573" 
+              color={AppStyles.colors.primary} 
             />
-            <Text style={styles.detalleTitulo}>{productoSeleccionado.nombre}</Text>
+            <ThemedText style={[AppStyles.text.detailTitle, { textAlign: 'center' }]}>{productoSeleccionado.nombre}</ThemedText>
           </View>
 
-          <View style={styles.detalleInfo}>
+          <View style={[AppStyles.cards.base, { marginBottom: 20 }]}>
             {productoSeleccionado.marca && (
-              <View key="marca" style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Marca:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.marca}</Text>
+              <View key="marca" style={AppStyles.containers.rowSpaceBetween}>
+                <Text style={AppStyles.text.infoLabel}>Marca:</Text>
+                <Text style={AppStyles.text.infoValue}>{productoSeleccionado.marca}</Text>
               </View>
             )}
             
             {productoSeleccionado.modelo && (
-              <View key="modelo" style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Modelo:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.modelo}</Text>
+              <View key="modelo" style={AppStyles.containers.rowSpaceBetween}>
+                <Text style={AppStyles.text.infoLabel}>Modelo:</Text>
+                <Text style={AppStyles.text.infoValue}>{productoSeleccionado.modelo}</Text>
               </View>
             )}
             
             {productoSeleccionado.fecha_compra && (
-              <View key="fechaCompra" style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Fecha de compra:</Text>
-                <Text style={styles.infoValue}>
+              <View key="fechaCompra" style={AppStyles.containers.rowSpaceBetween}>
+                <Text style={AppStyles.text.infoLabel}>Fecha de compra:</Text>
+                <Text style={AppStyles.text.infoValue}>
                   {new Date(productoSeleccionado.fecha_compra).toLocaleDateString()}
                 </Text>
               </View>
             )}
             
             {productoSeleccionado.duracion_garantia_meses && (
-              <View key="garantia" style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Garantía (meses):</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.duracion_garantia_meses}</Text>
+              <View key="garantia" style={AppStyles.containers.rowSpaceBetween}>
+                <Text style={AppStyles.text.infoLabel}>Garantía (meses):</Text>
+                <Text style={AppStyles.text.infoValue}>{productoSeleccionado.duracion_garantia_meses}</Text>
               </View>
             )}
             
             {productoSeleccionado.categorias && productoSeleccionado.categorias.length > 0 && (
-              <View key="categorias" style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Categorías:</Text>
-                <Text style={styles.infoValue}>
+              <View key="categorias" style={AppStyles.containers.rowSpaceBetween}>
+                <Text style={AppStyles.text.infoLabel}>Categorías:</Text>
+                <Text style={AppStyles.text.infoValue}>
                   {productoSeleccionado.categorias.map(cat => cat.nombre).join(', ')}
                 </Text>
               </View>
             )}
 
             {productoSeleccionado.tienda && (
-              <View key="tienda" style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Tienda:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.tienda}</Text>
+              <View key="tienda" style={AppStyles.containers.rowSpaceBetween}>
+                <Text style={AppStyles.text.infoLabel}>Tienda:</Text>
+                <Text style={AppStyles.text.infoValue}>{productoSeleccionado.tienda}</Text>
               </View>
             )}
             
             {productoSeleccionado.notas && (
-              <View key="notas" style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Notas:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.notas}</Text>
+              <View key="notas" style={AppStyles.containers.rowSpaceBetween}>
+                <Text style={AppStyles.text.infoLabel}>Notas:</Text>
+                <Text style={AppStyles.text.infoValue}>{productoSeleccionado.notas}</Text>
               </View>
             )}
           </View>
 
           {/* Sección de Documentos */}
-          <View style={styles.documentosSection}>
-            <View style={styles.documentosHeader}>
-              <Ionicons name="document-text" size={24} color="#e77573" />
-              <Text style={styles.documentosTitulo}>Documentos</Text>
+          <View style={[AppStyles.cards.base, { marginBottom: 20 }]}>
+            <View style={AppStyles.containers.row}>
+              <Ionicons name="document-text" size={24} color={AppStyles.colors.primary} />
+              <ThemedText style={[AppStyles.text.cardTitle, { marginLeft: AppStyles.spacing.md }]}>Documentos</ThemedText>
             </View>
 
             {cargandoDocumentos ? (
-              <Text style={styles.cargandoTexto}>Cargando documentos...</Text>
+              <Text style={AppStyles.misc.loadingText}>Cargando documentos...</Text>
             ) : documentos.length === 0 ? (
-              <Text style={styles.noDocumentosTexto}>
+              <Text style={{ fontSize: 14, color: '#888', textAlign: 'center', paddingVertical: 20, fontStyle: 'italic' }}>
                 No hay documentos asociados a este producto
               </Text>
             ) : (
-              <View style={styles.documentosList}>
+              <View style={{ gap: 12, marginTop: 12 }}>
                 {documentos.map((doc, index) => {
-                  // Manejar ambos formatos de ID (documentoid o DocumentoID)
                   const docId = doc.documentoid || doc.DocumentoID;
-                  // Manejar ambos formatos de URL (url_gcs o URL_GCS)
                   const urlGCS = doc.url_gcs || doc.URL_GCS || '';
-                  // Manejar ambos formatos de nombrearchivo
                   const nombreArchivo = doc.nombrearchivo || doc.NombreArchivo || 'Archivo';
-                  // Manejar ambos formatos de content_type
                   const contentType = doc.content_type || doc.ContentType;
-                  // Manejar ambos formatos de size_bytes
                   const sizeBytes = doc.size_bytes || doc.SizeBytes;
-                  // Manejar ambos formatos de fecha_subida
                   const fechaSubida = doc.fecha_subida || doc.FechaSubida || new Date().toISOString();
                   
                   return (
-                    <View key={docId || `doc-${index}`} style={styles.documentoItem}>
-                      <View style={styles.documentoInfo}>
+                    <View key={docId || `doc-${index}`} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 12, backgroundColor: '#f8f9fa', borderRadius: 8, borderWidth: 1, borderColor: '#e0e0e0' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 }}>
                         <Ionicons 
                           name={documentoService.isImage(contentType, nombreArchivo) ? "image" : "document"} 
                           size={24} 
-                          color="#e77573" 
+                          color={AppStyles.colors.primary} 
                         />
-                        <View style={styles.documentoTexto}>
-                          <Text style={styles.documentoNombre} numberOfLines={1}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 15, fontWeight: '600', color: '#222', marginBottom: 4 }} numberOfLines={1}>
                             {nombreArchivo}
                           </Text>
-                          <Text style={styles.documentoFecha}>
+                          <Text style={{ fontSize: 12, color: '#666' }}>
                             {new Date(fechaSubida).toLocaleDateString()} • {documentoService.formatFileSize(sizeBytes)}
                           </Text>
                         </View>
                       </View>
-                      <View style={styles.documentoAcciones}>
+                      <View style={{ flexDirection: 'row', gap: 12 }}>
                         <TouchableOpacity 
                           onPress={() => handleVerDocumento(urlGCS)}
-                          style={styles.botonIcono}
+                          style={{ padding: 8 }}
                           disabled={!urlGCS}
                         >
                           <Ionicons name="eye" size={20} color={urlGCS ? "#4CAF50" : "#ccc"} />
                         </TouchableOpacity>
                         <TouchableOpacity 
                           onPress={() => handleEliminarDocumento(docId)}
-                          style={styles.botonIcono}
+                          style={{ padding: 8 }}
                         >
                           <Ionicons name="trash" size={20} color="#f44336" />
                         </TouchableOpacity>
@@ -417,30 +411,32 @@ const handleEditarProducto = (producto: Producto) => {
             )}
 
             <TouchableOpacity 
-              style={styles.botonSubirDocumento}
+              style={[AppStyles.buttons.primary, { marginTop: 16 }]}
               onPress={handleSubirDocumento}
             >
-              <Ionicons name="cloud-upload" size={20} color="#fff" />
-              <Text style={styles.botonSubirTexto}>Subir Documento</Text>
+              <View style={AppStyles.containers.row}>
+                <Ionicons name="cloud-upload" size={20} color={AppStyles.colors.textLight} />
+                <Text style={[AppStyles.text.buttonText, { marginLeft: AppStyles.spacing.md }]}>Subir Documento</Text>
+              </View>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.accionesContainer}>
+          <View style={AppStyles.cards.base}>
             {/* Boton de Editar */}
             <TouchableOpacity 
-              style={styles.botonEditar}
+              style={[AppStyles.buttons.edit, { marginBottom: AppStyles.spacing.md }]}
               onPress={() => {handleEditarProducto(productoSeleccionado);}}
             >
-              <Ionicons name="create" size={20} color="#fff" />
-              <Text style={styles.botonEditarTexto}>Editar Producto</Text>
+              <Ionicons name="create" size={20} color={AppStyles.colors.textLight} />
+              <Text style={[AppStyles.text.buttonText, { marginLeft: AppStyles.spacing.md }]}>Editar Producto</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={styles.botonEliminar}
+              style={AppStyles.buttons.danger}
               onPress={() => handleEliminarProducto(productoSeleccionado)}
             >
-              <Ionicons name="trash" size={20} color="#fff" />
-              <Text style={styles.botonEliminarTexto}>Eliminar</Text>
+              <Ionicons name="trash" size={20} color={AppStyles.colors.textLight} />
+              <Text style={[AppStyles.text.buttonText, { marginLeft: AppStyles.spacing.md }]}>Eliminar</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -449,390 +445,100 @@ const handleEditarProducto = (producto: Producto) => {
   }
 
   return (
-    <View style={styles.container}>
-      <ThemedText type="title" style={styles.titulo}>
+    <View style={AppStyles.containers.page}>
+      <ThemedText type="title" style={{ fontSize: 20, textAlign: 'center', marginTop: 40, marginBottom: 24 }}>
         Tus Productos
       </ThemedText>
 
       {/* Mostrar loading mientras se verifica autenticación */}
       {authState.isLoading ? (
-        <View style={styles.sinProductosContainer}>
+        <View style={AppStyles.containers.centered}>
           <MaterialCommunityIcons name="loading" size={64} color="#ccc" />
-          <Text style={styles.sinProductosTexto}>
+          <Text style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>
             Verificando autenticación...
           </Text>
         </View>
       ) : !authState.isAuthenticated ? (
-        <View style={styles.sinProductosContainer}>
+        <View style={AppStyles.containers.centered}>
           <MaterialCommunityIcons name="account-alert" size={64} color="#ccc" />
-          <Text style={styles.sinProductosTexto}>
+          <Text style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>
             Necesitas iniciar sesión
           </Text>
-          <Text style={styles.sinProductosSubtexto}>
+          <Text style={[AppStyles.text.emptyStateSubtitle, { marginTop: AppStyles.spacing.md }]}>
             Ve a la sección de login para acceder a tus productos
           </Text>
         </View>
       ) : cargando ? (
-        <View style={styles.sinProductosContainer}>
+        <View style={AppStyles.containers.centered}>
           <MaterialCommunityIcons name="loading" size={64} color="#ccc" />
-          <Text style={styles.sinProductosTexto}>
+          <Text style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>
             Cargando productos...
           </Text>
         </View>
       ) : productos.length === 0 ? (
-        <View style={styles.sinProductosContainer}>
+        <View style={AppStyles.containers.centered}>
           <MaterialCommunityIcons name="package-variant" size={64} color="#ccc" />
-          <Text style={styles.sinProductosTexto}>
+          <Text style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>
             Aún no has registrado productos
           </Text>
-          <Text style={styles.sinProductosSubtexto}>
+          <Text style={[AppStyles.text.emptyStateSubtitle, { marginTop: AppStyles.spacing.md }]}>
             Puedes añadirlos en la sección de agregar producto
           </Text>
           
           <TouchableOpacity 
-            style={styles.botonAgregar} 
+            style={[AppStyles.buttons.primary, { marginTop: AppStyles.spacing.xl }]}
             onPress={handleAgregarProducto}
             testID='boton-agregar-producto'
           >
-            <Ionicons name="add" size={24} color="#fff" />
-            <Text style={styles.botonAgregarTexto}>Agregar Producto</Text>
+            <View style={AppStyles.containers.row}>
+              <Ionicons name="add" size={24} color={AppStyles.colors.textLight} />
+              <Text style={[AppStyles.text.buttonText, { marginLeft: AppStyles.spacing.md }]}>Agregar Producto</Text>
+            </View>
           </TouchableOpacity>
         </View>
       ) : (
-        <ScrollView style={styles.scrollContainer}>
-          <View style={styles.cardsContainer}>
+        <ScrollView style={{ flex: 1 }}>
+          <View style={{ width: '100%', gap: 16, marginBottom: 24 }}>
             {productos.map((producto) => (
-              // Cambio: Era "ProductoID" → Ahora "id_producto" (UUID)
               <TouchableOpacity 
                 key={producto.id_producto}
-                style={styles.card}
+                style={AppStyles.cards.interactive}
                 onPress={() => handleVerProducto(producto)}
                 testID={`tarjeta-producto-${producto.id_producto}`}
               >
-                <View style={styles.cardContent}>
+                <View style={AppStyles.containers.row}>
                   <MaterialCommunityIcons 
                     name="package-variant" 
                     size={24} 
-                    color="#e77573" 
+                    color={AppStyles.colors.primary} 
                   />
-                  <Text style={styles.cardText}>{producto.nombre}</Text>
+                  <Text style={AppStyles.text.cardText}>{producto.nombre}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={24} color="#e77573" />
+                <Ionicons name="chevron-forward" size={24} color={AppStyles.colors.primary} />
               </TouchableOpacity>
             ))}
           </View>
 
           <TouchableOpacity 
-            style={styles.botonAgregarSecundario}
+            style={[AppStyles.buttons.secondary, { marginBottom: 24 }]}
             onPress={handleAgregarProducto}
           >
-            <Ionicons name="add-circle-outline" size={24} color="#e77573" />
-            <Text style={styles.botonAgregarSecundarioTexto}>Agregar otro producto</Text>
+            <Ionicons name="add-circle-outline" size={24} color={AppStyles.colors.primary} />
+            <Text style={[AppStyles.text.cardText, { color: AppStyles.colors.primary, marginLeft: AppStyles.spacing.md }]}>Agregar otro producto</Text>
           </TouchableOpacity>
         </ScrollView>
       )}
 
       {/* BOTÓN DE AYUDA - TUTORIAL */}
       <TouchableOpacity
-        style={styles.botonAyuda}
+        style={AppStyles.buttons.fab}
         onPress={handleAbrirTutorial}
         >
-          <Ionicons name="help" size={40} color="#fff" />
+          <Ionicons name="help" size={40} color={AppStyles.colors.textLight} />
         </TouchableOpacity>
 
     </View>
   );
 };
-
-// Los estilos se mantienen igual que en el código anterior
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#a8cbf0',
-    padding: 24,
-  },
-  scrollContainer: {
-    flex: 1,
-  },
-  titulo: {
-    fontSize: 20,
-    textAlign: 'center',
-    marginTop: 40,
-    marginBottom: 24,
-  },
-  centeredContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cargandoTexto: {
-    fontSize: 16,
-    color: '#666',
-  },
-  cardsContainer: {
-    width: '100%',
-    gap: 16,
-    marginBottom: 24,
-  },
-  card: {
-    backgroundColor: '#ffffffff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 18,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
-  },
-  cardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  cardText: {
-    color: '#222',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  botonVolver: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    padding: 10,
-  },
-  botonVolverTexto: {
-    color: '#e77573',
-    fontSize: 16,
-    marginLeft: 8,
-    fontWeight: '600',
-  },
-  detalleContainer: {
-    flex: 1,
-  },
-  detalleHeader: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  detalleTitulo: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#222',
-    marginTop: 16,
-    textAlign: 'center',
-  },
-  detalleInfo: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  infoLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
-  },
-  infoValue: {
-    fontSize: 16,
-    color: '#222',
-    textAlign: 'right',
-    flex: 1,
-    marginLeft: 10,
-  },
-  documentosSection: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 20,
-  },
-  documentosHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    gap: 10,
-  },
-  documentosTitulo: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#222',
-  },
-  noDocumentosTexto: {
-    fontSize: 14,
-    color: '#888',
-    textAlign: 'center',
-    paddingVertical: 20,
-    fontStyle: 'italic',
-  },
-  documentosList: {
-    gap: 12,
-  },
-  documentoItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  documentoInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: 12,
-  },
-  documentoTexto: {
-    flex: 1,
-  },
-  documentoNombre: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#222',
-    marginBottom: 4,
-  },
-  documentoFecha: {
-    fontSize: 12,
-    color: '#666',
-  },
-  documentoAcciones: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  botonIcono: {
-    padding: 8,
-  },
-  botonSubirDocumento: {
-    backgroundColor: '#e77573',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    gap: 8,
-    marginTop: 16,
-  },
-  botonSubirTexto: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  accionesContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-  },
-  botonEliminar: {
-    backgroundColor: '#dc3545',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    gap: 8,
-  },
-  botonEliminarTexto: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  sinProductosContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  sinProductosTexto: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#666',
-    marginTop: 16,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  sinProductosSubtexto: {
-    fontSize: 14,
-    color: '#888',
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  botonAgregar: {
-    backgroundColor: '#1976d2',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    gap: 8,
-  },
-  botonAgregarTexto: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  botonAgregarSecundario: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: '#e77573',
-    backgroundColor: '#fff',
-  },
-  botonAgregarSecundarioTexto: {
-    color: '#222',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  botonEditar: {
-    backgroundColor: '#1b23faff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    gap: 8,
-  },
-  botonEditarTexto: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  //Botón ayuda
-botonAyuda: {
-  position: "absolute",
-  right: 20,
-  bottom: 20,
-  backgroundColor: "#e77573",
-  width: 60,
-  height: 60,
-  borderRadius: 50,
-  justifyContent: "center",
-  alignItems: "center",
-  elevation: 8,
-  shadowColor: "#000",
-  shadowOpacity: 0.3,
-  shadowRadius: 4,
-  shadowOffset: { width: 0, height: 2 },
-}
-});
 
 export default Inicio;

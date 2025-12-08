@@ -1,3 +1,4 @@
+import { AppStyles, ThemedText } from "@/components";
 import { useAuth } from "@/src/hooks/useAuth";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
@@ -9,8 +10,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
   View
@@ -201,55 +200,55 @@ export default function LoginScreen() {
 
   if (authState.isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Verificando autenticación...</Text>
+      <View style={AppStyles.containers.centered}>
+        <ActivityIndicator size="large" color={AppStyles.colors.primary} />
+        <ThemedText style={AppStyles.misc.loadingText}>Verificando autenticación...</ThemedText>
       </View>
     );
   }
 
   return (
     <KeyboardAvoidingView 
-      style={styles.container} 
+      style={{ flex: 1, backgroundColor: AppStyles.colors.background }} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.content}>
+        <View style={{ padding: 20 }}>
           <Image 
             source={require('@/assets/images/logoMisBoletas.jpeg')} 
-            style={styles.imagenLogo} 
+            style={AppStyles.misc.logo} 
           />
-          <Text style={styles.title}>Iniciar Sesión</Text>
-          <Text style={styles.subtitle}>Ingresa a tu cuenta de Mis Boletas</Text>
+          <ThemedText style={[AppStyles.text.detailTitle, { marginBottom: 10 }]}>Iniciar Sesión</ThemedText>
+          <ThemedText style={[AppStyles.text.cardSubtitle, { textAlign: "center", marginBottom: 30 }]}>Ingresa a tu cuenta de Mis Boletas</ThemedText>
           
-          <View style={styles.modoContainer}>
-            <Text style={styles.modoText}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15, backgroundColor: '#fff', padding: 15, borderRadius: 10, borderWidth: 1, borderColor: '#ddd' }}>
+            <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#666' }}>
               Modo: {usarBackend ? 'Backend' : 'Base de Datos Local'}
-            </Text>
+            </ThemedText>
             <TouchableOpacity 
-              style={styles.toggleButton}
+              style={{ backgroundColor: '#FFA500', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6 }}
               onPress={toggleModoAutenticacion}
             >
-              <Text style={styles.toggleButtonText}>
+              <ThemedText style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>
                 {usarBackend ? 'Usar BD Local' : 'Usar Backend'}
-              </Text>
+              </ThemedText>
             </TouchableOpacity>
           </View>
 
           {!usarBackend && (
             <TouchableOpacity 
-              style={styles.infoButton}
+              style={{ backgroundColor: '#6c757d', padding: 12, borderRadius: 8, marginBottom: 15, alignItems: 'center' }}
               onPress={mostrarUsuariosPrueba}
             >
-              <Text style={styles.infoButtonText}>👥 Ver Usuarios de Prueba</Text>
+              <ThemedText style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>👥 Ver Usuarios de Prueba</ThemedText>
             </TouchableOpacity>
           )}
           
           <TextInput
-            style={styles.input}
+            style={AppStyles.inputs.base}
             placeholder="Correo electrónico"
             placeholderTextColor="#999"
             value={correo}
@@ -261,7 +260,7 @@ export default function LoginScreen() {
           />
           
           <TextInput
-            style={styles.input}
+            style={AppStyles.inputs.base}
             placeholder="Contraseña"
             placeholderTextColor="#999"
             secureTextEntry
@@ -271,161 +270,33 @@ export default function LoginScreen() {
           />
           
           <TouchableOpacity 
-            style={[styles.button, styles.loginButton]} 
+            style={AppStyles.buttons.primary} 
             onPress={handleLogin}
             disabled={authState.isLoading}
           >
-            <Text style={styles.loginButtonText}>
+            <ThemedText style={AppStyles.text.buttonText}>
               {authState.isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
-            </Text>
+            </ThemedText>
           </TouchableOpacity>
           
           <TouchableOpacity 
-            style={[styles.button, styles.registerButton]} 
+            style={[AppStyles.buttons.secondary, { marginBottom: 10 }]} 
             onPress={handleRegister}
             disabled={authState.isLoading}
           >
-            <Text style={styles.registerButtonText}>
+            <ThemedText style={[AppStyles.text.cardText, { color: AppStyles.colors.primary }]}>
               {usarBackend ? "Crear cuenta nueva" : "Registrarse (Local)"}
-            </Text>
+            </ThemedText>
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={styles.forgotPasswordButton}
-            onPress={() => router.push('/forgot-password')}
+            style={{ marginTop: 15, alignItems: 'center' }}
+            onPress={() => router.push('./forgot-password')}
           >
-            <Text style={styles.forgotPasswordText}>¿Olvidaste tu contraseña?</Text>
+            <ThemedText style={{ color: '#667eea', fontSize: 14, fontWeight: '500' }}>¿Olvidaste tu contraseña?</ThemedText>
           </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#a8cbf0" 
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: "center",
-  },
-  content: {
-    padding: 20,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#a8cbf0"
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: "#666"
-  },
-  imagenLogo: {
-    width: 140,
-    height: 140,
-    marginBottom: 20,
-    alignSelf: 'center',
-    borderRadius: 70,    
-    resizeMode: 'cover',
-  },
-  title: { 
-    fontSize: 28, 
-    fontWeight: "bold", 
-    marginBottom: 10, 
-    textAlign: "center",
-    color: "#333"
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 30,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    padding: 15,
-    marginBottom: 15,
-    borderRadius: 10,
-    backgroundColor: "white",
-    fontSize: 16,
-    color: "#333"
-  },
-  button: {
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-    alignItems: "center",
-  },
-  loginButton: {
-    backgroundColor: "#e77573",
-  },
-  registerButton: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#e77573"
-  },
-  loginButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  registerButtonText: {
-    color: "#e77573",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  modoContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ddd'
-  },
-  modoText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666'
-  },
-  toggleButton: {
-    backgroundColor: '#FFA500',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6
-  },
-  toggleButtonText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600'
-  },
-  infoButton: {
-    backgroundColor: '#6c757d',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 15,
-    alignItems: 'center'
-  },
-  forgotPasswordButton: {
-    marginTop: 15,
-    alignItems: 'center',
-  },
-  forgotPasswordText: {
-    color: '#667eea',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  infoButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600'
-  },
-});

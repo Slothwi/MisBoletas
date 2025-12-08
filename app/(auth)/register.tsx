@@ -1,18 +1,17 @@
 // app/(auth)/register.tsx
+import { AppStyles, ThemedText } from '@/components';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useRouter } from 'expo-router';
-import React, { useState, useEffect } from 'react';
-import { 
-  Alert, 
-  ScrollView, 
-  StyleSheet, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  View,
-  KeyboardAvoidingView,
-  Platform,
-  Image
+import React, { useEffect, useState } from 'react';
+import {
+    Alert,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 
 export default function RegisterScreen() {
@@ -92,25 +91,25 @@ export default function RegisterScreen() {
 
   return (
     <KeyboardAvoidingView 
-      style={styles.container} 
+      style={{ flex: 1, backgroundColor: AppStyles.colors.background }} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView 
-        contentContainerStyle={styles.scrollContainer}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.content}>
+        <View style={{ padding: 20 }}>
           <Image 
             source={require('@/assets/images/logoMisBoletas.jpeg')} 
-            style={styles.imagenLogo} 
+            style={AppStyles.misc.logo} 
           />
-          <Text style={styles.title}>Crear Cuenta</Text>
-          <Text style={styles.subtitle}>Únete a Mis Boletas</Text>
+          <ThemedText style={[AppStyles.text.detailTitle, { marginBottom: 10 }]}>Crear Cuenta</ThemedText>
+          <ThemedText style={[AppStyles.text.cardSubtitle, { textAlign: 'center', marginBottom: 30 }]}>Únete a Mis Boletas</ThemedText>
           
-          <View style={styles.form}>
-            <Text style={styles.label}>Nombre *</Text>
+          <View style={{ width: '100%' }}>
+            <ThemedText style={AppStyles.text.label}>Nombre *</ThemedText>
             <TextInput
-              style={styles.input}
+              style={AppStyles.inputs.base}
               placeholder="Tu nombre completo"
               placeholderTextColor="#999"
               value={formData.nombre}
@@ -119,9 +118,9 @@ export default function RegisterScreen() {
               editable={!authState.isLoading}
             />
 
-            <Text style={styles.label}>Correo electrónico *</Text>
+            <ThemedText style={AppStyles.text.label}>Correo electrónico *</ThemedText>
             <TextInput
-              style={styles.input}
+              style={AppStyles.inputs.base}
               placeholder="tu@correo.com"
               placeholderTextColor="#999"
               value={formData.correo}
@@ -132,9 +131,9 @@ export default function RegisterScreen() {
               editable={!authState.isLoading}
             />
 
-            <Text style={styles.label}>Contraseña *</Text>
+            <ThemedText style={AppStyles.text.label}>Contraseña *</ThemedText>
             <TextInput
-              style={styles.input}
+              style={AppStyles.inputs.base}
               placeholder="Mínimo 6 caracteres"
               placeholderTextColor="#999"
               value={formData.contrasena}
@@ -143,9 +142,9 @@ export default function RegisterScreen() {
               editable={!authState.isLoading}
             />
 
-            <Text style={styles.label}>Confirmar Contraseña *</Text>
+            <ThemedText style={AppStyles.text.label}>Confirmar Contraseña *</ThemedText>
             <TextInput
-              style={styles.input}
+              style={AppStyles.inputs.base}
               placeholder="Repite tu contraseña"
               placeholderTextColor="#999"
               value={formData.confirmPassword}
@@ -155,21 +154,21 @@ export default function RegisterScreen() {
             />
 
             <TouchableOpacity 
-              style={[styles.button, authState.isLoading && styles.buttonDisabled]}
+              style={[AppStyles.buttons.primary, authState.isLoading && AppStyles.buttons.disabled]}
               onPress={handleRegister}
               disabled={authState.isLoading}
             >
-              <Text style={styles.buttonText}>
+              <ThemedText style={AppStyles.text.buttonText}>
                 {authState.isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
-              </Text>
+              </ThemedText>
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={styles.linkButton}
+              style={{ marginTop: 15, padding: 10, alignItems: 'center' }}
               onPress={() => router.push('/login')}
               disabled={authState.isLoading}
             >
-              <Text style={styles.linkText}>¿Ya tienes cuenta? Inicia sesión</Text>
+              <ThemedText style={{ color: '#333', fontSize: 14, fontWeight: '500' }}>¿Ya tienes cuenta? Inicia sesión</ThemedText>
             </TouchableOpacity>
           </View>
         </View>
@@ -177,82 +176,3 @@ export default function RegisterScreen() {
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#a8cbf0',
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: 'center',
-  },
-  content: {
-    padding: 20,
-  },
-  imagenLogo: {
-    width: 120,
-    height: 120,
-    marginBottom: 20,
-    alignSelf: 'center',
-    borderRadius: 60,    
-    resizeMode: 'cover',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
-    color: '#333',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 30,
-  },
-  form: {
-    width: '100%',
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 5,
-    color: '#333',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 15,
-    marginBottom: 15,
-    borderRadius: 10,
-    backgroundColor: 'white',
-    fontSize: 16,
-    color: '#333',
-  },
-  button: {
-    backgroundColor: '#e77573',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonDisabled: {
-    backgroundColor: '#CCCCCC',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  linkButton: {
-    marginTop: 15,
-    padding: 10,
-    alignItems: 'center',
-  },
-  linkText: {
-    color: '#333',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-});

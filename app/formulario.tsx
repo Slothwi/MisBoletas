@@ -1,4 +1,4 @@
-import { ThemedText } from '@/components/ThemedText';
+import { AppStyles, ThemedText } from "@/components";
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -8,8 +8,6 @@ import {
   Alert,
   Platform,
   ScrollView,
-  StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
   View
@@ -31,16 +29,16 @@ const SelectCategoria = (props: {
 
   if (props.cargando) {
     return (
-      <View style={styles.picker}>
-        <Text style={{ fontSize: 16, color: '#999' }}>Cargando categorías...</Text>
+      <View style={AppStyles.pickers.base}>
+        <ThemedText style={AppStyles.text.helperText}>Cargando categorías...</ThemedText>
       </View>
     );
   }
 
   if (props.categorias.length === 0) {
     return (
-      <View style={styles.picker}>
-        <Text style={{ fontSize: 16, color: '#999' }}>No hay categorías creadas</Text>
+      <View style={AppStyles.pickers.base}>
+        <ThemedText style={AppStyles.text.helperText}>No hay categorías creadas</ThemedText>
       </View>
     );
   }
@@ -48,7 +46,7 @@ const SelectCategoria = (props: {
   return (
     <View style={{ flex: 1 }}>
       <TouchableOpacity 
-        style={styles.picker}
+        style={AppStyles.pickers.base}
         onPress={() => setMostrarOpciones(!mostrarOpciones)}
       >
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -59,37 +57,35 @@ const SelectCategoria = (props: {
                   width: 12, 
                   height: 12, 
                   borderRadius: 6, 
-                  backgroundColor: props.categoriaSeleccionada.color,  // Cambio: Era "Color" → Ahora "color"
+                  backgroundColor: props.categoriaSeleccionada.color,
                   marginRight: 8 
                 }} 
               />
             )}
-            <Text style={{ 
+            <ThemedText style={{ 
               fontSize: 16, 
-              color: props.categoriaSeleccionada ? '#000' : '#999' 
+              color: props.categoriaSeleccionada ? AppStyles.colors.textDark : '#999' 
             }}>
-              {props.categoriaSeleccionada?.nombre || 'Seleccionar categoría...'}  {/* Cambio: Era "NombreCategoria" → Ahora "nombre" */}
-            </Text>
+              {props.categoriaSeleccionada?.nombre || 'Seleccionar categoría...'}
+            </ThemedText>
           </View>
           <Ionicons 
             name={mostrarOpciones ? "chevron-up" : "chevron-down"} 
             size={20} 
-            color="#e77573" 
+            color={AppStyles.colors.primary} 
           />
         </View>
       </TouchableOpacity>
 
       {mostrarOpciones && (
-        <View style={styles.opcionesContainer}>
-          <ScrollView style={styles.opcionesScroll}>
+        <View style={AppStyles.pickers.optionsContainer}>
+          <ScrollView style={AppStyles.pickers.optionsScroll}>
             {props.categorias.map((categoria) => (
-              // Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID)
               <TouchableOpacity
                 key={categoria.id_categoria}
                 style={[
-                  styles.opcionItem,
-                  // Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID)
-                  props.categoriaSeleccionada?.id_categoria === categoria.id_categoria && styles.opcionSeleccionada
+                  AppStyles.pickers.optionItem,
+                  props.categoriaSeleccionada?.id_categoria === categoria.id_categoria && AppStyles.pickers.optionItemSelected
                 ]}
                 onPress={() => {
                   props.onChange(categoria);
@@ -97,7 +93,6 @@ const SelectCategoria = (props: {
                 }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  {/* Cambio: Era "Color" → Ahora "color" */}
                   <View 
                     style={{ 
                       width: 12, 
@@ -107,14 +102,12 @@ const SelectCategoria = (props: {
                       marginRight: 10 
                     }} 
                   />
-                  <Text style={[
-                    styles.opcionText,
-                    // Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID)
-                    props.categoriaSeleccionada?.id_categoria === categoria.id_categoria && styles.opcionTextSeleccionada
+                  <ThemedText style={[
+                    AppStyles.text.cardText,
+                    props.categoriaSeleccionada?.id_categoria === categoria.id_categoria && { color: AppStyles.colors.primary }
                   ]}>
-                    {/* Cambio: Era "NombreCategoria" → Ahora "nombre" */}
                     {categoria.nombre}
-                  </Text>
+                  </ThemedText>
                 </View>
               </TouchableOpacity>
             ))}
@@ -209,7 +202,7 @@ function BasicExample() {
         
         Alert.alert(
           '📎 Archivo seleccionado',
-          `${tipoLabel}\n${fileName}\n${documentoService.formatFileSize(asset.fileSize)}`,
+          `${tipoLabel}\n${fileName}\n${documentoService.formatFileSize(asset.size)}`,
           [{ text: 'OK' }]
         );
       }
@@ -356,20 +349,20 @@ function BasicExample() {
   };
 
   return (
-    <ScrollView style={styles.scrollWrapper}>
-      <View style={styles.formWrapper}>
+    <ScrollView style={AppStyles.containers.scrollPage}>
+      <View style={AppStyles.containers.pageContent}>
         <TouchableOpacity 
-          style={styles.botonVolver}
+          style={AppStyles.misc.backButton}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color="#e77573" />
-          <ThemedText style={styles.botonVolverTexto}>Volver</ThemedText>
+          <Ionicons name="arrow-back" size={24} color={AppStyles.colors.primary} />
+          <ThemedText style={AppStyles.misc.backButtonText}>Volver</ThemedText>
         </TouchableOpacity>
-        <View style={styles.form}>
-          <View style={styles.stepContainer}>
-            <Text style={styles.titleText}>Nombre Producto</Text>
+        <View style={AppStyles.cards.base}>
+          <View style={AppStyles.inputs.container}>
+            <ThemedText style={AppStyles.text.label}>Nombre Producto</ThemedText>
             <TextInput
-              style={styles.input}
+              style={AppStyles.inputs.base}
               placeholder="Ingrese nombre del producto"
               placeholderTextColor="#999"
               value={nombreProducto}
@@ -377,12 +370,12 @@ function BasicExample() {
             />
           </View>
           
-          <View style={styles.stepContainer}>
-            <Text style={styles.titleText}>Fecha de compra</Text>
+          <View style={AppStyles.inputs.container}>
+            <ThemedText style={AppStyles.text.label}>Fecha de compra</ThemedText>
             <TouchableOpacity onPress={() => setShowDatePicker(true)}>
               <View style={{ position: 'relative' }}>
                 <TextInput
-                  style={styles.input}
+                  style={AppStyles.inputs.base}
                   value={fechaCompra ? formatDate(fechaCompra) : ''}
                   editable={false}
                   placeholder="DD/MM/AAAA"
@@ -392,7 +385,7 @@ function BasicExample() {
                 <Ionicons
                   name="calendar-outline"
                   size={20}
-                  color="#e77573"
+                  color={AppStyles.colors.primary}
                   style={{ position: 'absolute', right: 12, top: 14 }}
                 />
               </View>
@@ -413,10 +406,10 @@ function BasicExample() {
             )}
           </View>
 
-          <View style={styles.stepContainer}>
-            <Text style={styles.titleText}>Duración Garantía</Text>
+          <View style={AppStyles.inputs.container}>
+            <ThemedText style={AppStyles.text.label}>Duración Garantía</ThemedText>
             <TextInput
-              style={styles.input}
+              style={AppStyles.inputs.base}
               placeholder="Meses de garantía"
               placeholderTextColor="#999"
               keyboardType="numeric"
@@ -425,10 +418,10 @@ function BasicExample() {
             />
           </View>
           
-          <View style={styles.stepContainer}>
-            <Text style={styles.titleText}>Marca</Text>
+          <View style={AppStyles.inputs.container}>
+            <ThemedText style={AppStyles.text.label}>Marca</ThemedText>
             <TextInput
-              style={styles.input}
+              style={AppStyles.inputs.base}
               placeholder="Marca del producto"
               placeholderTextColor="#999"
               value={marca}
@@ -436,10 +429,10 @@ function BasicExample() {
             />
           </View>
           
-          <View style={styles.stepContainer}>
-            <Text style={styles.titleText}>Modelo</Text>
+          <View style={AppStyles.inputs.container}>
+            <ThemedText style={AppStyles.text.label}>Modelo</ThemedText>
             <TextInput
-              style={styles.input}
+              style={AppStyles.inputs.base}
               placeholder="Modelo del producto"
               placeholderTextColor="#999"
               value={modelo}
@@ -447,8 +440,8 @@ function BasicExample() {
             />
           </View>
           
-          <View style={styles.stepContainer}>
-            <Text style={styles.titleText}>Categoría</Text>
+          <View style={AppStyles.inputs.container}>
+            <ThemedText style={AppStyles.text.label}>Categoría</ThemedText>
             <SelectCategoria 
               categorias={categorias}
               categoriaSeleccionada={categoriaSeleccionada}
@@ -457,10 +450,10 @@ function BasicExample() {
             />
           </View>
           
-          <View style={styles.stepContainer}>
-            <Text style={styles.titleText}>Tienda</Text>
+          <View style={AppStyles.inputs.container}>
+            <ThemedText style={AppStyles.text.label}>Tienda</ThemedText>
             <TextInput
-              style={styles.input}
+              style={AppStyles.inputs.base}
               placeholder="Tienda de compra"
               placeholderTextColor="#999"
               value={tienda}
@@ -468,10 +461,10 @@ function BasicExample() {
             />
           </View>
 
-          <View style={styles.stepContainer}>
-            <Text style={styles.titleText}>Notas</Text>
+          <View style={AppStyles.inputs.container}>
+            <ThemedText style={AppStyles.text.label}>Notas</ThemedText>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[AppStyles.inputs.base, { minHeight: 100, textAlignVertical: 'top' }]}
               placeholder="Observaciones del producto"
               placeholderTextColor="#999"
               value={notas}
@@ -480,109 +473,109 @@ function BasicExample() {
               multiline
               numberOfLines={4}
             />
-            <Text style={styles.charCounter}>
+            <ThemedText style={AppStyles.text.helperText}>
               {notas.length}/{MAX_LENGTH} caracteres usados {"\n"}
-              Te quedan <Text style={styles.charRemaining}>{MAX_LENGTH - notas.length}</Text> caracteres
-            </Text>
+              Te quedan {MAX_LENGTH - notas.length} caracteres
+            </ThemedText>
           </View>
           
-          <View style={styles.stepContainer}>
-            <Text style={styles.titleText}>Documentos</Text>
+          <View style={AppStyles.inputs.container}>
+            <ThemedText style={AppStyles.text.label}>Documentos</ThemedText>
             
-            <View style={styles.documentSection}>
-              <Text style={styles.sectionLabel}>Boleta</Text>
+            <View style={{ marginBottom: AppStyles.spacing.md }}>
+              <ThemedText style={AppStyles.text.helperText}>Boleta</ThemedText>
               <TouchableOpacity
                 onPress={() => handleFileClick('boleta')}
                 style={[
-                  styles.docButton,
-                  archivoSeleccionado?.tipoDocumento === 'boleta' && styles.docButtonSelected
+                  AppStyles.buttons.secondary,
+                  archivoSeleccionado?.tipoDocumento === 'boleta' && { backgroundColor: '#4CAF50' }
                 ]}
               >
                 <Ionicons 
                   name="receipt-outline" 
                   size={18} 
-                  color={archivoSeleccionado?.tipoDocumento === 'boleta' ? "#4CAF50" : "#999"} 
+                  color={archivoSeleccionado?.tipoDocumento === 'boleta' ? "white" : AppStyles.colors.textMuted} 
                   style={{ marginRight: 6 }}
                 />
-                <Text style={styles.docButtonText}>
+                <ThemedText style={AppStyles.text.buttonTextSmall}>
                   {archivoSeleccionado?.tipoDocumento === 'boleta' ? archivoSeleccionado.name : 'Subir boleta'}
-                </Text>
+                </ThemedText>
               </TouchableOpacity>
             </View>
 
-            <View style={styles.documentSection}>
-              <Text style={styles.sectionLabel}>Garantía</Text>
+            <View style={{ marginBottom: AppStyles.spacing.md }}>
+              <ThemedText style={AppStyles.text.helperText}>Garantía</ThemedText>
               <TouchableOpacity
                 onPress={() => handleFileClick('garantia')}
                 style={[
-                  styles.docButton,
-                  archivoSeleccionado?.tipoDocumento === 'garantia' && styles.docButtonSelected
+                  AppStyles.buttons.secondary,
+                  archivoSeleccionado?.tipoDocumento === 'garantia' && { backgroundColor: '#4CAF50' }
                 ]}
               >
                 <Ionicons 
                   name="shield-checkmark-outline" 
                   size={18} 
-                  color={archivoSeleccionado?.tipoDocumento === 'garantia' ? "#4CAF50" : "#999"} 
+                  color={archivoSeleccionado?.tipoDocumento === 'garantia' ? "white" : AppStyles.colors.textMuted} 
                   style={{ marginRight: 6 }}
                 />
-                <Text style={styles.docButtonText}>
+                <ThemedText style={AppStyles.text.buttonTextSmall}>
                   {archivoSeleccionado?.tipoDocumento === 'garantia' ? archivoSeleccionado.name : 'Subir póliza'}
-                </Text>
+                </ThemedText>
               </TouchableOpacity>
             </View>
 
-            <View style={styles.documentSection}>
-              <Text style={styles.sectionLabel}>Manual/Otro</Text>
+            <View style={{ marginBottom: AppStyles.spacing.md }}>
+              <ThemedText style={AppStyles.text.helperText}>Manual/Otro</ThemedText>
               <TouchableOpacity
                 onPress={() => handleFileClick('manual')}
                 style={[
-                  styles.docButton,
-                  archivoSeleccionado?.tipoDocumento === 'manual' && styles.docButtonSelected
+                  AppStyles.buttons.secondary,
+                  archivoSeleccionado?.tipoDocumento === 'manual' && { backgroundColor: '#4CAF50' }
                 ]}
               >
                 <Ionicons 
                   name="document-outline" 
                   size={18} 
-                  color={archivoSeleccionado?.tipoDocumento === 'manual' ? "#4CAF50" : "#999"} 
+                  color={archivoSeleccionado?.tipoDocumento === 'manual' ? "white" : AppStyles.colors.textMuted} 
                   style={{ marginRight: 6 }}
                 />
-                <Text style={styles.docButtonText}>
+                <ThemedText style={AppStyles.text.buttonTextSmall}>
                   {archivoSeleccionado?.tipoDocumento === 'manual' ? archivoSeleccionado.name : 'Subir documento'}
-                </Text>
+                </ThemedText>
               </TouchableOpacity>
             </View>
 
             {archivoSeleccionado && (
-              <Text style={styles.fileInfo}>
+              <ThemedText style={AppStyles.text.helperText}>
                 {documentoService.formatFileSize(archivoSeleccionado.size)}
-              </Text>
+              </ThemedText>
             )}
           </View>
 
           {/* Indicador de OCR procesándose */}
           {isProcessingOCR && (
-            <View style={styles.ocrIndicator}>
-              <Ionicons name="hourglass-outline" size={20} color="#e77573" />
-              <Text style={styles.ocrStatusText}>{ocrStatus || 'Procesando OCR...'}</Text>
+            <View style={AppStyles.states.focused}>
+              <Ionicons name="hourglass-outline" size={20} color={AppStyles.colors.primary} />
+              <ThemedText style={AppStyles.text.helperText}>{ocrStatus || 'Procesando OCR...'}</ThemedText>
             </View>
           )}
           
-          <View style={styles.buttonRow}>
+          <View style={{ flexDirection: 'row', gap: AppStyles.spacing.md, marginTop: AppStyles.spacing.lg }}>
             <TouchableOpacity 
-              style={[styles.button, styles.cancelButton]}
+              style={[AppStyles.buttons.secondary, { flex: 1 }]}
               onPress={handleCancelar}
               disabled={isLoading || isProcessingOCR}
             >
-              <Text style={styles.buttonText}>Cancelar</Text>
+              <ThemedText style={AppStyles.text.buttonText}>Cancelar</ThemedText>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={[styles.button, styles.saveButton, (isLoading || isProcessingOCR) && styles.buttonDisabled]}
+              style={[AppStyles.buttons.primary, { flex: 1 }, (isLoading || isProcessingOCR) && { opacity: 0.6 }]}
               onPress={handleGuardar}
               disabled={isLoading || isProcessingOCR}
             >
-              <Text style={styles.buttonText}>
+              <ThemedText style={AppStyles.text.buttonText}>
                 {isLoading ? 'Guardando...' : isProcessingOCR ? 'Procesando OCR...' : 'Guardar'}
-              </Text>
+              </ThemedText>
             </TouchableOpacity>
           </View>
         </View>
@@ -590,212 +583,5 @@ function BasicExample() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  scrollWrapper: {
-    flex: 1,
-    backgroundColor: '#f7f7f7',
-  },
-  formWrapper: {
-    padding: 16,
-    alignItems: 'center',
-  },
-  form: {
-    backgroundColor: '#a8cbf0', 
-    padding: 24,
-    borderRadius: 12,
-    width: '100%',
-    maxWidth: 400,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  titleText: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
-    color: '#222',
-  },
-  stepContainer: {
-    marginBottom: 16,
-  },
-  input: {
-    backgroundColor: 'white',
-    fontSize: 16,
-    padding: 12,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#ccc',
-  },
-  textArea: {
-    minHeight: 100,
-    textAlignVertical: 'top',
-  },
-  charCounter: {
-    fontSize: 14,
-    color: '#555',
-    marginTop: 4,
-  },
-  charRemaining: {
-    fontWeight: 'bold',
-  },
-  picker: {
-    backgroundColor: 'white',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 12,
-    justifyContent: 'center',
-  },
-  // ESTILOS AGREGADOS para el selector
-  opcionesContainer: {
-    marginTop: 5,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 6,
-    backgroundColor: 'white',
-    maxHeight: 200,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    zIndex: 1000, // NUEVO: Para que se muestre encima de otros elementos
-    position: 'relative', // NUEVO: Necesario para que funcione zIndex
-  },
-  opcionesScroll: {
-    maxHeight: 200,
-  },
-  opcionItem: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  opcionSeleccionada: {
-    backgroundColor: '#e3f2fd',
-  },
-  opcionText: {
-    fontSize: 16,
-    color: '#000',
-  },
-  opcionTextSeleccionada: {
-    color: '#1976d2',
-    fontWeight: '600',
-  },
-  documentSection: {
-    marginBottom: 12,
-  },
-  sectionLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 6,
-    fontWeight: '600',
-  },
-  docButton: {
-    backgroundColor: '#f5f5f5',
-    padding: 10,
-    borderRadius: 6,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  docButtonSelected: {
-    backgroundColor: '#e8f5e9',
-    borderColor: '#4CAF50',
-    borderWidth: 2,
-  },
-  docButtonText: {
-    color: '#333',
-    fontSize: 14,
-    flex: 1,
-  },
-  fileButton: {
-    backgroundColor: '#e77573',
-    padding: 12,
-    borderRadius: 6,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  fileButtonSelected: {
-    backgroundColor: '#4CAF50',
-    borderWidth: 2,
-    borderColor: '#388E3C',
-  },
-  fileButtonText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  fileButtonTextSelected: {
-    color: 'white',
-  },
-  fileInfo: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16,
-  },
-  button: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 6,
-    minWidth: 110,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: '#e77573',
-  },
-  saveButton: {
-    backgroundColor: '#e77573',
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  botonVolver: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    padding: 10,
-  },
-  botonVolverTexto: {
-    color: '#e77573',
-    fontSize: 16,
-    marginLeft: 8,
-    fontWeight: '600',
-  },
-  ocrIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginBottom: 16,
-    backgroundColor: '#FFF3CD',
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#e77573',
-  },
-  ocrStatusText: {
-    marginLeft: 10,
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#856404',
-  },
-});
 
 export default BasicExample;

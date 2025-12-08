@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, ScrollView } from 'react-native';
+import { AppStyles, ThemedText, ThemedView } from '@/components';
 import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -46,18 +47,18 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>🔐 Recuperar Contraseña</Text>
+    <ScrollView style={AppStyles.containers.scrollPage}>
+      <ThemedView style={[AppStyles.containers.pageContent, { paddingVertical: AppStyles.spacing.xl }]}>
+        <ThemedText style={AppStyles.text.detailTitle}>🔐 Recuperar Contraseña</ThemedText>
 
         {!enviado ? (
           <>
-            <Text style={styles.subtitle}>
+            <ThemedText style={[AppStyles.text.helperText, { marginTop: AppStyles.spacing.lg, marginBottom: AppStyles.spacing.xl, textAlign: 'center' }]}>
               Ingresa tu correo electrónico y te enviaremos un link para restablecer tu contraseña.
-            </Text>
+            </ThemedText>
 
             <TextInput
-              style={styles.input}
+              style={AppStyles.inputs.base}
               placeholder="tu@email.com"
               keyboardType="email-address"
               value={email}
@@ -67,124 +68,39 @@ export default function ForgotPasswordScreen() {
             />
 
             <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
+              style={[AppStyles.buttons.primary, { marginTop: AppStyles.spacing.lg }, loading && { opacity: 0.6 }]}
               onPress={handleRequest}
               disabled={loading}
             >
-              <Text style={styles.buttonText}>
+              <ThemedText style={AppStyles.text.buttonText}>
                 {loading ? 'Enviando...' : 'Enviar Link de Recuperación'}
-              </Text>
+              </ThemedText>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => router.back()}>
-              <Text style={styles.backLink}>← Volver al Login</Text>
+            <TouchableOpacity onPress={() => router.back()} style={{ marginTop: AppStyles.spacing.lg }}>
+              <ThemedText style={[AppStyles.text.helperText, { textAlign: 'center', color: AppStyles.colors.primary }]}>← Volver al Login</ThemedText>
             </TouchableOpacity>
           </>
         ) : (
-          <View style={styles.successContainer}>
-            <Text style={styles.successTitle}>✅ Email Enviado</Text>
-            <Text style={styles.successText}>
+          <ThemedView style={{ alignItems: 'center', marginTop: AppStyles.spacing.xl }}>
+            <ThemedText style={[AppStyles.text.detailTitle, { color: '#28a745' }]}>✅ Email Enviado</ThemedText>
+            <ThemedText style={[AppStyles.text.helperText, { marginTop: AppStyles.spacing.lg, textAlign: 'center' }]}>
               Hemos enviado un link de recuperación a:
-            </Text>
-            <Text style={styles.emailText}>{email}</Text>
-            <Text style={styles.successText}>
+            </ThemedText>
+            <ThemedText style={[AppStyles.text.label, { marginVertical: AppStyles.spacing.md, backgroundColor: AppStyles.colors.primaryLight, paddingVertical: AppStyles.spacing.md, paddingHorizontal: AppStyles.spacing.lg, borderRadius: 6, textAlign: 'center' }]}>{email}</ThemedText>
+            <ThemedText style={[AppStyles.text.helperText, { marginTop: AppStyles.spacing.md, textAlign: 'center' }]}>
               Revisa tu bandeja de entrada (o spam). El link expira en 24 horas.
-            </Text>
+            </ThemedText>
 
             <TouchableOpacity
-              style={styles.button}
+              style={[AppStyles.buttons.primary, { marginTop: AppStyles.spacing.xl }]}
               onPress={() => router.back()}
             >
-              <Text style={styles.buttonText}>Volver al Login</Text>
+              <ThemedText style={AppStyles.text.buttonText}>Volver al Login</ThemedText>
             </TouchableOpacity>
-          </View>
+          </ThemedView>
         )}
-      </View>
+      </ThemedView>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  content: {
-    padding: 20,
-    justifyContent: 'center',
-    minHeight: '100%',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 15,
-    color: '#333',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 30,
-    lineHeight: 20,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: 'white',
-    padding: 15,
-    marginBottom: 20,
-    borderRadius: 8,
-    fontSize: 16,
-    color: '#333',
-  },
-  button: {
-    backgroundColor: '#667eea',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  backLink: {
-    color: '#667eea',
-    textAlign: 'center',
-    marginTop: 20,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  successContainer: {
-    alignItems: 'center',
-  },
-  successTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#28a745',
-    marginBottom: 15,
-  },
-  successText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 10,
-  },
-  emailText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    backgroundColor: '#f5f5f5',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 6,
-    marginVertical: 15,
-    textAlign: 'center',
-  },
-});

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, ScrollView } from 'react-native';
+import { AppStyles, ThemedText, ThemedView } from '@/components';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
+import React, { useState } from 'react';
+import { Alert, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 
 export default function ResetPasswordScreen() {
   const { token } = useLocalSearchParams();
@@ -54,7 +55,7 @@ export default function ResetPasswordScreen() {
 
       if (response.ok && data.access_token) {
         // Guardar token nuevo
-        await SecureStore.setItemAsync('accessToken', data.access_token);
+        await AsyncStorage.setItem('accessToken', data.access_token);
         setSuccess(true);
 
         // Esperar 2 segundos y redirigir
@@ -77,37 +78,37 @@ export default function ResetPasswordScreen() {
 
   if (success) {
     return (
-      <View style={styles.successContainer}>
-        <Text style={styles.successTitle}>✅ ¡Éxito!</Text>
-        <Text style={styles.successText}>
+      <ThemedView style={AppStyles.containers.centered}>
+        <ThemedText style={[AppStyles.text.detailTitle, { color: '#28a745' }]}>✅ ¡Éxito!</ThemedText>
+        <ThemedText style={[AppStyles.text.cardText, { marginTop: AppStyles.spacing.md }]}>
           Tu contraseña ha sido restablecida correctamente.
-        </Text>
-        <Text style={styles.successSubtext}>
+        </ThemedText>
+        <ThemedText style={[AppStyles.text.helperText, { marginTop: AppStyles.spacing.md }]}>
           Redirigiendo a inicio...
-        </Text>
-      </View>
+        </ThemedText>
+      </ThemedView>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>🔐 Restablecer Contraseña</Text>
+    <ScrollView style={AppStyles.containers.scrollPage}>
+      <ThemedView style={[AppStyles.containers.pageContent, { paddingVertical: AppStyles.spacing.xl }]}>
+        <ThemedText style={AppStyles.text.detailTitle}>🔐 Restablecer Contraseña</ThemedText>
 
-        <Text style={styles.subtitle}>
+        <ThemedText style={[AppStyles.text.helperText, { marginTop: AppStyles.spacing.lg }]}>
           Ingresa tu nueva contraseña. Debe tener:
-        </Text>
+        </ThemedText>
 
-        <View style={styles.requirementsList}>
-          <Text style={styles.requirement}>✓ Mínimo 8 caracteres</Text>
-          <Text style={styles.requirement}>✓ Una letra mayúscula</Text>
-          <Text style={styles.requirement}>✓ Un número</Text>
-          <Text style={styles.requirement}>✓ Un símbolo (!@#$%^&*)</Text>
-        </View>
+        <ThemedView style={[AppStyles.cards.base, { marginTop: AppStyles.spacing.lg, marginBottom: AppStyles.spacing.lg }]}>
+          <ThemedText style={AppStyles.text.helperText}>✓ Mínimo 8 caracteres</ThemedText>
+          <ThemedText style={AppStyles.text.helperText}>✓ Una letra mayúscula</ThemedText>
+          <ThemedText style={AppStyles.text.helperText}>✓ Un número</ThemedText>
+          <ThemedText style={AppStyles.text.helperText}>✓ Un símbolo (!@#$%^&*)</ThemedText>
+        </ThemedView>
 
-        <Text style={styles.label}>Nueva Contraseña</Text>
+        <ThemedText style={AppStyles.text.label}>Nueva Contraseña</ThemedText>
         <TextInput
-          style={styles.input}
+          style={AppStyles.inputs.base}
           placeholder="••••••••"
           secureTextEntry
           value={password}
@@ -116,9 +117,9 @@ export default function ResetPasswordScreen() {
           placeholderTextColor="#999"
         />
 
-        <Text style={styles.label}>Confirmar Contraseña</Text>
+        <ThemedText style={[AppStyles.text.label, { marginTop: AppStyles.spacing.lg }]}>Confirmar Contraseña</ThemedText>
         <TextInput
-          style={styles.input}
+          style={AppStyles.inputs.base}
           placeholder="••••••••"
           secureTextEntry
           value={confirmPassword}
@@ -128,111 +129,15 @@ export default function ResetPasswordScreen() {
         />
 
         <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
+          style={[AppStyles.buttons.primary, { marginTop: AppStyles.spacing.lg }, loading && { opacity: 0.6 }]}
           onPress={handleReset}
           disabled={loading}
         >
-          <Text style={styles.buttonText}>
+          <ThemedText style={AppStyles.text.buttonText}>
             {loading ? 'Procesando...' : 'Restablecer Contraseña'}
-          </Text>
+          </ThemedText>
         </TouchableOpacity>
-      </View>
+      </ThemedView>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  content: {
-    padding: 20,
-    justifyContent: 'center',
-    minHeight: '100%',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 15,
-    color: '#333',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 15,
-    lineHeight: 20,
-  },
-  requirementsList: {
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 30,
-    borderLeftWidth: 4,
-    borderLeftColor: '#667eea',
-  },
-  requirement: {
-    fontSize: 13,
-    color: '#666',
-    marginBottom: 8,
-    lineHeight: 18,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-    marginTop: 15,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: 'white',
-    padding: 15,
-    marginBottom: 15,
-    borderRadius: 8,
-    fontSize: 16,
-    color: '#333',
-  },
-  button: {
-    backgroundColor: '#667eea',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  successContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    padding: 20,
-  },
-  successTitle: {
-    fontSize: 32,
-    fontWeight: '600',
-    color: '#28a745',
-    marginBottom: 15,
-  },
-  successText: {
-    fontSize: 16,
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  successSubtext: {
-    fontSize: 13,
-    color: '#999',
-    textAlign: 'center',
-  },
-});

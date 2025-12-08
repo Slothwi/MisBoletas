@@ -1,7 +1,7 @@
+import { AppStyles, ThemedText, ThemedView } from '@/components';
+import { useAuth } from '@/src/hooks/useAuth';
 import { Redirect } from 'expo-router';
 import React from 'react';
-import { useAuth } from '@/src/hooks/useAuth';
-import { View, Text } from 'react-native';
 
 export default function Index() {
   const { authState } = useAuth();
@@ -9,9 +9,9 @@ export default function Index() {
   // Mostrar loading mientras se verifica el estado de autenticación
   if (authState.isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#a8cbf0' }}>
-        <Text style={{ fontSize: 18, color: '#222' }}>Cargando...</Text>
-      </View>
+      <ThemedView style={AppStyles.containers.centered}>
+        <ThemedText style={AppStyles.text.label}>Cargando...</ThemedText>
+      </ThemedView>
     );
   }
 

@@ -1,12 +1,13 @@
 // app/auth-callback.tsx
 // Maneja los deep links desde emails de confirmación
 
-import React, { useEffect } from 'react';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { View, Text, ActivityIndicator } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from '@/src/hooks/useAuth';
+import { AppStyles, ThemedText, ThemedView } from '@/components';
 import { API_ENDPOINTS, BASE_URL, STORAGE_CONFIG } from '@/src/constants/config';
+import { useAuth } from '@/src/hooks/useAuth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect } from 'react';
+import { ActivityIndicator } from 'react-native';
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -98,11 +99,11 @@ export default function AuthCallback() {
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#a8cbf0' }}>
-      <ActivityIndicator size="large" color="#2c3e50" />
-      <Text style={{ marginTop: 20, fontSize: 16, color: '#222' }}>
+    <ThemedView style={AppStyles.containers.centered}>
+      <ActivityIndicator size="large" color={AppStyles.colors.primary} />
+      <ThemedText style={[AppStyles.text.label, { marginTop: AppStyles.spacing.lg }]}>
         Confirmando email...
-      </Text>
-    </View>
+      </ThemedText>
+    </ThemedView>
   );
 }

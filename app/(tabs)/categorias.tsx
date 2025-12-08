@@ -1,8 +1,8 @@
-import { ThemedText } from "@/components/ThemedText";
+import { AppStyles, ThemedText } from "@/components";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { Alert, Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Linking, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { BASE_URL } from "../../src/constants/config";
 import { useAuth } from "../../src/hooks/useAuth";
 import categoriaService, { Categoria } from "../../src/services/CategoriaServiceSimplified";
@@ -234,10 +234,10 @@ const Categorias = () => {
 
   if (authState.isLoading) {
     return (
-      <View style={styles.container}>
-        <View style={styles.sinCategoriasContainer}>
+      <View style={AppStyles.containers.page}>
+        <View style={AppStyles.containers.centered}>
           <MaterialCommunityIcons name="loading" size={64} color="#ccc" />
-          <Text style={styles.sinCategoriasTexto}>Verificando autenticación...</Text>
+          <Text style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>Verificando autenticación...</Text>
         </View>
       </View>
     );
@@ -245,11 +245,11 @@ const Categorias = () => {
 
   if (!authState.isAuthenticated) {
     return (
-      <View style={styles.container}>
-        <View style={styles.sinCategoriasContainer}>
+      <View style={AppStyles.containers.page}>
+        <View style={AppStyles.containers.centered}>
           <MaterialCommunityIcons name="account-alert" size={64} color="#ccc" />
-          <Text style={styles.sinCategoriasTexto}>Necesitas iniciar sesión</Text>
-          <Text style={styles.sinCategoriasSubtexto}>
+          <Text style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>Necesitas iniciar sesión</Text>
+          <Text style={[AppStyles.text.emptyStateSubtitle, { marginTop: AppStyles.spacing.md }]}>
             Ve a la sección de login para acceder a tus categorías
           </Text>
         </View>
@@ -259,10 +259,10 @@ const Categorias = () => {
 
   if (cargando) {
     return (
-      <View style={styles.container}>
-        <View style={styles.sinCategoriasContainer}>
+      <View style={AppStyles.containers.page}>
+        <View style={AppStyles.containers.centered}>
           <MaterialCommunityIcons name="loading" size={64} color="#ccc" />
-          <Text style={styles.sinCategoriasTexto}>Cargando categorías...</Text>
+          <Text style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>Cargando categorías...</Text>
         </View>
       </View>
     );
@@ -271,39 +271,39 @@ const Categorias = () => {
   // SI SE SELECCIONÓ UN PRODUCTO, MUESTRA EL DETALLE
   if (productoSeleccionado) {
     return (
-      <View style={styles.container}>
+      <View style={AppStyles.containers.page}>
         <TouchableOpacity 
-          style={styles.botonVolver}
+          style={AppStyles.misc.backButton}
           onPress={handleVolverALista}
         >
-          <Ionicons name="arrow-back" size={24} color="#e77573" />
-          <Text style={styles.botonVolverTexto}>Volver a la lista</Text>
+          <Ionicons name="arrow-back" size={24} color={AppStyles.colors.primary} />
+          <Text style={AppStyles.misc.backButtonText}>Volver a la lista</Text>
         </TouchableOpacity>
 
-        <ScrollView style={styles.detalleContainer}>
-          <View style={styles.detalleHeader}>
+        <ScrollView style={{ flex: 1 }}>
+          <View style={{ alignItems: 'center', marginBottom: 30, gap: 15 }}>
             <MaterialCommunityIcons 
               name="package-variant" 
               size={48} 
-              color="#e77573" 
+              color={AppStyles.colors.primary} 
             />
-            <Text style={styles.detalleTitulo}>{productoSeleccionado.nombre}</Text>
+            <Text style={AppStyles.text.detailTitle}>{productoSeleccionado.nombre}</Text>
           </View>
 
-          <View style={styles.detalleInfo}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Marca:</Text>
-              <Text style={styles.infoValue}>{productoSeleccionado.marca || 'No especificada'}</Text>
+          <View style={[AppStyles.cards.base, { marginBottom: 20 }]}>
+            <View style={AppStyles.containers.rowSpaceBetween}>
+              <Text style={AppStyles.text.infoLabel}>Marca:</Text>
+              <Text style={AppStyles.text.infoValue}>{productoSeleccionado.marca || 'No especificada'}</Text>
             </View>
             
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Modelo:</Text>
-              <Text style={styles.infoValue}>{productoSeleccionado.modelo || 'No especificado'}</Text>
+            <View style={AppStyles.containers.rowSpaceBetween}>
+              <Text style={AppStyles.text.infoLabel}>Modelo:</Text>
+              <Text style={AppStyles.text.infoValue}>{productoSeleccionado.modelo || 'No especificado'}</Text>
             </View>
             
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Fecha de compra:</Text>
-              <Text style={styles.infoValue}>
+            <View style={AppStyles.containers.rowSpaceBetween}>
+              <Text style={AppStyles.text.infoLabel}>Fecha de compra:</Text>
+              <Text style={AppStyles.text.infoValue}>
                 {productoSeleccionado.fecha_compra ? 
                   new Date(productoSeleccionado.fecha_compra).toLocaleDateString() : 
                   'No especificada'
@@ -312,32 +312,32 @@ const Categorias = () => {
             </View>
             
             {productoSeleccionado.duracion_garantia_meses && (
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Garantía (meses):</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.duracion_garantia_meses}</Text>
+              <View style={AppStyles.containers.rowSpaceBetween}>
+                <Text style={AppStyles.text.infoLabel}>Garantía (meses):</Text>
+                <Text style={AppStyles.text.infoValue}>{productoSeleccionado.duracion_garantia_meses}</Text>
               </View>
             )}
             
             {productoSeleccionado.categorias && productoSeleccionado.categorias.length > 0 && (
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Categorías:</Text>
-                <Text style={styles.infoValue}>
+              <View style={AppStyles.containers.rowSpaceBetween}>
+                <Text style={AppStyles.text.infoLabel}>Categorías:</Text>
+                <Text style={AppStyles.text.infoValue}>
                   {productoSeleccionado.categorias.map(cat => cat.nombre).join(', ')}
                 </Text>
               </View>
             )}
 
             {productoSeleccionado.tienda && (
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Tienda:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.tienda}</Text>
+              <View style={AppStyles.containers.rowSpaceBetween}>
+                <Text style={AppStyles.text.infoLabel}>Tienda:</Text>
+                <Text style={AppStyles.text.infoValue}>{productoSeleccionado.tienda}</Text>
               </View>
             )}
             
             {productoSeleccionado.notas && (
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Notas:</Text>
-                <Text style={styles.infoValue}>{productoSeleccionado.notas}</Text>
+              <View style={AppStyles.containers.rowSpaceBetween}>
+                <Text style={AppStyles.text.infoLabel}>Notas:</Text>
+                <Text style={AppStyles.text.infoValue}>{productoSeleccionado.notas}</Text>
               </View>
             )}
           </View>
@@ -349,20 +349,20 @@ const Categorias = () => {
   // SI SE SELECCIONÓ UNA CATEGORÍA, MUESTRA LA LISTA DE PRODUCTOS
   if (categoriaSeleccionada) {
     return (
-      <View style={styles.container}>
-        <TouchableOpacity style={styles.botonVolver} onPress={handleVolverACategorias}>
-          <Ionicons name="arrow-back" size={24} color="#e77573" />
-          <Text style={styles.botonVolverTexto}>Volver a Categorías</Text>
+      <View style={AppStyles.containers.page}>
+        <TouchableOpacity style={AppStyles.misc.backButton} onPress={handleVolverACategorias}>
+          <Ionicons name="arrow-back" size={24} color={AppStyles.colors.primary} />
+          <Text style={AppStyles.misc.backButtonText}>Volver a Categorías</Text>
         </TouchableOpacity>
 
-        <ThemedText type="title" style={styles.titulo}>
-          Productos en {categoriaSeleccionada.nombre}  {/* Cambio: Era "NombreCategoria" → Ahora "nombre" */}
+        <ThemedText type="title" style={{ fontSize: 20, textAlign: "center", marginBottom: 24 }}>
+          Productos en {categoriaSeleccionada.nombre}
         </ThemedText>
 
         {productosDeCategoria.length === 0 ? (
-          <View style={styles.sinCategoriasContainer}>
+          <View style={AppStyles.containers.centered}>
             <MaterialCommunityIcons name="package-variant-closed" size={64} color="#ccc" />
-            <Text style={styles.sinCategoriasTexto}>
+            <Text style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>
               No hay productos en esta categoría
             </Text>
           </View>
@@ -371,33 +371,33 @@ const Categorias = () => {
             {productosDeCategoria.map(producto => (
               <View key={producto.id_producto}>
                 <TouchableOpacity 
-                  style={styles.cardProducto} 
+                  style={[AppStyles.cards.interactive, { marginBottom: 10 }]} 
                   onPress={() => handleVerProducto(producto)}
                   testID={`tarjeta-producto-${producto.id_producto}`}
                 >
-                  <View style={styles.cardContent}>
-                    <MaterialCommunityIcons name="package-variant" size={24} color="#e77573"/>
-                    <Text style={styles.cardTitle}>{producto.nombre}</Text>
+                  <View style={AppStyles.containers.row}>
+                    <MaterialCommunityIcons name="package-variant" size={24} color={AppStyles.colors.primary}/>
+                    <Text style={AppStyles.text.cardTitle}>{producto.nombre}</Text>
                   </View>
                   <Ionicons name="chevron-forward" size={24} color="#ccc" />
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
-                  style={styles.botonEliminar}
+                  style={AppStyles.buttons.danger}
                   onPress={() => handleEliminarProducto(producto)}
                 >
-                  <Ionicons name="trash" size={20} color="#fff" />
-                  <Text style={styles.botonEliminarTexto}>Eliminar</Text>
+                  <Ionicons name="trash" size={20} color={AppStyles.colors.textLight} />
+                  <Text style={[AppStyles.text.buttonText, { marginLeft: AppStyles.spacing.md }]}>Eliminar</Text>
                 </TouchableOpacity>
               </View>
             ))}
 
             <TouchableOpacity 
-              style={styles.botonAgregarSecundario}
+              style={[AppStyles.buttons.secondary, { marginTop: 16, marginBottom: 20 }]}
               onPress={handleAgregarProducto}
             >
-              <Ionicons name="add-circle-outline" size={24} color="#e77573" />
-              <Text style={styles.botonAgregarSecundarioTexto}>Agregar otro producto</Text>
+              <Ionicons name="add-circle-outline" size={24} color={AppStyles.colors.primary} />
+              <Text style={[AppStyles.text.cardText, { color: AppStyles.colors.primary, marginLeft: AppStyles.spacing.md }]}>Agregar otro producto</Text>
             </TouchableOpacity>
          
           </ScrollView>
@@ -408,54 +408,51 @@ const Categorias = () => {
 
   // VISTA PRINCIPAL: MUESTRA CATEGORÍAS Y EL FORMULARIO
   return (
-    <View style={styles.container}>
-      <ThemedText type="title" style={styles.titulo}>
+    <View style={AppStyles.containers.page}>
+      <ThemedText type="title" style={{ fontSize: 20, textAlign: "center", marginTop: 40, marginBottom: 24 }}>
         Tus Categorías
       </ThemedText>
 
-      <ScrollView style={styles.scrollContainer}>
+      <ScrollView style={{ flex: 1 }}>
         {categorias.length === 0 ? (
-          <View style={styles.sinCategoriasContainer}>
+          <View style={AppStyles.containers.centered}>
             <MaterialCommunityIcons name="shape-outline" size={64} color="#ccc" />
-            <Text style={styles.sinCategoriasTexto}>
+            <Text style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>
               Aún no has creado categorías
             </Text>
-            <Text style={styles.sinCategoriasSubtexto}>
+            <Text style={[AppStyles.text.emptyStateSubtitle, { marginTop: AppStyles.spacing.md }]}>
               Crea tu primera categoría para organizar tus productos
             </Text>
           </View>
         ) : (
-          <View style={styles.cardsContainer}>
+          <View style={{ width: "100%", gap: 16, marginBottom: 24 }}>
             {categorias.map((categoria) => (
               <View key={categoria.id_categoria}>
-                {/* Cambio: Era "CategoriaID" → Ahora "id_categoria" (UUID) */}
                 <TouchableOpacity
-                  style={styles.card}
+                  style={AppStyles.cards.interactive}
                   onPress={() => handleVerCategoria(categoria)}
                 >
-                  <View style={styles.cardContent}>
-                    {/* Cambio: Era "Color" → Ahora "color" */}
-                    <View style={[styles.colorIndicator, { backgroundColor: categoria.color }]} />
-                    <MaterialCommunityIcons name="shape" size={32} color="#e77573" />
-                    <View style={styles.cardTextContainer}>
-                      {/* Cambio: Era "NombreCategoria" → Ahora "nombre" */}
-                      <Text style={styles.cardTitle}>
+                  <View style={AppStyles.containers.row}>
+                    <View style={[AppStyles.misc.colorIndicator, { backgroundColor: categoria.color }]} />
+                    <MaterialCommunityIcons name="shape" size={32} color={AppStyles.colors.primary} />
+                    <View style={{ flexDirection: "column" }}>
+                      <Text style={AppStyles.text.cardTitle}>
                         {categoria.nombre}
                       </Text>
-                      <Text style={styles.cardSubtitle}>
+                      <Text style={AppStyles.text.cardSubtitle}>
                         Toca para ver productos
                       </Text>
                     </View>
                   </View>
-                  <Ionicons name="chevron-forward" size={24} color="#e77573" />
+                  <Ionicons name="chevron-forward" size={24} color={AppStyles.colors.primary} />
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
                   onPress={() => handleEliminarCategoria(categoria)}
-                  style={styles.botonEliminar}
+                  style={AppStyles.buttons.danger}
                 >
-                  <Ionicons name="trash-outline" size={20} color="#fff" />
-                  <Text style={styles.botonEliminarTexto}>Eliminar Categoría</Text>
+                  <Ionicons name="trash-outline" size={20} color={AppStyles.colors.textLight} />
+                  <Text style={[AppStyles.text.buttonText, { marginLeft: AppStyles.spacing.md }]}>Eliminar Categoría</Text>
                 </TouchableOpacity>
               </View>
             ))}
@@ -464,160 +461,44 @@ const Categorias = () => {
         
         {/* MINI FORMULARIO Y BOTÓN PARA CREAR CATEGORÍA */}
         {mostrandoFormulario ? (
-          <View style={styles.formularioContainer}>
+          <View style={[AppStyles.cards.base, { marginBottom: 20 }]}>
             <TextInput
-              style={styles.input}
+              style={AppStyles.inputs.base}
               placeholder="Nombre de la nueva categoría"
               value={nuevoNombreCategoria}
               onChangeText={setNuevoNombreCategoria}
             />
-            <View style={styles.botonesFormulario}>
+            <View style={AppStyles.containers.row}>
               <TouchableOpacity 
-                style={[styles.botonForm, styles.botonCancelar]} 
+                style={[AppStyles.buttons.secondary, { flex: 1 }]}
                 onPress={() => setMostrandoFormulario(false)}
               >
-                <Text style={styles.botonFormTexto}>Cancelar</Text>
+                <Text style={[AppStyles.text.cardText, { color: AppStyles.colors.primary, textAlign: 'center' }]}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity 
-                style={[styles.botonForm, styles.botonGuardar]} 
+                style={[AppStyles.buttons.primary, { flex: 1, marginLeft: AppStyles.spacing.md }]}
                 onPress={handleGuardarCategoria}
               >
-                <Text style={[styles.botonFormTexto, { color: '#fff' }]}>Guardar</Text>
+                <Text style={[AppStyles.text.buttonText, { textAlign: 'center' }]}>Guardar</Text>
               </TouchableOpacity>
             </View>
           </View>
         ) : (
-          <TouchableOpacity style={styles.botonAgregar} onPress={handleMostrarFormulario}>
-            <Ionicons name="add-circle-outline" size={24} color="#e77573" />
-            <Text style={styles.botonAgregarTexto}>Crear Nueva Categoría</Text>
+          <TouchableOpacity style={AppStyles.buttons.secondary} onPress={handleMostrarFormulario}>
+            <Ionicons name="add-circle-outline" size={24} color={AppStyles.colors.primary} />
+            <Text style={[AppStyles.text.cardText, { color: AppStyles.colors.primary, marginLeft: AppStyles.spacing.md }]}>Crear Nueva Categoría</Text>
           </TouchableOpacity>
         )}        
       </ScrollView>
        {/* BOTÓN DE AYUDA - TUTORIAL */}
       <TouchableOpacity
-        style={styles.botonAyuda}
+        style={AppStyles.buttons.fab}
         onPress={handleAbrirTutorial}
         >
-          <Ionicons name="help" size={40} color="#fff" />
+          <Ionicons name="help" size={40} color={AppStyles.colors.textLight} />
         </TouchableOpacity>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#a8cbf0", padding: 24 },
-  scrollContainer: { flex: 1 },
-  titulo: { fontSize: 20, textAlign: "center", marginTop: 40, marginBottom: 24 },
-  cardsContainer: { width: "100%", gap: 16, marginBottom: 24 },
-  card: { backgroundColor: "#ffffff", flexDirection: "row", alignItems: "center", 
-    justifyContent: "space-between", padding: 20, borderRadius: 12, elevation: 2, 
-    shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 10 },
-  cardContent: { flexDirection: "row", alignItems: "center", gap: 15 },
-  cardTextContainer: { flexDirection: "column" },
-  cardTitle: { color: "#222", fontSize: 18, fontWeight: "600" },
-  cardSubtitle: { color: "#666", fontSize: 14 },
-  colorIndicator: { width: 16, height: 16, borderRadius: 8, marginRight: 8 },
-  botonAgregar: { flexDirection: "row", alignItems: "center", justifyContent: "center", 
-    paddingVertical: 16, borderRadius: 8, gap: 8, borderWidth: 1, borderColor: "#e77573", 
-    backgroundColor: "#fff" },
-  botonAgregarTexto: { color: "#222", fontSize: 16, fontWeight: "600" },
-  botonVolver: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  botonVolverTexto: { color: '#e77573', fontSize: 16, marginLeft: 8, fontWeight: '600' },
-  cardProducto: { backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center',
-     justifyContent: 'space-between', padding: 16, borderRadius: 12, marginBottom: 10 },
-  formularioContainer: { backgroundColor: '#fff', borderRadius: 12, padding: 20, 
-    marginTop: 10, elevation: 2 },
-  input: { borderWidth: 1, borderColor: '#ddd', padding: 12, borderRadius: 8, 
-    fontSize: 16, marginBottom: 15 },
-  botonesFormulario: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10 },
-  botonForm: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
-  botonCancelar: { backgroundColor: '#f0f0f0' },
-  botonGuardar: { backgroundColor: '#e77573' },
-  botonFormTexto: { fontWeight: '600', fontSize: 16 },
-  detalleContainer: { flex: 1, backgroundColor: '#f9f9f9', borderRadius: 12, padding: 20 },
-  detalleHeader: { flexDirection: 'row', alignItems: 'center', gap: 15, marginBottom: 20 },
-  detalleTitulo: { fontSize: 24, fontWeight: 'bold', color: '#222', marginTop: 16, 
-     textAlign: 'center'},
-  detalleInfo: { backgroundColor: '#fff', borderRadius: 12, padding: 20, marginBottom: 20},
-  infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, 
-    borderBottomWidth: 1, borderBottomColor: '#f0f0f0'},
-  infoLabel: { fontSize: 16, fontWeight: '600', color: '#666'},
-  infoValue: { fontSize: 16, color: '#222', textAlign: 'right', flex: 1, marginLeft: 10},
-  sinCategoriasContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  sinCategoriasTexto: { fontSize: 18, color: '#666', marginTop: 16, textAlign: 'center' },
-  sinCategoriasSubtexto: { fontSize: 14, color: '#999', marginTop: 8, textAlign: 'center' },
-  botonAgregarSecundario: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: '#e77573',
-    backgroundColor: '#fff',
-    marginTop: 16,
-    marginBottom: 20,
-  },
-  botonAgregarSecundarioTexto: {
-    color: '#222',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  botonEliminar: {
-    backgroundColor: '#dc3545',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    gap: 8,
-  },
-  botonEliminarTexto: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  botonEditar: {
-    backgroundColor: '#1b23faff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    gap: 8,
-  },
-  botonEditarTexto: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  botonIconoEdicion: {
-    padding: 8,
-  },
-  botonesEdicion: {
-    flexDirection: 'row',
-    gap: 4,
-  },
-  botonAyuda: {
-    position: "absolute",
-    right: 20,
-    bottom: 20,
-    backgroundColor: "#e77573",
-    width: 60,
-    height: 60,
-    borderRadius: 50,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 8,
-    shadowColor: "#000",
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-  }
-});
 
 export default Categorias;
