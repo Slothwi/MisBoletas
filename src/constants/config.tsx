@@ -83,7 +83,7 @@ export const API_ENDPOINTS = {
     register: '/users/register',  // ✅ CORREGIDO: POST /users/register
     login: '/users/login',        // ✅ CORREGIDO: POST /users/login
     verifyOTP: '/users/verify-otp',  // POST /users/verify-otp (para deep links)
-    confirm: '/users/confirm',    // GET /users/confirm (puente email → app)
+    confirm: '/bridges/confirm',  // GET /bridges/confirm (puente email → app)
     profile: '/users/me',
     updateProfile: '/users/',
   },

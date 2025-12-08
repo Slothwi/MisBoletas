@@ -1,7 +1,7 @@
 import { AppStyles, ThemedText, ThemedView } from '@/components';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, ScrollView, TextInput, TouchableOpacity } from 'react-native';
+import { Alert, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -32,7 +32,7 @@ export default function ForgotPasswordScreen() {
       if (response.ok) {
         setEnviado(true);
         Alert.alert(
-          '✅ Email Enviado',
+          'Email Enviado',
           'Revisa tu bandeja de entrada. El link expira en 24 horas.'
         );
       } else {
@@ -82,9 +82,9 @@ export default function ForgotPasswordScreen() {
             </TouchableOpacity>
           </>
         ) : (
-          <ThemedView style={{ alignItems: 'center', marginTop: AppStyles.spacing.xl }}>
-            <ThemedText style={[AppStyles.text.detailTitle, { color: '#28a745' }]}>✅ Email Enviado</ThemedText>
-            <ThemedText style={[AppStyles.text.helperText, { marginTop: AppStyles.spacing.lg, textAlign: 'center' }]}>
+          <View style={AppStyles.containers.centered}>
+            <ThemedText style={AppStyles.text.detailTitle}>Email Enviado</ThemedText>
+            <ThemedText style={[AppStyles.text.cardText, { marginVertical: AppStyles.spacing.lg, textAlign: 'center' }]}>
               Hemos enviado un link de recuperación a:
             </ThemedText>
             <ThemedText style={[AppStyles.text.label, { marginVertical: AppStyles.spacing.md, backgroundColor: AppStyles.colors.primaryLight, paddingVertical: AppStyles.spacing.md, paddingHorizontal: AppStyles.spacing.lg, borderRadius: 6, textAlign: 'center' }]}>{email}</ThemedText>
@@ -98,7 +98,7 @@ export default function ForgotPasswordScreen() {
             >
               <ThemedText style={AppStyles.text.buttonText}>Volver al Login</ThemedText>
             </TouchableOpacity>
-          </ThemedView>
+          </View>
         )}
       </ThemedView>
     </ScrollView>

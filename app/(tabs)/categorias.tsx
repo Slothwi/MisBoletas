@@ -2,7 +2,7 @@ import { AppStyles, ThemedText } from "@/components";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { Alert, Linking, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Linking, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
 import { BASE_URL } from "../../src/constants/config";
 import { useAuth } from "../../src/hooks/useAuth";
 import categoriaService, { Categoria } from "../../src/services/CategoriaServiceSimplified";
@@ -20,7 +20,7 @@ const Categorias = () => {
   // Para guardar la lista de productos de la categoría seleccionada
   const [productosDeCategoria, setProductosDeCategoria] = useState<Producto[]>([]);
 
-  // Para mostrar/ocultar el mini-formulario
+  // Para mostrar/ocultar el mini-formulario de crear categoría
   const [mostrandoFormulario, setMostrandoFormulario] = useState(false);
 
   // Para manejar el texto del input del nuevo nombre de categoría
@@ -28,6 +28,12 @@ const Categorias = () => {
   
   // MOSTRAR PRODUCTO SELECCIONADO
   const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
+
+  // ESTADOS PARA EDITAR CATEGORÍA
+  const [categoriasEdicion, setCategoriaEdicion] = useState<Categoria | null>(null);
+  const [nombreEdicion, setNombreEdicion] = useState("");
+  const [colorEdicion, setColorEdicion] = useState("");
+  const [mostrandoEdicion, setMostrandoEdicion] = useState(false);
 
   //Función para abrir URL externa (video tutorial).
   const handleAbrirTutorial = () => {
@@ -191,6 +197,56 @@ const Categorias = () => {
     );
   };
 
+  // ABRIR MODAL DE EDICIÓN
+  const handleAbrirEdicion = (categoria: Categoria) => {
+    setCategoriaEdicion(categoria);
+    setNombreEdicion(categoria.nombre);
+    setColorEdicion(categoria.color);
+    setMostrandoEdicion(true);
+  };
+
+  // GUARDAR CAMBIOS DE CATEGORÍA
+  const handleGuardarEdicion = async () => {
+    if (!categoriasEdicion || !nombreEdicion.trim()) {
+      Alert.alert('Error', 'El nombre de la categoría no puede estar vacío');
+      return;
+    }
+
+    try {
+      console.log('✏️ Editando categoría:', categoriasEdicion.id_categoria);
+      await categoriaService.update(categoriasEdicion.id_categoria, {
+        nombre: nombreEdicion.trim(),
+        color: colorEdicion,
+      });
+      console.log('✅ Categoría actualizada exitosamente');
+
+      // Actualizar la lista local
+      setCategorias(
+        categorias.map(c =>
+          c.id_categoria === categoriasEdicion.id_categoria
+            ? { ...c, nombre: nombreEdicion.trim(), color: colorEdicion }
+            : c
+        )
+      );
+
+      setMostrandoEdicion(false);
+      Alert.alert('Éxito', 'Categoría actualizada correctamente');
+    } catch (error: any) {
+      console.error('❌ Error editando categoría:', error);
+      Alert.alert('Error', error.message || 'No se pudo actualizar la categoría');
+    }
+  };
+
+  // GENERAR COLOR ALEATORIO PARA EDICIÓN
+  const generarColorAleatorio = () => {
+    const colores = [
+      '#e77573', '#ff9f5f', '#ffcc66', '#66dd77', '#55d9d9',
+      '#a8cbf0', '#a8a8f0', '#d8a8f0', '#f0a8d8', '#f0a8a8'
+    ];
+    const colorAleatorio = colores[Math.floor(Math.random() * colores.length)];
+    setColorEdicion(colorAleatorio);
+  };
+
   // Mostrar el formulario en lugar de navegar
   const handleMostrarFormulario = () => {
     setMostrandoFormulario(true);
@@ -237,7 +293,7 @@ const Categorias = () => {
       <View style={AppStyles.containers.page}>
         <View style={AppStyles.containers.centered}>
           <MaterialCommunityIcons name="loading" size={64} color="#ccc" />
-          <Text style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>Verificando autenticación...</Text>
+          <ThemedText style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>Verificando autenticación...</ThemedText>
         </View>
       </View>
     );
@@ -248,10 +304,10 @@ const Categorias = () => {
       <View style={AppStyles.containers.page}>
         <View style={AppStyles.containers.centered}>
           <MaterialCommunityIcons name="account-alert" size={64} color="#ccc" />
-          <Text style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>Necesitas iniciar sesión</Text>
-          <Text style={[AppStyles.text.emptyStateSubtitle, { marginTop: AppStyles.spacing.md }]}>
+          <ThemedText style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>Necesitas iniciar sesión</ThemedText>
+          <ThemedText style={[AppStyles.text.emptyStateSubtitle, { marginTop: AppStyles.spacing.md }]}>
             Ve a la sección de login para acceder a tus categorías
-          </Text>
+          </ThemedText>
         </View>
       </View>
     );
@@ -262,7 +318,7 @@ const Categorias = () => {
       <View style={AppStyles.containers.page}>
         <View style={AppStyles.containers.centered}>
           <MaterialCommunityIcons name="loading" size={64} color="#ccc" />
-          <Text style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>Cargando categorías...</Text>
+          <ThemedText style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>Cargando categorías...</ThemedText>
         </View>
       </View>
     );
@@ -277,7 +333,7 @@ const Categorias = () => {
           onPress={handleVolverALista}
         >
           <Ionicons name="arrow-back" size={24} color={AppStyles.colors.primary} />
-          <Text style={AppStyles.misc.backButtonText}>Volver a la lista</Text>
+          <ThemedText style={AppStyles.misc.backButtonText}>Volver a la lista</ThemedText>
         </TouchableOpacity>
 
         <ScrollView style={{ flex: 1 }}>
@@ -287,57 +343,57 @@ const Categorias = () => {
               size={48} 
               color={AppStyles.colors.primary} 
             />
-            <Text style={AppStyles.text.detailTitle}>{productoSeleccionado.nombre}</Text>
+            <ThemedText style={AppStyles.text.detailTitle}>{productoSeleccionado.nombre}</ThemedText>
           </View>
 
           <View style={[AppStyles.cards.base, { marginBottom: 20 }]}>
             <View style={AppStyles.containers.rowSpaceBetween}>
-              <Text style={AppStyles.text.infoLabel}>Marca:</Text>
-              <Text style={AppStyles.text.infoValue}>{productoSeleccionado.marca || 'No especificada'}</Text>
+              <ThemedText style={AppStyles.text.infoLabel}>Marca:</ThemedText>
+              <ThemedText style={AppStyles.text.infoValue}>{productoSeleccionado.marca || 'No especificada'}</ThemedText>
             </View>
             
             <View style={AppStyles.containers.rowSpaceBetween}>
-              <Text style={AppStyles.text.infoLabel}>Modelo:</Text>
-              <Text style={AppStyles.text.infoValue}>{productoSeleccionado.modelo || 'No especificado'}</Text>
+              <ThemedText style={AppStyles.text.infoLabel}>Modelo:</ThemedText>
+              <ThemedText style={AppStyles.text.infoValue}>{productoSeleccionado.modelo || 'No especificado'}</ThemedText>
             </View>
             
             <View style={AppStyles.containers.rowSpaceBetween}>
-              <Text style={AppStyles.text.infoLabel}>Fecha de compra:</Text>
-              <Text style={AppStyles.text.infoValue}>
+              <ThemedText style={AppStyles.text.infoLabel}>Fecha de compra:</ThemedText>
+              <ThemedText style={AppStyles.text.infoValue}>
                 {productoSeleccionado.fecha_compra ? 
                   new Date(productoSeleccionado.fecha_compra).toLocaleDateString() : 
                   'No especificada'
                 }
-              </Text>
+              </ThemedText>
             </View>
             
             {productoSeleccionado.duracion_garantia_meses && (
               <View style={AppStyles.containers.rowSpaceBetween}>
-                <Text style={AppStyles.text.infoLabel}>Garantía (meses):</Text>
-                <Text style={AppStyles.text.infoValue}>{productoSeleccionado.duracion_garantia_meses}</Text>
+                <ThemedText style={AppStyles.text.infoLabel}>Garantía (meses):</ThemedText>
+                <ThemedText style={AppStyles.text.infoValue}>{productoSeleccionado.duracion_garantia_meses}</ThemedText>
               </View>
             )}
             
             {productoSeleccionado.categorias && productoSeleccionado.categorias.length > 0 && (
               <View style={AppStyles.containers.rowSpaceBetween}>
-                <Text style={AppStyles.text.infoLabel}>Categorías:</Text>
-                <Text style={AppStyles.text.infoValue}>
+                <ThemedText style={AppStyles.text.infoLabel}>Categorías:</ThemedText>
+                <ThemedText style={AppStyles.text.infoValue}>
                   {productoSeleccionado.categorias.map(cat => cat.nombre).join(', ')}
-                </Text>
+                </ThemedText>
               </View>
             )}
 
             {productoSeleccionado.tienda && (
               <View style={AppStyles.containers.rowSpaceBetween}>
-                <Text style={AppStyles.text.infoLabel}>Tienda:</Text>
-                <Text style={AppStyles.text.infoValue}>{productoSeleccionado.tienda}</Text>
+                <ThemedText style={AppStyles.text.infoLabel}>Tienda:</ThemedText>
+                <ThemedText style={AppStyles.text.infoValue}>{productoSeleccionado.tienda}</ThemedText>
               </View>
             )}
             
             {productoSeleccionado.notas && (
               <View style={AppStyles.containers.rowSpaceBetween}>
-                <Text style={AppStyles.text.infoLabel}>Notas:</Text>
-                <Text style={AppStyles.text.infoValue}>{productoSeleccionado.notas}</Text>
+                <ThemedText style={AppStyles.text.infoLabel}>Notas:</ThemedText>
+                <ThemedText style={AppStyles.text.infoValue}>{productoSeleccionado.notas}</ThemedText>
               </View>
             )}
           </View>
@@ -352,7 +408,7 @@ const Categorias = () => {
       <View style={AppStyles.containers.page}>
         <TouchableOpacity style={AppStyles.misc.backButton} onPress={handleVolverACategorias}>
           <Ionicons name="arrow-back" size={24} color={AppStyles.colors.primary} />
-          <Text style={AppStyles.misc.backButtonText}>Volver a Categorías</Text>
+          <ThemedText style={AppStyles.misc.backButtonText}>Volver a Categorías</ThemedText>
         </TouchableOpacity>
 
         <ThemedText type="title" style={{ fontSize: 20, textAlign: "center", marginBottom: 24 }}>
@@ -362,9 +418,9 @@ const Categorias = () => {
         {productosDeCategoria.length === 0 ? (
           <View style={AppStyles.containers.centered}>
             <MaterialCommunityIcons name="package-variant-closed" size={64} color="#ccc" />
-            <Text style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>
+            <ThemedText style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>
               No hay productos en esta categoría
-            </Text>
+            </ThemedText>
           </View>
         ) : (
           <ScrollView>
@@ -377,7 +433,7 @@ const Categorias = () => {
                 >
                   <View style={AppStyles.containers.row}>
                     <MaterialCommunityIcons name="package-variant" size={24} color={AppStyles.colors.primary}/>
-                    <Text style={AppStyles.text.cardTitle}>{producto.nombre}</Text>
+                    <ThemedText style={AppStyles.text.cardTitle}>{producto.nombre}</ThemedText>
                   </View>
                   <Ionicons name="chevron-forward" size={24} color="#ccc" />
                 </TouchableOpacity>
@@ -387,7 +443,7 @@ const Categorias = () => {
                   onPress={() => handleEliminarProducto(producto)}
                 >
                   <Ionicons name="trash" size={20} color={AppStyles.colors.textLight} />
-                  <Text style={[AppStyles.text.buttonText, { marginLeft: AppStyles.spacing.md }]}>Eliminar</Text>
+                  <ThemedText style={[AppStyles.text.buttonText, { marginLeft: AppStyles.spacing.md }]}>Eliminar</ThemedText>
                 </TouchableOpacity>
               </View>
             ))}
@@ -397,7 +453,7 @@ const Categorias = () => {
               onPress={handleAgregarProducto}
             >
               <Ionicons name="add-circle-outline" size={24} color={AppStyles.colors.primary} />
-              <Text style={[AppStyles.text.cardText, { color: AppStyles.colors.primary, marginLeft: AppStyles.spacing.md }]}>Agregar otro producto</Text>
+              <ThemedText style={[AppStyles.text.cardText, { color: AppStyles.colors.primary, marginLeft: AppStyles.spacing.md }]}>Agregar otro producto</ThemedText>
             </TouchableOpacity>
          
           </ScrollView>
@@ -417,12 +473,12 @@ const Categorias = () => {
         {categorias.length === 0 ? (
           <View style={AppStyles.containers.centered}>
             <MaterialCommunityIcons name="shape-outline" size={64} color="#ccc" />
-            <Text style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>
+            <ThemedText style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>
               Aún no has creado categorías
-            </Text>
-            <Text style={[AppStyles.text.emptyStateSubtitle, { marginTop: AppStyles.spacing.md }]}>
+            </ThemedText>
+            <ThemedText style={[AppStyles.text.emptyStateSubtitle, { marginTop: AppStyles.spacing.md }]}>
               Crea tu primera categoría para organizar tus productos
-            </Text>
+            </ThemedText>
           </View>
         ) : (
           <View style={{ width: "100%", gap: 16, marginBottom: 24 }}>
@@ -436,24 +492,34 @@ const Categorias = () => {
                     <View style={[AppStyles.misc.colorIndicator, { backgroundColor: categoria.color }]} />
                     <MaterialCommunityIcons name="shape" size={32} color={AppStyles.colors.primary} />
                     <View style={{ flexDirection: "column" }}>
-                      <Text style={AppStyles.text.cardTitle}>
+                      <ThemedText style={AppStyles.text.cardTitle}>
                         {categoria.nombre}
-                      </Text>
-                      <Text style={AppStyles.text.cardSubtitle}>
+                      </ThemedText>
+                      <ThemedText style={AppStyles.text.cardSubtitle}>
                         Toca para ver productos
-                      </Text>
+                      </ThemedText>
                     </View>
                   </View>
                   <Ionicons name="chevron-forward" size={24} color={AppStyles.colors.primary} />
                 </TouchableOpacity>
                 
-                <TouchableOpacity 
-                  onPress={() => handleEliminarCategoria(categoria)}
-                  style={AppStyles.buttons.danger}
-                >
-                  <Ionicons name="trash-outline" size={20} color={AppStyles.colors.textLight} />
-                  <Text style={[AppStyles.text.buttonText, { marginLeft: AppStyles.spacing.md }]}>Eliminar Categoría</Text>
-                </TouchableOpacity>
+                <View style={AppStyles.containers.row}>
+                  <TouchableOpacity 
+                    onPress={() => handleAbrirEdicion(categoria)}
+                    style={[AppStyles.buttons.edit, { flex: 1, marginRight: AppStyles.spacing.md }]}
+                  >
+                    <Ionicons name="pencil-outline" size={20} color="#fff" />
+                    <ThemedText style={AppStyles.text.buttonText}>Editar</ThemedText>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    onPress={() => handleEliminarCategoria(categoria)}
+                    style={[AppStyles.buttons.danger, { flex: 1 }]}
+                  >
+                    <Ionicons name="trash-outline" size={20} color="#fff" />
+                    <ThemedText style={AppStyles.text.buttonText}>Eliminar</ThemedText>
+                  </TouchableOpacity>
+                </View>
               </View>
             ))}
           </View>
@@ -473,23 +539,95 @@ const Categorias = () => {
                 style={[AppStyles.buttons.secondary, { flex: 1 }]}
                 onPress={() => setMostrandoFormulario(false)}
               >
-                <Text style={[AppStyles.text.cardText, { color: AppStyles.colors.primary, textAlign: 'center' }]}>Cancelar</Text>
+                <ThemedText style={[AppStyles.text.cardText, { color: AppStyles.colors.primary, textAlign: 'center' }]}>Cancelar</ThemedText>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[AppStyles.buttons.primary, { flex: 1, marginLeft: AppStyles.spacing.md }]}
                 onPress={handleGuardarCategoria}
               >
-                <Text style={[AppStyles.text.buttonText, { textAlign: 'center' }]}>Guardar</Text>
+                <ThemedText style={[AppStyles.text.buttonText, { textAlign: 'center' }]}>Guardar</ThemedText>
               </TouchableOpacity>
             </View>
           </View>
         ) : (
           <TouchableOpacity style={AppStyles.buttons.secondary} onPress={handleMostrarFormulario}>
             <Ionicons name="add-circle-outline" size={24} color={AppStyles.colors.primary} />
-            <Text style={[AppStyles.text.cardText, { color: AppStyles.colors.primary, marginLeft: AppStyles.spacing.md }]}>Crear Nueva Categoría</Text>
+            <ThemedText style={[AppStyles.text.cardText, { color: AppStyles.colors.primary, marginLeft: AppStyles.spacing.md }]}>Crear Nueva Categoría</ThemedText>
           </TouchableOpacity>
         )}        
       </ScrollView>
+
+      {/* MODAL DE EDICIÓN DE CATEGORÍA */}
+      {mostrandoEdicion && categoriasEdicion && (
+        <View style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+        }}>
+          <View style={{
+            backgroundColor: AppStyles.colors.backgroundLight,
+            borderRadius: AppStyles.borderRadius.lg,
+            padding: AppStyles.spacing.xl,
+            width: '85%',
+            maxWidth: 400,
+          }}>
+            <ThemedText style={[AppStyles.text.detailTitle, { textAlign: 'center', marginBottom: AppStyles.spacing.lg }]}>Editar Categoría</ThemedText>
+            
+            <View style={AppStyles.inputs.container}>
+              <ThemedText style={AppStyles.text.label}>Nombre</ThemedText>
+              <TextInput
+                style={AppStyles.inputs.base}
+                placeholder="Nombre de la categoría"
+                value={nombreEdicion}
+                onChangeText={setNombreEdicion}
+                placeholderTextColor={AppStyles.colors.textMuted}
+              />
+            </View>
+
+            <View style={{ marginVertical: AppStyles.spacing.md }}>
+              <ThemedText style={AppStyles.text.label}>Color actual:</ThemedText>
+              <View style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: colorEdicion,
+                borderWidth: 2,
+                borderColor: AppStyles.colors.textDark,
+                marginVertical: AppStyles.spacing.md
+              }} />
+              <TouchableOpacity 
+                style={[AppStyles.buttons.edit, { marginTop: AppStyles.spacing.md }]}
+                onPress={generarColorAleatorio}
+              >
+                <Ionicons name="refresh" size={20} color="#fff" />
+                <ThemedText style={AppStyles.text.buttonText}>Cambiar Color</ThemedText>
+              </TouchableOpacity>
+            </View>
+
+            <View style={AppStyles.containers.row}>
+              <TouchableOpacity 
+                style={[AppStyles.buttons.secondary, { flex: 1, marginRight: AppStyles.spacing.md }]}
+                onPress={() => setMostrandoEdicion(false)}
+              >
+                <ThemedText style={AppStyles.text.buttonText}>Cancelar</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[AppStyles.buttons.primary, { flex: 1 }]}
+                onPress={handleGuardarEdicion}
+              >
+                <ThemedText style={AppStyles.text.buttonText}>Guardar</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
        {/* BOTÓN DE AYUDA - TUTORIAL */}
       <TouchableOpacity
         style={AppStyles.buttons.fab}
