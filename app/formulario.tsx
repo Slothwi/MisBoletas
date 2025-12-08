@@ -158,15 +158,29 @@ function BasicExample() {
   // Estados para edición
   const [modoEdicion, setModoEdicion] = useState(false);
   const [productoEditando, setProductoEditando] = useState<any>(null);
+  const [parametrosCargados, setParametrosCargados] = useState(false);
   
   const MAX_LENGTH = 200;
 
   // Cargar parámetros y producto si está en modo edición
   useEffect(() => {
-    if (params.producto && params.modoEdicion) {
+    setParametrosCargados(true);
+    
+    const modoEdicionStr = params.modoEdicion as string;
+    const productoStr = params.producto as string;
+    
+    console.log('📋 Parámetros recibidos:', {
+      modoEdicion: modoEdicionStr,
+      tieneProducto: !!productoStr,
+      longitudProducto: productoStr?.length || 0
+    });
+    
+    if (productoStr && modoEdicionStr === 'true') {
       try {
-        console.log('✏️ Detectado modo edición');
-        const producto = JSON.parse(params.producto as string);
+        console.log('✏️ Detectado modo edición, parseando producto...');
+        const producto = JSON.parse(productoStr);
+        console.log('📊 Producto parseado:', producto);
+        
         setProductoEditando(producto);
         setModoEdicion(true);
         
@@ -189,6 +203,11 @@ function BasicExample() {
         console.log('✅ Producto cargado en el formulario:', producto.nombre);
       } catch (error) {
         console.error('❌ Error parseando producto:', error);
+        console.error('📝 Contenido del parámetro:', productoStr);
+        Alert.alert(
+          'Error',
+          'No se pudieron cargar los datos del producto para editar.'
+        );
       }
     }
   }, [params.producto, params.modoEdicion]);
@@ -223,7 +242,7 @@ function BasicExample() {
     if (authState.isAuthenticated) {
       cargarCategorias();
     }
-  }, [authState.isAuthenticated]);
+  }, [authState.isAuthenticated, productoEditando]);
 
   const handleFileClick = async (tipoDocumento: 'boleta' | 'garantia' | 'manual') => {
     try {
@@ -255,7 +274,7 @@ function BasicExample() {
         
         Alert.alert(
           '📎 Archivo seleccionado',
-          `${tipoLabel}\n${fileName}\n${documentoService.formatFileSize(asset.fileSize)}`,
+          `${tipoLabel}\n${fileName}\n${documentoService.formatFileSize(asset.size || 0)}`,
           [{ text: 'OK' }]
         );
       }
@@ -308,12 +327,15 @@ function BasicExample() {
       // MODO EDICIÓN
       if (modoEdicion && productoEditando?.id_producto) {
         console.log('✏️ Actualizando producto:', productoEditando.id_producto);
+        console.log('📊 Datos a actualizar:', productoData);
         productoGuardado = await productoService.update(productoEditando.id_producto, productoData);
         console.log('✅ Producto actualizado:', productoGuardado);
       } 
       // MODO CREACIÓN
       else {
-        console.log('📝 Creando producto:', productoData);
+        console.log('📝 Creando producto nuevo');
+        console.log('⚠️ modoEdicion:', modoEdicion, '| productoEditando:', productoEditando);
+        console.log('📊 Datos a crear:', productoData);
         productoGuardado = await productoService.create(productoData);
         console.log('✅ Producto creado:', productoGuardado);
       }

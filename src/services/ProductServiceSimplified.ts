@@ -101,7 +101,7 @@ class ProductoService {
   }
 
   // Actualizar producto
-  async update(id: number, productoData: ProductoUpdate): Promise<Producto> {
+  async update(id: string | number, productoData: ProductoUpdate): Promise<Producto> {
     try {
       console.log('📝 Updating product:', id);
       const producto = await apiService.put<Producto>(

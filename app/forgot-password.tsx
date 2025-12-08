@@ -31,7 +31,7 @@ export default function ForgotPasswordScreen() {
       if (response.ok) {
         setEnviado(true);
         Alert.alert(
-          '✅ Email Enviado',
+          'Email Enviado',
           'Revisa tu bandeja de entrada. El link expira en 24 horas.'
         );
       } else {
@@ -82,7 +82,7 @@ export default function ForgotPasswordScreen() {
           </>
         ) : (
           <View style={styles.successContainer}>
-            <Text style={styles.successTitle}>✅ Email Enviado</Text>
+            <Text style={styles.successTitle}>Email Enviado</Text>
             <Text style={styles.successText}>
               Hemos enviado un link de recuperación a:
             </Text>

@@ -20,7 +20,7 @@ const Categorias = () => {
   // Para guardar la lista de productos de la categoría seleccionada
   const [productosDeCategoria, setProductosDeCategoria] = useState<Producto[]>([]);
 
-  // Para mostrar/ocultar el mini-formulario
+  // Para mostrar/ocultar el mini-formulario de crear categoría
   const [mostrandoFormulario, setMostrandoFormulario] = useState(false);
 
   // Para manejar el texto del input del nuevo nombre de categoría
@@ -28,6 +28,12 @@ const Categorias = () => {
   
   // MOSTRAR PRODUCTO SELECCIONADO
   const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
+
+  // ESTADOS PARA EDITAR CATEGORÍA
+  const [categoriasEdicion, setCategoriaEdicion] = useState<Categoria | null>(null);
+  const [nombreEdicion, setNombreEdicion] = useState("");
+  const [colorEdicion, setColorEdicion] = useState("");
+  const [mostrandoEdicion, setMostrandoEdicion] = useState(false);
 
   //Función para abrir URL externa (video tutorial).
   const handleAbrirTutorial = () => {
@@ -189,6 +195,56 @@ const Categorias = () => {
         }
       ]
     );
+  };
+
+  // ABRIR MODAL DE EDICIÓN
+  const handleAbrirEdicion = (categoria: Categoria) => {
+    setCategoriaEdicion(categoria);
+    setNombreEdicion(categoria.nombre);
+    setColorEdicion(categoria.color);
+    setMostrandoEdicion(true);
+  };
+
+  // GUARDAR CAMBIOS DE CATEGORÍA
+  const handleGuardarEdicion = async () => {
+    if (!categoriasEdicion || !nombreEdicion.trim()) {
+      Alert.alert('Error', 'El nombre de la categoría no puede estar vacío');
+      return;
+    }
+
+    try {
+      console.log('✏️ Editando categoría:', categoriasEdicion.id_categoria);
+      await categoriaService.update(categoriasEdicion.id_categoria, {
+        nombre: nombreEdicion.trim(),
+        color: colorEdicion,
+      });
+      console.log('✅ Categoría actualizada exitosamente');
+
+      // Actualizar la lista local
+      setCategorias(
+        categorias.map(c =>
+          c.id_categoria === categoriasEdicion.id_categoria
+            ? { ...c, nombre: nombreEdicion.trim(), color: colorEdicion }
+            : c
+        )
+      );
+
+      setMostrandoEdicion(false);
+      Alert.alert('Éxito', 'Categoría actualizada correctamente');
+    } catch (error: any) {
+      console.error('❌ Error editando categoría:', error);
+      Alert.alert('Error', error.message || 'No se pudo actualizar la categoría');
+    }
+  };
+
+  // GENERAR COLOR ALEATORIO PARA EDICIÓN
+  const generarColorAleatorio = () => {
+    const colores = [
+      '#e77573', '#ff9f5f', '#ffcc66', '#66dd77', '#55d9d9',
+      '#a8cbf0', '#a8a8f0', '#d8a8f0', '#f0a8d8', '#f0a8a8'
+    ];
+    const colorAleatorio = colores[Math.floor(Math.random() * colores.length)];
+    setColorEdicion(colorAleatorio);
   };
 
   // Mostrar el formulario en lugar de navegar
@@ -450,13 +506,23 @@ const Categorias = () => {
                   <Ionicons name="chevron-forward" size={24} color="#e77573" />
                 </TouchableOpacity>
                 
-                <TouchableOpacity 
-                  onPress={() => handleEliminarCategoria(categoria)}
-                  style={styles.botonEliminar}
-                >
-                  <Ionicons name="trash-outline" size={20} color="#fff" />
-                  <Text style={styles.botonEliminarTexto}>Eliminar Categoría</Text>
-                </TouchableOpacity>
+                <View style={styles.botonesAccionesCategoria}>
+                  <TouchableOpacity 
+                    onPress={() => handleAbrirEdicion(categoria)}
+                    style={styles.botonEditar}
+                  >
+                    <Ionicons name="pencil-outline" size={20} color="#fff" />
+                    <Text style={styles.botonEditarTexto}>Editar</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    onPress={() => handleEliminarCategoria(categoria)}
+                    style={styles.botonEliminar}
+                  >
+                    <Ionicons name="trash-outline" size={20} color="#fff" />
+                    <Text style={styles.botonEliminarTexto}>Eliminar</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             ))}
           </View>
@@ -493,6 +559,51 @@ const Categorias = () => {
           </TouchableOpacity>
         )}        
       </ScrollView>
+
+      {/* MODAL DE EDICIÓN DE CATEGORÍA */}
+      {mostrandoEdicion && categoriasEdicion && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitulo}>Editar Categoría</Text>
+            
+            <TextInput
+              style={styles.input}
+              placeholder="Nombre de la categoría"
+              value={nombreEdicion}
+              onChangeText={setNombreEdicion}
+              placeholderTextColor="#999"
+            />
+
+            <View style={styles.selectorColorContainer}>
+              <Text style={styles.labelColor}>Color actual:</Text>
+              <View style={[styles.colorPreview, { backgroundColor: colorEdicion }]} />
+              <TouchableOpacity 
+                style={styles.botonCambiarColor}
+                onPress={generarColorAleatorio}
+              >
+                <Ionicons name="refresh" size={20} color="#fff" />
+                <Text style={styles.botonCambiarColorTexto}>Cambiar Color</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.botonesModal}>
+              <TouchableOpacity 
+                style={[styles.botonForm, styles.botonCancelar]}
+                onPress={() => setMostrandoEdicion(false)}
+              >
+                <Text style={styles.botonFormTexto}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.botonForm, styles.botonGuardar]}
+                onPress={handleGuardarEdicion}
+              >
+                <Text style={[styles.botonFormTexto, { color: '#fff' }]}>Guardar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
        {/* BOTÓN DE AYUDA - TUTORIAL */}
       <TouchableOpacity
         style={styles.botonAyuda}
@@ -505,103 +616,352 @@ const Categorias = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#a8cbf0", padding: 24 },
-  scrollContainer: { flex: 1 },
-  titulo: { fontSize: 20, textAlign: "center", marginTop: 40, marginBottom: 24 },
-  cardsContainer: { width: "100%", gap: 16, marginBottom: 24 },
-  card: { backgroundColor: "#ffffff", flexDirection: "row", alignItems: "center", 
-    justifyContent: "space-between", padding: 20, borderRadius: 12, elevation: 2, 
-    shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 10 },
-  cardContent: { flexDirection: "row", alignItems: "center", gap: 15 },
-  cardTextContainer: { flexDirection: "column" },
-  cardTitle: { color: "#222", fontSize: 18, fontWeight: "600" },
-  cardSubtitle: { color: "#666", fontSize: 14 },
-  colorIndicator: { width: 16, height: 16, borderRadius: 8, marginRight: 8 },
-  botonAgregar: { flexDirection: "row", alignItems: "center", justifyContent: "center", 
-    paddingVertical: 16, borderRadius: 8, gap: 8, borderWidth: 1, borderColor: "#e77573", 
-    backgroundColor: "#fff" },
-  botonAgregarTexto: { color: "#222", fontSize: 16, fontWeight: "600" },
-  botonVolver: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  botonVolverTexto: { color: '#e77573', fontSize: 16, marginLeft: 8, fontWeight: '600' },
-  cardProducto: { backgroundColor: '#fff', flexDirection: 'row', alignItems: 'center',
-     justifyContent: 'space-between', padding: 16, borderRadius: 12, marginBottom: 10 },
-  formularioContainer: { backgroundColor: '#fff', borderRadius: 12, padding: 20, 
-    marginTop: 10, elevation: 2 },
-  input: { borderWidth: 1, borderColor: '#ddd', padding: 12, borderRadius: 8, 
-    fontSize: 16, marginBottom: 15 },
-  botonesFormulario: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10 },
-  botonForm: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
-  botonCancelar: { backgroundColor: '#f0f0f0' },
-  botonGuardar: { backgroundColor: '#e77573' },
-  botonFormTexto: { fontWeight: '600', fontSize: 16 },
-  detalleContainer: { flex: 1, backgroundColor: '#f9f9f9', borderRadius: 12, padding: 20 },
-  detalleHeader: { flexDirection: 'row', alignItems: 'center', gap: 15, marginBottom: 20 },
-  detalleTitulo: { fontSize: 24, fontWeight: 'bold', color: '#222', marginTop: 16, 
-     textAlign: 'center'},
-  detalleInfo: { backgroundColor: '#fff', borderRadius: 12, padding: 20, marginBottom: 20},
-  infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, 
-    borderBottomWidth: 1, borderBottomColor: '#f0f0f0'},
-  infoLabel: { fontSize: 16, fontWeight: '600', color: '#666'},
-  infoValue: { fontSize: 16, color: '#222', textAlign: 'right', flex: 1, marginLeft: 10},
-  sinCategoriasContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  sinCategoriasTexto: { fontSize: 18, color: '#666', marginTop: 16, textAlign: 'center' },
-  sinCategoriasSubtexto: { fontSize: 14, color: '#999', marginTop: 8, textAlign: 'center' },
+  // ===== LAYOUT PRINCIPAL =====
+  container: {
+    flex: 1,
+    backgroundColor: "#a8cbf0",
+    padding: 24,
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+
+  // ===== TÍTULO Y CONTENEDORES =====
+  titulo: {
+    fontSize: 20,
+    textAlign: "center",
+    marginTop: 40,
+    marginBottom: 24,
+    fontWeight: "600",
+    color: "#222",
+  },
+  cardsContainer: {
+    width: "100%",
+    gap: 16,
+    marginBottom: 24,
+  },
+  sinCategoriasContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  // ===== TARJETAS =====
+  card: {
+    backgroundColor: "#ffffff",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 20,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+  },
+  cardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 15,
+  },
+  cardTextContainer: {
+    flexDirection: "column",
+  },
+  cardTitle: {
+    color: "#222",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  cardSubtitle: {
+    color: "#666",
+    fontSize: 14,
+  },
+  colorIndicator: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  cardProducto: {
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 10,
+    elevation: 1,
+  },
+
+  // ===== BOTONES PRINCIPALES =====
+  botonAgregar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    borderRadius: 8,
+    gap: 8,
+    borderWidth: 1,
+    borderColor: "#e77573",
+    backgroundColor: "#fff",
+  },
+  botonAgregarTexto: {
+    color: "#222",
+    fontSize: 16,
+    fontWeight: "600",
+  },
   botonAgregarSecundario: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 8,
     gap: 8,
     borderWidth: 1,
-    borderColor: '#e77573',
-    backgroundColor: '#fff',
+    borderColor: "#e77573",
+    backgroundColor: "#fff",
     marginTop: 16,
     marginBottom: 20,
   },
   botonAgregarSecundarioTexto: {
-    color: '#222',
+    color: "#222",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
-  botonEliminar: {
-    backgroundColor: '#dc3545',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+
+  // ===== BOTONES DE NAVEGACIÓN =====
+  botonVolver: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  botonVolverTexto: {
+    color: "#e77573",
+    fontSize: 16,
+    marginLeft: 8,
+    fontWeight: "600",
+  },
+
+  // ===== FORMULARIO =====
+  formularioContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    marginTop: 10,
+    elevation: 2,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    padding: 12,
+    borderRadius: 8,
+    fontSize: 16,
+    marginBottom: 15,
+  },
+  botonesFormulario: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 10,
+  },
+  botonForm: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  botonCancelar: {
+    backgroundColor: "#f0f0f0",
+  },
+  botonGuardar: {
+    backgroundColor: "#e77573",
+  },
+  botonFormTexto: {
+    fontWeight: "600",
+    fontSize: 16,
+  },
+
+  // ===== MODAL DE EDICIÓN =====
+  modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 999,
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 24,
+    width: "90%",
+    maxWidth: 400,
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+  },
+  modalTitulo: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#222",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  selectorColorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 8,
+  },
+  labelColor: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#666",
+  },
+  colorPreview: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: "#ddd",
+  },
+  botonCambiarColor: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#1b23faff",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    marginLeft: "auto",
+  },
+  botonCambiarColorTexto: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  botonesModal: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 10,
+    marginTop: 20,
+  },
+
+  // ===== DETALLES =====
+  detalleContainer: {
+    flex: 1,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 12,
+    padding: 20,
+  },
+  detalleHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 15,
+    marginBottom: 20,
+  },
+  detalleTitulo: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#222",
+    marginTop: 16,
+    textAlign: "center",
+  },
+  detalleInfo: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    elevation: 1,
+  },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  infoLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+  },
+  infoValue: {
+    fontSize: 16,
+    color: "#222",
+    textAlign: "right",
+    flex: 1,
+    marginLeft: 10,
+  },
+
+  // ===== TEXTOS DE ESTADO =====
+  sinCategoriasTexto: {
+    fontSize: 18,
+    color: "#666",
+    marginTop: 16,
+    textAlign: "center",
+    fontWeight: "500",
+  },
+  sinCategoriasSubtexto: {
+    fontSize: 14,
+    color: "#999",
+    marginTop: 8,
+    textAlign: "center",
+  },
+
+  // ===== BOTONES DE EDICIÓN Y ELIMINACIÓN =====
+  botonEditar: {
+    backgroundColor: "#1b23faff",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
     gap: 8,
-  },
-  botonEliminarTexto: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  botonEditar: {
-    backgroundColor: '#1b23faff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    gap: 8,
+    elevation: 2,
+    flex: 1,
   },
   botonEditarTexto: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
   },
-  botonIconoEdicion: {
-    padding: 8,
+  botonEliminar: {
+    backgroundColor: "#dc3545",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    gap: 8,
+    elevation: 2,
+    flex: 1,
   },
-  botonesEdicion: {
-    flexDirection: 'row',
-    gap: 4,
+  botonEliminarTexto: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
   },
+
+  // ===== BOTONES DE ACCIONES DE CATEGORÍA =====
+  botonesAccionesCategoria: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+    paddingHorizontal: 0,
+    marginBottom: 15,
+  },
+
+  // ===== BOTÓN DE AYUDA =====
   botonAyuda: {
     position: "absolute",
     right: 20,
@@ -617,7 +977,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
-  }
+  },
 });
 
 export default Categorias;
