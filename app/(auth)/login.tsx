@@ -224,6 +224,7 @@ export default function LoginScreen() {
           <ThemedText style={[AppStyles.text.detailTitle, { marginBottom: 10 }]}>Iniciar Sesión</ThemedText>
           <ThemedText style={[AppStyles.text.cardSubtitle, { textAlign: "center", marginBottom: 30 }]}>Ingresa a tu cuenta de Mis Boletas</ThemedText>
           
+          {/* Se elimina botón de backend/local por ahora
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15, backgroundColor: '#fff', padding: 15, borderRadius: 10, borderWidth: 1, borderColor: '#ddd' }}>
             <ThemedText style={{ fontSize: 14, fontWeight: '600', color: '#666' }}>
               Modo: {usarBackend ? 'Backend' : 'Base de Datos Local'}
@@ -246,7 +247,7 @@ export default function LoginScreen() {
               <ThemedText style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>👥 Ver Usuarios de Prueba</ThemedText>
             </TouchableOpacity>
           )}
-          
+          */}
           <TextInput
             style={AppStyles.inputs.base}
             placeholder="Correo electrónico"
@@ -291,7 +292,7 @@ export default function LoginScreen() {
 
           <TouchableOpacity 
             style={{ marginTop: 15, alignItems: 'center' }}
-            onPress={() => router.push('./forgot-password')}
+            onPress={() => router.push('./forgot-password.tsx')}
           >
             <ThemedText style={{ color: '#667eea', fontSize: 14, fontWeight: '500' }}>¿Olvidaste tu contraseña?</ThemedText>
           </TouchableOpacity>

@@ -116,7 +116,7 @@ const Configuracion = () => {
                     </TouchableOpacity>
 
                     <TouchableOpacity 
-                        style={AppStyles.buttons.primaryRow}
+                        style={[AppStyles.buttons.primary, AppStyles.containers.row]}
                         onPress={handleCerrarSesion}
                         testID='boton-cerrar-sesion'
                     >

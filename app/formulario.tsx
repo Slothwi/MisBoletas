@@ -1,4 +1,5 @@
 import { AppStyles, ThemedText } from "@/components";
+import { colors } from "@/components/styles";
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -85,7 +86,7 @@ const SelectCategoria = (props: {
                 key={categoria.id_categoria}
                 style={[
                   AppStyles.pickers.optionItem,
-                  props.categoriaSeleccionada?.id_categoria === categoria.id_categoria && AppStyles.pickers.optionItemSelected
+                  props.categoriaSeleccionada?.id_categoria === categoria.id_categoria && AppStyles.pickers.optionSelected
                 ]}
                 onPress={() => {
                   props.onChange(categoria);
@@ -466,6 +467,7 @@ function BasicExample() {
                   size={20}
                   color={AppStyles.colors.primary}
                   style={{ position: 'absolute', right: 12, top: 14 }}
+                  alignSelf="center"
                 />
               </View>
             </TouchableOpacity>
@@ -567,14 +569,15 @@ function BasicExample() {
                 onPress={() => handleFileClick('boleta')}
                 style={[
                   AppStyles.buttons.secondary,
-                  archivoSeleccionado?.tipoDocumento === 'boleta' && { backgroundColor: '#4CAF50' }
+                  archivoSeleccionado?.tipoDocumento === 'boleta' && { backgroundColor: '#ccc' }
                 ]}
               >
                 <Ionicons 
                   name="receipt-outline" 
                   size={18} 
-                  color={archivoSeleccionado?.tipoDocumento === 'boleta' ? "white" : AppStyles.colors.textMuted} 
+                  color={archivoSeleccionado?.tipoDocumento === 'boleta' ? "white" : AppStyles.colors.primary} 
                   style={{ marginRight: 6 }}
+                  align='center'
                 />
                 <ThemedText style={AppStyles.text.buttonTextSmall}>
                   {archivoSeleccionado?.tipoDocumento === 'boleta' ? archivoSeleccionado.name : 'Subir boleta'}
@@ -588,14 +591,15 @@ function BasicExample() {
                 onPress={() => handleFileClick('garantia')}
                 style={[
                   AppStyles.buttons.secondary,
-                  archivoSeleccionado?.tipoDocumento === 'garantia' && { backgroundColor: '#4CAF50' }
+                  archivoSeleccionado?.tipoDocumento === 'garantia' && { backgroundColor: '#ccc' }
                 ]}
               >
                 <Ionicons 
                   name="shield-checkmark-outline" 
                   size={18} 
-                  color={archivoSeleccionado?.tipoDocumento === 'garantia' ? "white" : AppStyles.colors.textMuted} 
+                  color={archivoSeleccionado?.tipoDocumento === 'garantia' ? "white" : AppStyles.colors.primary} 
                   style={{ marginRight: 6 }}
+                  align='center'
                 />
                 <ThemedText style={AppStyles.text.buttonTextSmall}>
                   {archivoSeleccionado?.tipoDocumento === 'garantia' ? archivoSeleccionado.name : 'Subir póliza'}
@@ -609,14 +613,15 @@ function BasicExample() {
                 onPress={() => handleFileClick('manual')}
                 style={[
                   AppStyles.buttons.secondary,
-                  archivoSeleccionado?.tipoDocumento === 'manual' && { backgroundColor: '#4CAF50' }
+                  archivoSeleccionado?.tipoDocumento === 'manual' && { backgroundColor: '#ccc' }
                 ]}
               >
                 <Ionicons 
                   name="document-outline" 
                   size={18} 
-                  color={archivoSeleccionado?.tipoDocumento === 'manual' ? "white" : AppStyles.colors.textMuted} 
+                  color={archivoSeleccionado?.tipoDocumento === 'manual' ? "white" : AppStyles.colors.primary} 
                   style={{ marginRight: 6 }}
+                  align='center'
                 />
                 <ThemedText style={AppStyles.text.buttonTextSmall}>
                   {archivoSeleccionado?.tipoDocumento === 'manual' ? archivoSeleccionado.name : 'Subir documento'}
@@ -645,7 +650,7 @@ function BasicExample() {
               onPress={handleCancelar}
               disabled={isLoading || isProcessingOCR}
             >
-              <ThemedText style={AppStyles.text.buttonText}>Cancelar</ThemedText>
+              <ThemedText style={[AppStyles.text.buttonTextColorless, { color: colors.secondary}]}>Cancelar</ThemedText>
             </TouchableOpacity>
             <TouchableOpacity 
               style={[AppStyles.buttons.primary, { flex: 1 }, (isLoading || isProcessingOCR) && { opacity: 0.6 }]}

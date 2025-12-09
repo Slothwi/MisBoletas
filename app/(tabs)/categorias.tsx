@@ -7,6 +7,7 @@ import { BASE_URL } from "../../src/constants/config";
 import { useAuth } from "../../src/hooks/useAuth";
 import categoriaService, { Categoria } from "../../src/services/CategoriaServiceSimplified";
 import productoService, { Producto } from "../../src/services/ProductServiceSimplified";
+import { colors } from "@/components/styles";
 
 const Categorias = () => {
   const router = useRouter();
@@ -508,16 +509,16 @@ const Categorias = () => {
                     onPress={() => handleAbrirEdicion(categoria)}
                     style={[AppStyles.buttons.edit, { flex: 1, marginRight: AppStyles.spacing.md }]}
                   >
-                    <Ionicons name="pencil-outline" size={20} color="#fff" />
-                    <ThemedText style={AppStyles.text.buttonText}>Editar</ThemedText>
+                    <Ionicons name="pencil-outline" size={20} color="#62A1E4" />
+                    <ThemedText style={[AppStyles.text.buttonTextColorless, { color: colors.secondary}]}>Editar</ThemedText>
                   </TouchableOpacity>
 
                   <TouchableOpacity 
                     onPress={() => handleEliminarCategoria(categoria)}
                     style={[AppStyles.buttons.danger, { flex: 1 }]}
                   >
-                    <Ionicons name="trash-outline" size={20} color="#fff" />
-                    <ThemedText style={AppStyles.text.buttonText}>Eliminar</ThemedText>
+                    <Ionicons name="trash-outline" size={20} color="#E15351" />
+                    <ThemedText style={[AppStyles.text.buttonTextColorless, { color: colors.alert}]}>Eliminar</ThemedText>
                   </TouchableOpacity>
                 </View>
               </View>
