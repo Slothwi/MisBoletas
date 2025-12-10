@@ -360,17 +360,42 @@ function BasicExample() {
           
           // Mostrar datos extraídos solo si hay OCR (boleta)
           if (tipoDocumento === 'boleta' && ocrData) {
-            const datosExtraidos = Object.entries(ocrData)
-              .filter(([key, value]) => value && key !== 'full_text')
-              .map(([key, value]) => `${key}: ${value}`)
-              .join('\n');
-            
-            if (datosExtraidos) {
-              Alert.alert(
-                '✅ OCR Procesado',
-                `Datos extraídos:\n\n${datosExtraidos}`,
-                [{ text: 'OK' }]
-              );
+            // Verificar si hay parsed_data del servidor
+            if (ocrData.parsed_data) {
+              const { total, fecha, comercio } = ocrData.parsed_data;
+              
+              // Auto-completar campos
+              if (comercio) {
+                setTienda(comercio);
+              }
+              
+              if (fecha) {
+                try {
+                  // Convertir string fecha (dd/mm/yyyy) a Date
+                  const [dia, mes, anio] = fecha.split(/[-/]/).map(Number);
+                  const fechaObj = new Date(anio, mes - 1, dia);
+                  setFechaCompra(fechaObj);
+                } catch (e) {
+                  console.warn('No se pudo parsear fecha:', fecha);
+                }
+              }
+              
+              // Notificación discreta
+              Alert.alert('✅ Éxito', 'Datos autocompletados desde la boleta', [{ text: 'OK' }]);
+            } else {
+              // Fallback: mostrar datos crudos si no hay parsed_data
+              const datosExtraidos = Object.entries(ocrData)
+                .filter(([key, value]) => value && key !== 'full_text' && key !== 'parsed_data')
+                .map(([key, value]) => `${key}: ${value}`)
+                .join('\n');
+              
+              if (datosExtraidos) {
+                Alert.alert(
+                  '✅ OCR Procesado',
+                  `Datos extraídos:\n\n${datosExtraidos}`,
+                  [{ text: 'OK' }]
+                );
+              }
             }
           }
         } catch (ocrError) {
