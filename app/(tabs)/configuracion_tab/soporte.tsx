@@ -182,22 +182,22 @@ export default function Soporte() {
         
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: AppStyles.spacing.sm }}>
           <Ionicons name="information-circle" size={20} color={AppStyles.colors.primary} style={{ marginRight: AppStyles.spacing.sm, marginTop: 2 }} />
-          <ThemedText style={AppStyles.text.cardText}>
+          <ThemedText type="default">
             Responderemos a tu ticket en un plazo máximo de 48 horas hábiles.
           </ThemedText>
         </View>
         
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: AppStyles.spacing.sm }}>
           <Ionicons name="information-circle" size={20} color={AppStyles.colors.primary} style={{ marginRight: AppStyles.spacing.sm, marginTop: 2 }} />
-          <ThemedText style={AppStyles.text.cardText}>
+          <ThemedText type="default">
             Asegúrate de proporcionar detalles suficientes para poder ayudarte mejor.
           </ThemedText>
         </View>
         
         <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
           <Ionicons name="information-circle" size={20} color={AppStyles.colors.primary} style={{ marginRight: AppStyles.spacing.sm, marginTop: 2 }} />
-          <ThemedText style={AppStyles.text.cardText}>
-            Puedes adjuntar imágenes o documentos relevantes desde la sección de tickets.
+          <ThemedText type="default">
+            MisBoletas no tiene responsabilidad legal sobre las compras que realices; nuestro soporte se limita a problemas técnicos con la aplicación.
           </ThemedText>
         </View>
       </View>

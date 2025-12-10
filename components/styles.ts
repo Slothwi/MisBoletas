@@ -6,28 +6,36 @@ import { StyleSheet } from 'react-native';
  * This file contains all shared styles, tokens, and component variants.
  * Use this instead of inline StyleSheet.create() in pages.
  * 
+ * DESIGN PRINCIPLES:
+ * - Single Responsibility: Each style variant has ONE clear purpose
+ * - No Parent-Child Conflicts: Cards inherit parent width, containers define layout
+ * - Reusable States: Common states (disabled, focused, error) are centralized in 'states'
+ * - Composition over Duplication: Build complex layouts by combining simple styles
+ * 
+ * PARENT-CHILD RELATIONSHIP:
+ * scrollPageContent (parent with padding) contains Cards (no width:100% to avoid overflow)
+ * Cards naturally inherit available space from parent without hardcoded width.
+ * 
  * STRUCTURE:
  * - spacing: xs, sm, md, lg, xl, xxl (4-32px)
  * - colors: primary, danger, edit, text variants
  * - borderRadius: sm, md, lg, full
  * - shadows: sm, md, lg
  * - containers: page, centered, row, etc.
- * - cards: base, interactive, profile
+ * - cards: base, interactive, profile (NO hardcoded width - inherit from parent)
  * - buttons: primary, small, secondary, danger, edit, disabled, fab
  * - text: Various typography variants (label, title, cardText, etc.)
- * - inputs: base, focused, disabled, error states
- * - states: Reusable state modifiers (disabled, focused, error)
+ * - inputs: base + state modifiers (focused, disabled, error)
+ * - states: Reusable state modifiers (disabled, focused, error) for ANY component
  * - pickers: Dropdown/custom picker styles
  * - misc: Logos, indicators, dividers, etc.
  * 
- * USAGE EXAMPLES:
- * import AppStyles from '@/components/styles';
- * 
- * <View style={AppStyles.containers.page}>
- * <TouchableOpacity style={AppStyles.buttons.primary}>
- * <Text style={AppStyles.text.label}>Label</Text>
- * <ThemedTextInput style={AppStyles.inputs.base} />
- * <View style={[AppStyles.cards.base, AppStyles.states.disabled]} />
+ * KEY PATTERNS:
+ * - Cards use NO width property to inherit parent constraints
+ * - Buttons + row for icon+text: [buttons.primary, containers.row]
+ * - Inputs with states: [inputs.base, isError && inputs.error]
+ * - Disabled cards: [cards.base, disabled && states.disabled]
+ * - Selected pickers: [pickers.optionItem, isSelected && pickers.optionSelected]
  */
 
 // Design tokens
@@ -50,6 +58,8 @@ export const colors = {
   textLight: '#fff',
   border: '#ddd',
   shadow: '#000',
+  secondary: '#62A1E4',
+  alert: '#E15351'
 };
 
 export const borderRadius = {
@@ -136,28 +146,31 @@ export const containers = StyleSheet.create({
 });
 
 export const cards = StyleSheet.create({
+  // BASE: Card container for form sections and content blocks
+  // NOTE: width is NOT set here to avoid conflicts with parent padding.
+  // Use maxWidth if you need to constrain card width.
   base: {
-    width: '100%',
     backgroundColor: colors.primaryLight,
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginBottom: spacing.lg,
     ...shadows.sm,
   },
+  // INTERACTIVE: Touchable card (row layout for lists)
+  // Common parent: ScrollView with paddingHorizontal or View with padding
   interactive: {
-    width: '100%',
     backgroundColor: colors.primaryLight,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: spacing.lg - 2,
-    paddingHorizontal: spacing.lg - 4,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
     borderRadius: borderRadius.md,
     marginBottom: spacing.sm,
     ...shadows.sm,
   },
+  // PROFILE: Large card for profile information
   profile: {
-    width: '100%',
     backgroundColor: colors.primaryLight,
     borderRadius: borderRadius.lg,
     padding: spacing.xl,
@@ -168,37 +181,35 @@ export const cards = StyleSheet.create({
 });
 
 export const buttons = StyleSheet.create({
+  // BASE: Core button styling (alignment, rounding, shadow)
+  base: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: borderRadius.md,
+    ...shadows.lg,
+  },
   // PRIMARY: Main action button (red)
   primary: {
     backgroundColor: colors.primary,
     paddingVertical: spacing.lg - 8,
     paddingHorizontal: spacing.xl,
-    borderRadius: borderRadius.md,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: borderRadius.md,
     ...shadows.lg,
   },
-  // SMALL: Compact button for forms (same padding structure, reduced size)
+  // SMALL: Compact button for forms (reduced padding)
   small: {
     backgroundColor: colors.primary,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
-    borderRadius: borderRadius.md,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
     alignItems: 'center',
     justifyContent: 'center',
-    ...shadows.lg,
-  },
-  // PRIMARY ROW: Button with icon + text (flex row)
-  primaryRow: {
-    backgroundColor: colors.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.lg - 8,
-    paddingHorizontal: spacing.xl,
     borderRadius: borderRadius.md,
-    width: '100%',
-    gap: spacing.md,
     ...shadows.lg,
   },
   // SECONDARY: Outline button (white + border)
@@ -208,39 +219,43 @@ export const buttons = StyleSheet.create({
     borderColor: colors.primary,
     paddingVertical: spacing.lg - 8,
     paddingHorizontal: spacing.xl,
-    borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: borderRadius.md,
     ...shadows.lg,
   },
   // DANGER: Delete/destructive action (red danger color)
   danger: {
-    backgroundColor: '#dc3545',
+    backgroundColor: colors.primaryLight,
     paddingVertical: spacing.lg - 8,
     paddingHorizontal: spacing.xl,
-    borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: borderRadius.md,
+    borderColor: colors.alert,
+    borderWidth: 1,
     ...shadows.lg,
   },
   // EDIT: Edit action button (blue)
   edit: {
-    backgroundColor: '#1b23fa',
+    backgroundColor: colors.primaryLight,
     paddingVertical: spacing.lg - 8,
     paddingHorizontal: spacing.xl,
-    borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: borderRadius.md,
+    borderColor: colors.secondary,
+    borderWidth: 1,
     ...shadows.lg,
   },
-  // DISABLED: Disabled state (gray)
+  // DISABLED: Disabled state (gray) - Use with primary/secondary
   disabled: {
     backgroundColor: '#ccc',
     paddingVertical: spacing.lg - 8,
     paddingHorizontal: spacing.xl,
-    borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: borderRadius.md,
     opacity: 0.6,
   },
   // FAB: Floating Action Button (round, absolute position)
@@ -278,6 +293,10 @@ export const text = StyleSheet.create({
   },
   buttonText: {
     color: colors.textLight,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  buttonTextColorless: {
     fontSize: 18,
     fontWeight: '600',
   },
@@ -327,7 +346,7 @@ export const text = StyleSheet.create({
   },
   emptyStateSubtitle: {
     fontSize: 14,
-    color: '#999',
+    color: colors.textMuted,
     textAlign: 'center',
     marginTop: spacing.sm,
   },
@@ -357,15 +376,14 @@ export const inputs = StyleSheet.create({
     width: '100%',
     backgroundColor: colors.primaryLight,
     borderRadius: borderRadius.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
     fontSize: 16,
     borderWidth: 1,
     borderColor: colors.border,
     color: colors.textDark,
-    marginTop: spacing.sm,
-    marginBottom: spacing.sm,
   },
+  // STATE MODIFIERS: Compose with base using StyleSheet.compose or inline arrays
   focused: {
     borderColor: colors.primary,
     borderWidth: 2,
@@ -426,9 +444,7 @@ export const pickers = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
-  optionItemSelected: {
-    backgroundColor: '#e3f2fd',
-  },
+  // SELECTED STATE: Applied to option items when selected
   optionSelected: {
     backgroundColor: '#e3f2fd',
   },

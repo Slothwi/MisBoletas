@@ -3,11 +3,10 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { Href, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, Linking, RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Linking, RefreshControl, ScrollView, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../../src/hooks/useAuth';
 import documentoService, { Documento } from '../../src/services/DocumentoService';
 import productoService, { Producto } from '../../src/services/ProductServiceSimplified';
-
 
 const Inicio = () => {
   const router = useRouter();
@@ -262,7 +261,7 @@ const handleEditarProducto = (producto: Producto) => {
           Tus Productos
         </ThemedText>
         <View style={AppStyles.containers.centered}>
-          <Text style={AppStyles.misc.loadingText}>Cargando productos...</Text>
+          <ThemedText style={AppStyles.misc.loadingText}>Cargando productos...</ThemedText>
         </View>
       </View>
     );
@@ -276,11 +275,12 @@ const handleEditarProducto = (producto: Producto) => {
           onPress={handleVolverALista}
         >
           <Ionicons name="arrow-back" size={24} color={AppStyles.colors.primary} />
-          <Text style={AppStyles.misc.backButtonText}>Volver a la lista</Text>
+          <ThemedText style={AppStyles.misc.backButtonText}>Volver a la lista</ThemedText>
         </TouchableOpacity>
 
         <ScrollView 
           style={{ flex: 1 }}
+          contentContainerStyle={{ paddingHorizontal: AppStyles.spacing.lg, paddingBottom: AppStyles.spacing.xl }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
@@ -297,54 +297,54 @@ const handleEditarProducto = (producto: Producto) => {
           <View style={[AppStyles.cards.base, { marginBottom: 20 }]}>
             {productoSeleccionado.marca && (
               <View key="marca" style={AppStyles.containers.rowSpaceBetween}>
-                <Text style={AppStyles.text.infoLabel}>Marca:</Text>
-                <Text style={AppStyles.text.infoValue}>{productoSeleccionado.marca}</Text>
+                <ThemedText style={AppStyles.text.infoLabel}>Marca:</ThemedText>
+                <ThemedText style={AppStyles.text.infoValue}>{productoSeleccionado.marca}</ThemedText>
               </View>
             )}
             
             {productoSeleccionado.modelo && (
               <View key="modelo" style={AppStyles.containers.rowSpaceBetween}>
-                <Text style={AppStyles.text.infoLabel}>Modelo:</Text>
-                <Text style={AppStyles.text.infoValue}>{productoSeleccionado.modelo}</Text>
+                <ThemedText style={AppStyles.text.infoLabel}>Modelo:</ThemedText>
+                <ThemedText style={AppStyles.text.infoValue}>{productoSeleccionado.modelo}</ThemedText>
               </View>
             )}
             
             {productoSeleccionado.fecha_compra && (
               <View key="fechaCompra" style={AppStyles.containers.rowSpaceBetween}>
-                <Text style={AppStyles.text.infoLabel}>Fecha de compra:</Text>
-                <Text style={AppStyles.text.infoValue}>
+                <ThemedText style={AppStyles.text.infoLabel}>Fecha de compra:</ThemedText>
+                <ThemedText style={AppStyles.text.infoValue}>
                   {new Date(productoSeleccionado.fecha_compra).toLocaleDateString()}
-                </Text>
+                </ThemedText>
               </View>
             )}
             
             {productoSeleccionado.duracion_garantia_meses && (
               <View key="garantia" style={AppStyles.containers.rowSpaceBetween}>
-                <Text style={AppStyles.text.infoLabel}>Garantía (meses):</Text>
-                <Text style={AppStyles.text.infoValue}>{productoSeleccionado.duracion_garantia_meses}</Text>
+                <ThemedText style={AppStyles.text.infoLabel}>Garantía (meses):</ThemedText>
+                <ThemedText style={AppStyles.text.infoValue}>{productoSeleccionado.duracion_garantia_meses}</ThemedText>
               </View>
             )}
             
             {productoSeleccionado.categorias && productoSeleccionado.categorias.length > 0 && (
               <View key="categorias" style={AppStyles.containers.rowSpaceBetween}>
-                <Text style={AppStyles.text.infoLabel}>Categorías:</Text>
-                <Text style={AppStyles.text.infoValue}>
+                <ThemedText style={AppStyles.text.infoLabel}>Categorías:</ThemedText>
+                <ThemedText style={AppStyles.text.infoValue}>
                   {productoSeleccionado.categorias.map(cat => cat.nombre).join(', ')}
-                </Text>
+                </ThemedText>
               </View>
             )}
 
             {productoSeleccionado.tienda && (
               <View key="tienda" style={AppStyles.containers.rowSpaceBetween}>
-                <Text style={AppStyles.text.infoLabel}>Tienda:</Text>
-                <Text style={AppStyles.text.infoValue}>{productoSeleccionado.tienda}</Text>
+                <ThemedText style={AppStyles.text.infoLabel}>Tienda:</ThemedText>
+                <ThemedText style={AppStyles.text.infoValue}>{productoSeleccionado.tienda}</ThemedText>
               </View>
             )}
             
             {productoSeleccionado.notas && (
               <View key="notas" style={AppStyles.containers.rowSpaceBetween}>
-                <Text style={AppStyles.text.infoLabel}>Notas:</Text>
-                <Text style={AppStyles.text.infoValue}>{productoSeleccionado.notas}</Text>
+                <ThemedText style={AppStyles.text.infoLabel}>Notas:</ThemedText>
+                <ThemedText style={AppStyles.text.infoValue}>{productoSeleccionado.notas}</ThemedText>
               </View>
             )}
           </View>
@@ -357,11 +357,11 @@ const handleEditarProducto = (producto: Producto) => {
             </View>
 
             {cargandoDocumentos ? (
-              <Text style={AppStyles.misc.loadingText}>Cargando documentos...</Text>
+              <ThemedText style={AppStyles.misc.loadingText}>Cargando documentos...</ThemedText>
             ) : documentos.length === 0 ? (
-              <Text style={{ fontSize: 14, color: '#888', textAlign: 'center', paddingVertical: 20, fontStyle: 'italic' }}>
+              <ThemedText style={{ fontSize: 14, color: '#888', textAlign: 'center', paddingVertical: 20, fontStyle: 'italic' }}>
                 No hay documentos asociados a este producto
-              </Text>
+              </ThemedText>
             ) : (
               <View style={{ gap: 12, marginTop: 12 }}>
                 {documentos.map((doc, index) => {
@@ -381,12 +381,12 @@ const handleEditarProducto = (producto: Producto) => {
                           color={AppStyles.colors.primary} 
                         />
                         <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 15, fontWeight: '600', color: '#222', marginBottom: 4 }} numberOfLines={1}>
+                          <ThemedText style={{ fontSize: 15, fontWeight: '600', color: '#222', marginBottom: 4 }} numberOfLines={1}>
                             {nombreArchivo}
-                          </Text>
-                          <Text style={{ fontSize: 12, color: '#666' }}>
+                          </ThemedText>
+                          <ThemedText style={{ fontSize: 12, color: '#666' }}>
                             {new Date(fechaSubida).toLocaleDateString()} • {documentoService.formatFileSize(sizeBytes)}
-                          </Text>
+                          </ThemedText>
                         </View>
                       </View>
                       <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -416,7 +416,7 @@ const handleEditarProducto = (producto: Producto) => {
             >
               <View style={AppStyles.containers.row}>
                 <Ionicons name="cloud-upload" size={20} color={AppStyles.colors.textLight} />
-                <Text style={[AppStyles.text.buttonText, { marginLeft: AppStyles.spacing.md }]}>Subir Documento</Text>
+                <ThemedText style={[AppStyles.text.buttonText, { marginLeft: AppStyles.spacing.md }]}>Subir Documento</ThemedText>
               </View>
             </TouchableOpacity>
           </View>
@@ -427,16 +427,16 @@ const handleEditarProducto = (producto: Producto) => {
               style={[AppStyles.buttons.edit, { marginBottom: AppStyles.spacing.md }]}
               onPress={() => {handleEditarProducto(productoSeleccionado);}}
             >
-              <Ionicons name="create" size={20} color={AppStyles.colors.textLight} />
-              <Text style={[AppStyles.text.buttonText, { marginLeft: AppStyles.spacing.md }]}>Editar Producto</Text>
+              <Ionicons name="pencil-outline" size={20} color={AppStyles.colors.textLight} />
+              <ThemedText style={AppStyles.text.buttonText}>Editar Producto</ThemedText>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={AppStyles.buttons.danger}
               onPress={() => handleEliminarProducto(productoSeleccionado)}
             >
-              <Ionicons name="trash" size={20} color={AppStyles.colors.textLight} />
-              <Text style={[AppStyles.text.buttonText, { marginLeft: AppStyles.spacing.md }]}>Eliminar</Text>
+              <Ionicons name="trash-outline" size={20} color={AppStyles.colors.textLight} />
+              <ThemedText style={AppStyles.text.buttonText}>Eliminar</ThemedText>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -454,36 +454,36 @@ const handleEditarProducto = (producto: Producto) => {
       {authState.isLoading ? (
         <View style={AppStyles.containers.centered}>
           <MaterialCommunityIcons name="loading" size={64} color="#ccc" />
-          <Text style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>
+          <ThemedText style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>
             Verificando autenticación...
-          </Text>
+          </ThemedText>
         </View>
       ) : !authState.isAuthenticated ? (
         <View style={AppStyles.containers.centered}>
           <MaterialCommunityIcons name="account-alert" size={64} color="#ccc" />
-          <Text style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>
+          <ThemedText style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>
             Necesitas iniciar sesión
-          </Text>
-          <Text style={[AppStyles.text.emptyStateSubtitle, { marginTop: AppStyles.spacing.md }]}>
+          </ThemedText>
+          <ThemedText style={[AppStyles.text.emptyStateSubtitle, { marginTop: AppStyles.spacing.md }]}>
             Ve a la sección de login para acceder a tus productos
-          </Text>
+          </ThemedText>
         </View>
       ) : cargando ? (
         <View style={AppStyles.containers.centered}>
           <MaterialCommunityIcons name="loading" size={64} color="#ccc" />
-          <Text style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>
+          <ThemedText style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>
             Cargando productos...
-          </Text>
+          </ThemedText>
         </View>
       ) : productos.length === 0 ? (
         <View style={AppStyles.containers.centered}>
-          <MaterialCommunityIcons name="package-variant" size={64} color="#ccc" />
-          <Text style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>
+          <MaterialCommunityIcons name="package-variant" size={64} color="#fff" />
+          <ThemedText style={[AppStyles.text.emptyStateTitle, { marginTop: AppStyles.spacing.lg }]}>
             Aún no has registrado productos
-          </Text>
-          <Text style={[AppStyles.text.emptyStateSubtitle, { marginTop: AppStyles.spacing.md }]}>
+          </ThemedText>
+          <ThemedText style={[AppStyles.text.emptyStateSubtitle, { marginTop: AppStyles.spacing.md }]}>
             Puedes añadirlos en la sección de agregar producto
-          </Text>
+          </ThemedText>
           
           <TouchableOpacity 
             style={[AppStyles.buttons.primary, { marginTop: AppStyles.spacing.xl }]}
@@ -492,13 +492,13 @@ const handleEditarProducto = (producto: Producto) => {
           >
             <View style={AppStyles.containers.row}>
               <Ionicons name="add" size={24} color={AppStyles.colors.textLight} />
-              <Text style={[AppStyles.text.buttonText, { marginLeft: AppStyles.spacing.md }]}>Agregar Producto</Text>
+              <ThemedText style={[AppStyles.text.buttonText, { marginLeft: AppStyles.spacing.md }]}>Agregar Producto</ThemedText>
             </View>
           </TouchableOpacity>
         </View>
       ) : (
-        <ScrollView style={{ flex: 1 }}>
-          <View style={{ width: '100%', gap: 16, marginBottom: 24 }}>
+        <ScrollView style={{ flex: 1, paddingHorizontal: AppStyles.spacing.lg }}>
+          <View style={{ gap: 16, marginBottom: 24 }}>
             {productos.map((producto) => (
               <TouchableOpacity 
                 key={producto.id_producto}
@@ -512,7 +512,7 @@ const handleEditarProducto = (producto: Producto) => {
                     size={24} 
                     color={AppStyles.colors.primary} 
                   />
-                  <Text style={AppStyles.text.cardText}>{producto.nombre}</Text>
+                  <ThemedText style={AppStyles.text.cardText}>{producto.nombre}</ThemedText>
                 </View>
                 <Ionicons name="chevron-forward" size={24} color={AppStyles.colors.primary} />
               </TouchableOpacity>
@@ -524,7 +524,7 @@ const handleEditarProducto = (producto: Producto) => {
             onPress={handleAgregarProducto}
           >
             <Ionicons name="add-circle-outline" size={24} color={AppStyles.colors.primary} />
-            <Text style={[AppStyles.text.cardText, { color: AppStyles.colors.primary, marginLeft: AppStyles.spacing.md }]}>Agregar otro producto</Text>
+            <ThemedText style={[AppStyles.text.cardText, { color: AppStyles.colors.primary, marginLeft: AppStyles.spacing.md }]}>Agregar otro producto</ThemedText>
           </TouchableOpacity>
         </ScrollView>
       )}
