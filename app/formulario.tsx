@@ -365,9 +365,11 @@ function BasicExample() {
             if (ocrData.parsed_data) {
               const { total, fecha, comercio } = ocrData.parsed_data;
               
-              // Auto-completar campos
-              if (comercio) {
-                setTienda(comercio);
+              // Preparar datos para actualizar el producto con la info del OCR
+              const datosParaActualizar: any = {};
+              
+              if (comercio && comercio !== productoGuardado.tienda) {
+                datosParaActualizar.tienda = comercio;
               }
               
               if (fecha) {
@@ -375,14 +377,33 @@ function BasicExample() {
                   // Convertir string fecha (dd/mm/yyyy) a Date
                   const [dia, mes, anio] = fecha.split(/[-/]/).map(Number);
                   const fechaObj = new Date(anio, mes - 1, dia);
-                  setFechaCompra(fechaObj);
+                  const fechaISO = formatDateForAPI(fechaObj);
+                  
+                  if (fechaISO !== productoGuardado.fecha_compra) {
+                    datosParaActualizar.fecha_compra = fechaISO;
+                  }
                 } catch (e) {
                   console.warn('No se pudo parsear fecha:', fecha);
                 }
               }
               
+              // ACCIÓN CLAVE: Actualizar el producto con los datos del OCR ANTES de redirigir
+              if (Object.keys(datosParaActualizar).length > 0) {
+                try {
+                  console.log('🔄 Actualizando producto con datos del OCR:', datosParaActualizar);
+                  await productoService.update(
+                    productoGuardado.id_producto,
+                    datosParaActualizar
+                  );
+                  console.log('✅ Datos del OCR guardados en la BD');
+                } catch (updateError) {
+                  console.error('⚠️ Error guardando datos del OCR:', updateError);
+                  // No es crítico, continuamos
+                }
+              }
+              
               // Notificación discreta
-              Alert.alert('✅ Éxito', 'Datos autocompletados desde la boleta', [{ text: 'OK' }]);
+              Alert.alert('✅ Éxito', 'Datos autocompletados y guardados desde la boleta', [{ text: 'OK' }]);
             } else {
               // Fallback: mostrar datos crudos si no hay parsed_data
               const datosExtraidos = Object.entries(ocrData)
