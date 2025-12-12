@@ -68,12 +68,12 @@ export const APP_CONFIG = {
   },
 };
 
-// Configuración de almacenamiento - Compatible con tu backend
+// Configuración de almacenamiento - Compatible con tu backend y SecureStore
 export const STORAGE_CONFIG = {
-  authTokenKey: '@MisBoletas:auth_token',
-  userDataKey: '@MisBoletas:user_data', 
-  appSettingsKey: '@MisBoletas:app_settings',
-  cacheKey: '@MisBoletas:app_cache',
+  authTokenKey: 'MisBoletas.auth_token',
+  userDataKey: 'MisBoletas.user_data', 
+  appSettingsKey: 'MisBoletas.app_settings',
+  cacheKey: 'MisBoletas.app_cache',
 };
 
 // Endpoints específicos de tu backend FastAPI
