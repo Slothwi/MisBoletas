@@ -133,19 +133,19 @@ const HomeScreen = () => {
     }
   }, [authState.isAuthenticated, authState.isLoading, cargarProductos]);
 
-  const handleAgregarProducto = () => {
+  const handleAgregarProducto = useCallback(() => {
     router.push('/formulario' as Href);
-  };
+  }, [router]);
 
-  const handleVerProducto = (producto: Producto) => {
+  const handleVerProducto = useCallback((producto: Producto) => {
     setProductoSeleccionado(producto);
-  };
+  }, []);
 
-  const handleVolverALista = () => {
+  const handleVolverALista = useCallback(() => {
     setProductoSeleccionado(null);
-  };
+  }, []);
 
-  const handleEliminarProducto = async (producto: Producto) => {
+  const handleEliminarProducto = useCallback(async (producto: Producto) => {
     Alert.alert(
       'Eliminar Producto',
       `¿Estás seguro de que quieres eliminar "${producto.nombre}"?`,
@@ -169,15 +169,13 @@ const HomeScreen = () => {
         }
       ]
     );
-  };
+  }, [cargarProductos, handleVolverALista]);
 
-  const handleEditarProducto = (producto: Producto) => {
+  const handleEditarProducto = useCallback((producto: Producto) => {
     if (!producto.id_producto) {
       Alert.alert('Error', 'No se puede editar este producto');
       return;
     }
-    
-    console.log('✏️ Editando producto:', producto.nombre);
     
     router.push({
       pathname: '/formulario' as Href,
@@ -186,7 +184,7 @@ const HomeScreen = () => {
         modoEdicion: 'true'
       }
     } as any );
-  };
+  }, [router]);
 
   const cargarDocumentos = async (productoId: string) => {
     try {

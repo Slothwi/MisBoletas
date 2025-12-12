@@ -2,7 +2,9 @@ import { ThemedText } from "@/src/components";
 import { useAuth } from "@/src/hooks/useAuth";
 // 👇 CORRECCIÓN: Importamos estilos del tema
 import { buttons, colors, containers, inputs, misc, text } from '@/src/theme';
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { validateEmail } from '@/src/utils/validators';
+import secureStorageService from '@/src/services/secureStorageService';
+import { logger } from '@/src/utils/logger';
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -16,6 +18,8 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+
+const TAG = 'LoginScreen';
 
 // Base de datos de prueba local
 const usuariosPrueba = [
@@ -77,8 +81,7 @@ export default function LoginScreen() {
         Alert.alert("Error", "Por favor completa todos los campos");
         return;
       }
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(correo)) {
+      if (!validateEmail(correo)) {
         Alert.alert("Error", "Por favor ingresa un correo válido");
         return;
       }
@@ -98,9 +101,8 @@ export default function LoginScreen() {
       Alert.alert("Error", "Por favor completa todos los campos");
       return;
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(correo)) {
-      Alert.alert("Error", "Por favor ingresa un correo valido");
+    if (!validateEmail(correo)) {
+      Alert.alert("Error", "Por favor ingresa un correo válido");
       return;
     }
 
@@ -108,23 +110,26 @@ export default function LoginScreen() {
       try {
         await login({ correo: correo.toLowerCase().trim(), contrasena });
       } catch (err: any) {
-        console.log("❌ Error en login:", err.message);
+        logger.error(TAG, `Login error: ${err.message}`);
       }
     } else {
       const resultado = autenticarLocal(correo, contrasena);
       if (resultado.success && resultado.token && resultado.user) {
         try {
-          await AsyncStorage.setItem("@MisBoletas:auth_token", resultado.token);
-          await AsyncStorage.setItem("@MisBoletas:user_data", JSON.stringify({
-            idUsuario: parseInt(resultado.user.id),
-            nombre: resultado.user.nombre,
-            correo: resultado.user.email,
-            fechaRegistro: new Date().toISOString(),
-          }));
+          // Usar secureStorageService en lugar de AsyncStorage directo
+          await secureStorageService.storeToken(resultado.token);
+          await secureStorageService.storeUser({
+            id_usuario: resultado.user.id,
+            email: resultado.user.email,
+            nombre_completo: resultado.user.nombre,
+            fecha_registro: new Date().toISOString(),
+          });
+          logger.log(TAG, '✅ Local authentication successful');
           await new Promise(resolve => setTimeout(resolve, 500));
           router.replace("/(tabs)");
         } catch (error) {
-          Alert.alert("Error", "Error al guardar la sesion");
+          logger.error(TAG, `Storage error: ${error}`);
+          Alert.alert("Error", "Error al guardar la sesión");
         }
       } else {
         Alert.alert("Error", resultado.error || "Credenciales incorrectas");
