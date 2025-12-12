@@ -4,7 +4,7 @@ import categoriaService, { Categoria } from '@/src/services/CategoriaServiceSimp
 import documentoService from '@/src/services/DocumentoService';
 import productoService from '@/src/services/ProductServiceSimplified';
 // 👇 Importamos todo desde el tema
-import { buttons, cards, colors, containers, inputs, misc, pickers, spacing, states, text } from '@/src/theme';
+import { buttons, cards, colors, containers, inputs, misc, pickers, spacing, text } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -215,26 +215,77 @@ const FormularioScreen = () => {
         productoGuardado = await productoService.create(productoData);
       }
 
+      // --- LOGICA OCR CORREGIDA ---
       if (archivoSeleccionado && productoGuardado.id_producto) {
         try {
           setIsProcessingOCR(true);
-          setOcrStatus('Subiendo archivo...');
-          await documentoService.uploadAndWaitOCR(
+          setOcrStatus('Subiendo y analizando boleta...'); // Feedback visual
+          
+          const tipoDocumento = archivoSeleccionado.tipoDocumento || 'boleta';
+
+          // 1. Subir y esperar análisis
+          const { ocrData } = await documentoService.uploadAndWaitOCR(
             productoGuardado.id_producto,
             { uri: archivoSeleccionado.uri, type: archivoSeleccionado.type, name: archivoSeleccionado.name },
-            archivoSeleccionado.tipoDocumento || 'boleta'
+            tipoDocumento
           );
+
+          // 2. [FIX] Verificar y GUARDAR datos del OCR
+          if (tipoDocumento === 'boleta' && ocrData && ocrData.parsed_data) {
+            const { comercio, fecha } = ocrData.parsed_data;
+            const datosActualizar: any = {};
+            let huboCambios = false;
+
+            // Solo autocompletar si el usuario no escribió nada (para no sobrescribir)
+            if (comercio && !tienda) {
+                datosActualizar.tienda = comercio;
+                huboCambios = true;
+            }
+            
+            if (fecha && !fechaCompra) {
+                try {
+                  // Asumimos formato del regex: DD-MM-YYYY o DD/MM/YYYY
+                  const partes = fecha.split(/[-/]/);
+                  if (partes.length === 3) {
+                      // Crear fecha (Mes es 0-indexado)
+                      const fechaObj = new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
+                      if (!isNaN(fechaObj.getTime())) {
+                          datosActualizar.fecha_compra = fechaObj.toISOString().split('T')[0];
+                          huboCambios = true;
+                      }
+                    }
+                } catch (e) { console.log('Error parseando fecha OCR', e); }
+            }
+
+             // 3. ACTUALIZAR BASE DE DATOS
+            if (huboCambios) {
+                console.log("🤖 OCR encontró datos, guardando...", datosActualizar);
+                await productoService.update(productoGuardado.id_producto, datosActualizar);
+                
+                Alert.alert(
+                  '✨ ¡Magia!',
+                  `Hemos detectado datos en tu boleta:\n\nTienda: ${comercio || 'No detectada'}\nFecha: ${fecha || 'No detectada'}\n\nSe han guardado automáticamente.`
+                );
+            }
+          }
         } catch (ocrError) {
-          Alert.alert('Advertencia', 'El producto se guardó, pero hubo un error al guardar el archivo.');
+          console.error('Error OCR:', ocrError);
+          Alert.alert('Advertencia', 'El producto se guardó, pero hubo un problema analizando el documento.');
         }
       }
 
-      Alert.alert('Éxito', 'Guardado correctamente', [{ text: 'OK', onPress: () => router.replace('/(tabs)/home') }]);
+      Alert.alert(
+        'Éxito', 
+        'Producto guardado correctamente', 
+        [{ text: 'OK', onPress: () => router.replace('/(tabs)/home') }]
+      );
+
     } catch (error: any) {
       Alert.alert('Error', error.message || 'No se pudo guardar el producto.');
     } finally {
       setIsLoading(false);
       setIsProcessingOCR(false);
+      setOcrStatus('');
     }
   };
 
@@ -274,17 +325,60 @@ const FormularioScreen = () => {
             <SelectCategoria categorias={categorias} categoriaSeleccionada={categoriaSeleccionada} onChange={setCategoriaSeleccionada} cargando={cargandoCategorias} />
           </View>
 
-          {/* Resto de campos (Marca, Modelo, Tienda, Notas, Documentos) */}
+          <View style={inputs.container}>
+            <ThemedText style={text.label}>Duración Garantía (Meses)</ThemedText>
+            <TextInput 
+                style={inputs.base} 
+                value={duracionGarantia} 
+                onChangeText={setDuracionGarantia} 
+                placeholder="Ej: 12" 
+                keyboardType="numeric"
+            />
+          </View>
+
           <View style={inputs.container}>
             <ThemedText style={text.label}>Marca</ThemedText>
             <TextInput style={inputs.base} value={marca} onChangeText={setMarca} placeholder="Marca" />
           </View>
 
+          <View style={inputs.container}>
+            <ThemedText style={text.label}>Tienda</ThemedText>
+            <TextInput style={inputs.base} value={tienda} onChangeText={setTienda} placeholder="Tienda" />
+          </View>
+
+          <View style={inputs.container}>
+            <ThemedText style={text.label}>Documentos</ThemedText>
+            
+            <View style={{ marginBottom: spacing.md }}>
+              <TouchableOpacity
+                onPress={() => handleFileClick('boleta')}
+                style={[
+                  buttons.secondary,
+                  archivoSeleccionado?.tipoDocumento === 'boleta' && { backgroundColor: '#e0e0e0' }
+                ]}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="receipt-outline" size={20} color={colors.primary} style={{ marginRight: 8 }} />
+                    <ThemedText style={text.buttonTextSmall}>
+                    {archivoSeleccionado?.tipoDocumento === 'boleta' ? `✅ ${archivoSeleccionado.name}` : 'Subir Boleta (OCR)'}
+                    </ThemedText>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Estado del OCR */}
+          {isProcessingOCR && (
+            <View style={{ alignItems: 'center', marginVertical: 10 }}>
+                <ThemedText style={{ color: colors.primary, fontWeight: 'bold' }}>{ocrStatus}</ThemedText>
+            </View>
+          )}
+
           <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: spacing.lg }}>
             <TouchableOpacity style={[buttons.secondary, { flex: 1 }]} onPress={() => router.back()} disabled={isLoading}>
               <ThemedText style={[text.buttonTextColorless, { color: colors.secondary}]}>Cancelar</ThemedText>
             </TouchableOpacity>
-            <TouchableOpacity style={[buttons.primary, { flex: 1 }]} onPress={handleGuardar} disabled={isLoading}>
+            <TouchableOpacity style={[buttons.primary, { flex: 1 }]} onPress={handleGuardar} disabled={isLoading || isProcessingOCR}>
               <ThemedText style={text.buttonText}>{isLoading ? 'Guardando...' : 'Guardar'}</ThemedText>
             </TouchableOpacity>
           </View>
