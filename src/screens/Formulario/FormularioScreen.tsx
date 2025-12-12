@@ -8,11 +8,9 @@ import { buttons, cards, colors, containers, inputs, misc, pickers, spacing, tex
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, Image, Platform, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Alert, Platform, ScrollView, TouchableOpacity, View } from 'react-native';
 
 const SelectCategoria = (props: { 
   categorias: Categoria[];
@@ -79,8 +77,6 @@ const FormularioScreen = () => {
   const [notas, setNotas] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isProcessingOCR, setIsProcessingOCR] = useState(false);
-  const [ocrStatus, setOcrStatus] = useState('');
   const [archivoSeleccionado, setArchivoSeleccionado] = useState<any>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [cargandoCategorias, setCargandoCategorias] = useState(true);
@@ -124,101 +120,6 @@ const FormularioScreen = () => {
     } catch { Alert.alert('Error', 'No se pudo seleccionar'); }
   };
 
-  const handleProcesarOCR = async () => {
-    if (!archivoSeleccionado) {
-        Alert.alert('Error', 'Selecciona un documento primero');
-        return;
-    }
-    
-    setIsProcessingOCR(true);
-    setOcrStatus('Validando imagen...');
-    
-    try {
-        // ✅ VALIDA ANTES de procesar
-        const fileInfo = await FileSystem.getInfoAsync(archivoSeleccionado.uri);
-        
-        // Validar tamaño (máximo 5MB)
-        if (fileInfo.size > 5 * 1024 * 1024) {
-            Alert.alert('Error', `Imagen muy grande (${(fileInfo.size / 1024 / 1024).toFixed(1)}MB). Máximo 5MB`);
-            setIsProcessingOCR(false);
-            return;
-        }
-        
-        // ✅ Validar resolución mínima (800x600) para OCR - Evita procesar imágenes muy pequeñas
-        if (archivoSeleccionado.uri.match(/\.(jpg|jpeg|png|gif|bmp)$/i)) {
-            try {
-                const { width, height } = await Image.getSize(archivoSeleccionado.uri);
-                if (width < 800 || height < 600) {
-                    Alert.alert('Error', `Imagen muy pequeña (${width}x${height}px).\nMínimo: 800x600px`);
-                    setIsProcessingOCR(false);
-                    return;
-                }
-            } catch (e) {
-                // Si no puede obtener tamaño, deja pasar (ej: documentos PDF)
-            }
-        }
-        
-        // Crear producto temporal
-        const dataTemp = {
-            nombre: nombreProducto || 'Sin nombre',
-            fecha_compra: fechaCompra?.toISOString().split('T')[0],
-            duracion_garantia_meses: parseInt(duracionGarantia) || undefined,
-            marca, modelo, tienda, precio: precio ? parseFloat(precio) : undefined, notas,
-            categoria_ids: categoriaSeleccionada ? [categoriaSeleccionada.id_categoria] : []
-        };
-
-        let prodId = productoEditando?.id_producto;
-        if (!prodId) {
-            setOcrStatus('Creando producto...');
-            const prod = await productoService.create(dataTemp);
-            prodId = prod.id_producto;
-        }
-
-        // Subir y procesar OCR
-        setOcrStatus('Subiendo documento (será comprimido)...');
-        const docResponse = await documentoService.uploadDocument(prodId, archivoSeleccionado);
-        
-        if (docResponse.id_documento) {
-            setOcrStatus('Extrayendo datos (OCR)...');
-            const ocrResult = await fetch(
-                `https://misboletas-backend.onrender.com/api/v1/documentos/${docResponse.id_documento}/process-ocr`,
-                { 
-                    method: 'POST',
-                    headers: { 
-                        'Authorization': `Bearer ${authState.token}`,
-                        'Content-Type': 'application/json' 
-                    },
-                    timeout: 45000  // 45 segundos timeout máximo
-                }
-            ).then(r => r.json());
-
-            if (ocrResult.parsed_data) {
-                const { comercio, fecha, total, marca: marcaOcr, modelo: modeloOcr, garantia } = ocrResult.parsed_data;
-                
-                // Auto-rellenar campos
-                if (comercio && !tienda) setTienda(comercio);
-                if (fecha && !fechaCompra) {
-                    const partes = fecha.split(/[-/]/);
-                    if (partes.length === 3) {
-                        setFechaCompra(new Date(`${partes[2]}-${partes[1]}-${partes[0]}`));
-                    }
-                }
-                if (total && !precio) setPrecio(total.toString());
-                if (marcaOcr && !marca) setMarca(marcaOcr);
-                if (modeloOcr && !modelo) setModelo(modeloOcr);
-                if (garantia && !duracionGarantia) setDuracionGarantia(garantia.toString());
-                
-                Alert.alert('✨ Éxito', 'Datos extraídos y campos actualizados');
-            }
-        }
-    } catch (e: any) {
-        Alert.alert('Error', e.message || 'Error procesando documento');
-    } finally {
-        setIsProcessingOCR(false);
-        setOcrStatus('');
-    }
-  };
-
   const handleGuardar = async () => {
     if (!nombreProducto.trim()) return Alert.alert('Error', 'Nombre requerido');
     setIsLoading(true);
@@ -232,11 +133,65 @@ const FormularioScreen = () => {
     };
 
     try {
+        // Crear/actualizar producto primero
         let prod;
         if (modoEdicion && productoEditando?.id_producto) prod = await productoService.update(productoEditando.id_producto, data);
         else prod = await productoService.create(data);
 
-        Alert.alert('Éxito', 'Producto guardado', [{ text: 'OK', onPress: () => router.replace('/(tabs)/home') }]);
+        // Si hay documento seleccionado, procesarlo
+        let ocrCompleted = false;
+        if (archivoSeleccionado && prod.id_producto) {
+            try {
+                // Subir documento
+                const docResponse = await documentoService.upload(prod.id_producto, archivoSeleccionado);
+                console.log('[DEBUG] Documento subido:', docResponse);
+                
+                // Procesar OCR SÍNCRONO si se subió correctamente
+                if (docResponse.documento?.id_documento) {
+                    const ocrResponse = await fetch(
+                        `https://misboletas-backend.onrender.com/api/v1/documentos/${docResponse.documento.id_documento}/process-ocr`,
+                        { 
+                            method: 'POST',
+                            headers: { 
+                                'Authorization': `Bearer ${authState.token}`,
+                                'Content-Type': 'application/json' 
+                            }
+                        }
+                    );
+                    
+                    console.log('[DEBUG] OCR Response status:', ocrResponse.status);
+                    if (ocrResponse.ok) {
+                        const ocrData = await ocrResponse.json();
+                        console.log('[DEBUG] OCR Data recibido:', ocrData);
+                        
+                        // Llenar formulario con datos OCR extraídos
+                        if (ocrData) {
+                            console.log('[DEBUG] Actualizando campos con OCR data');
+                            if (ocrData.nombre) { console.log('Setting nombre:', ocrData.nombre); setNombreProducto(ocrData.nombre); }
+                            if (ocrData.marca) { console.log('Setting marca:', ocrData.marca); setMarca(ocrData.marca); }
+                            if (ocrData.modelo) { console.log('Setting modelo:', ocrData.modelo); setModelo(ocrData.modelo); }
+                            if (ocrData.tienda) { console.log('Setting tienda:', ocrData.tienda); setTienda(ocrData.tienda); }
+                            if (ocrData.precio) { console.log('Setting precio:', ocrData.precio); setPrecio(ocrData.precio.toString()); }
+                            if (ocrData.fecha_compra) { console.log('Setting fecha:', ocrData.fecha_compra); setFechaCompra(new Date(ocrData.fecha_compra)); }
+                            if (ocrData.duracion_garantia_meses) { console.log('Setting garantía:', ocrData.duracion_garantia_meses); setDuracionGarantia(ocrData.duracion_garantia_meses.toString()); }
+                            ocrCompleted = true;
+                            Alert.alert('OCR Completado', 'Datos extraídos correctamente');
+                        }
+                    } else {
+                        const errorText = await ocrResponse.text();
+                        console.warn('OCR processing failed:', ocrResponse.status, errorText);
+                        Alert.alert('Aviso', 'Documento guardado pero OCR no procesó correctamente');
+                    }
+                }
+            } catch (docError) {
+                console.error('Error procesando documento:', docError);
+                Alert.alert('Aviso', 'Documento guardado pero hubo error en OCR');
+            }
+        }
+
+        if (ocrCompleted || !archivoSeleccionado) {
+            Alert.alert('Éxito', 'Producto guardado', [{ text: 'OK', onPress: () => router.replace('/(tabs)/home') }]);
+        }
     } catch (e: any) { Alert.alert('Error', e.message); } 
     finally { setIsLoading(false); }
   };
@@ -283,28 +238,17 @@ const FormularioScreen = () => {
           <View style={inputs.container}><ThemedText style={text.label}>Notas</ThemedText><ThemedTextInput style={[inputs.base, { height: 80 }]} multiline value={notas} onChangeText={setNotas} /></View>
 
           <View style={{ marginVertical: 10 }}>
-            <TouchableOpacity style={buttons.secondary} onPress={() => handleFileClick('boleta')} disabled={isProcessingOCR}>
+            <TouchableOpacity style={buttons.secondary} onPress={() => handleFileClick('boleta')}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                     <Ionicons name="camera" size={20} color={colors.primary} style={{ marginRight: 8 }} />
                     <ThemedText style={{ color: colors.primary }}>{archivoSeleccionado ? '✓ Archivo seleccionado' : 'Seleccionar documento'}</ThemedText>
                 </View>
             </TouchableOpacity>
-            
-            {archivoSeleccionado && (
-              <TouchableOpacity style={[buttons.primary, { marginTop: 10 }]} onPress={handleProcesarOCR} disabled={isProcessingOCR}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                    <Ionicons name="scan" size={20} color="#fff" style={{ marginRight: 8 }} />
-                    <ThemedText style={text.buttonText}>{isProcessingOCR ? 'Procesando...' : 'Procesar documento o boleta'}</ThemedText>
-                </View>
-              </TouchableOpacity>
-            )}
           </View>
-
-          {isProcessingOCR && <ThemedText style={{ textAlign: 'center', color: colors.primary, marginBottom: 10 }}>{ocrStatus}</ThemedText>}
 
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <TouchableOpacity style={[buttons.secondary, { flex: 1 }]} onPress={() => router.back()}><ThemedText style={{ color: colors.secondary, textAlign: 'center' }}>Cancelar</ThemedText></TouchableOpacity>
-            <TouchableOpacity style={[buttons.primary, { flex: 1 }]} onPress={handleGuardar} disabled={isLoading || isProcessingOCR}>
+            <TouchableOpacity style={[buttons.primary, { flex: 1 }]} onPress={handleGuardar} disabled={isLoading}>
                 <ThemedText style={text.buttonText}>{isLoading ? 'Guardando...' : 'Guardar'}</ThemedText>
             </TouchableOpacity>
           </View>
