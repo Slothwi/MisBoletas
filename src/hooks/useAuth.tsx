@@ -2,6 +2,9 @@ import { useRouter } from 'expo-router';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import authService from '../services/authService';
 import { AuthState, LoginCredentials, RegisterData, User } from '../types/auth';
+import { logger } from '../utils/logger';
+
+const TAG = 'AuthProvider';
 
 // Contexto de autenticación
 interface AuthContextType {
@@ -54,7 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         if (isLocalToken) {
           // Token local, aceptarlo directamente sin validación al servidor
-          console.log('✅ Autenticación local detectada');
+          logger.log(TAG, '✅ Autenticación local detectada');
           setAuthState({
             isAuthenticated: true,
             isLoading: false,
@@ -96,7 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
       }
     } catch (error) {
-      console.error('Error checking auth status:', error);
+      logger.error(TAG, `Error checking auth status: ${error}`);
       setAuthState({
         isAuthenticated: false,
         isLoading: false,
@@ -122,12 +125,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         error: null,
       });
       
-      console.log('✅ User logged in successfully');
+      logger.log(TAG, '✅ User logged in successfully');
       
       // Redirigir a la pantalla principal
       router.replace('/(tabs)');
     } catch (error: any) {
-      console.error('❌ Login failed:', error);
+      logger.error(TAG, `Login failed: ${error}`);
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
@@ -146,7 +149,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       // Si no hay token, el usuario debe confirmar email primero
       if (!response.access_token) {
-        console.log('⏳ Email confirmation pending');
+        logger.log(TAG, '⏳ Email confirmation pending');
         setAuthState({
           isAuthenticated: false,
           isLoading: false,
@@ -167,12 +170,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         error: null,
       });
       
-      console.log('✅ User registered successfully');
+      logger.log(TAG, '✅ User registered successfully');
       
       // Redirigir a la pantalla principal
       router.replace('/(tabs)');
     } catch (error: any) {
-      console.error('❌ Registration failed:', error);
+      logger.error(TAG, `Registration failed: ${error}`);
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
@@ -197,12 +200,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         error: null,
       });
       
-      console.log('✅ User logged out successfully');
+      logger.log(TAG, '✅ User logged out successfully');
       
       // Redirigir al login
       router.replace('/(auth)/login');
     } catch (error: any) {
-      console.error('❌ Logout failed:', error);
+      logger.error(TAG, `Logout failed: ${error}`);
       // Aún si hay error, limpiar el estado local
       setAuthState({
         isAuthenticated: false,
@@ -237,9 +240,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         error: null,
       }));
       
-      console.log('✅ Profile updated successfully');
+      logger.log(TAG, '✅ Profile updated successfully');
     } catch (error: any) {
-      console.error('❌ Profile update failed:', error);
+      logger.error(TAG, `Profile update failed: ${error}`);
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
