@@ -1,6 +1,9 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BASE_URL, API_TIMEOUT, STORAGE_CONFIG } from '../constants/config';
+import { BASE_URL, API_TIMEOUT } from '../constants/config';
+import secureStorageService from './secureStorageService';
+import { logger } from '../utils/logger';
+
+const TAG = 'APIService';
 
 // Configuración del axios instance
 const api: AxiosInstance = axios.create({
@@ -16,58 +19,32 @@ const api: AxiosInstance = axios.create({
 api.interceptors.request.use(
   async (config) => {
     try {
-      console.log('🔍 Request interceptor start for:', config.url);
-      console.log('🔍 Using token key:', STORAGE_CONFIG.authTokenKey);
+      logger.log(TAG, `🔍 Request interceptor: ${config.url}`);
       
-      const token = await AsyncStorage.getItem(STORAGE_CONFIG.authTokenKey);
-      
-      console.log('🔍 Request interceptor:', {
-        url: (config.baseURL || '') + (config.url || ''),
-        tokenExists: !!token,
-        tokenPreview: token ? `${token.substring(0, 20)}...` : 'NULL',
-        tokenKey: STORAGE_CONFIG.authTokenKey
-      });
+      const token = await secureStorageService.getToken();
       
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
-        console.log('✅ Token added to request headers');
+        logger.log(TAG, '✅ Token added to request headers');
       } else {
-        console.log('⚠️ No token found in AsyncStorage for key:', STORAGE_CONFIG.authTokenKey);
-        
-        // Vamos a verificar qué claves existen
-        try {
-          const allKeys = await AsyncStorage.getAllKeys();
-          console.log('📱 All AsyncStorage keys:', allKeys);
-          
-          // Intentar buscar tokens con diferentes claves
-          const possibleTokenKeys = allKeys.filter(key => key.includes('token') || key.includes('auth'));
-          for (const key of possibleTokenKeys) {
-            const value = await AsyncStorage.getItem(key);
-            console.log(`🔑 Found potential token in key "${key}":`, value ? `${value.substring(0, 20)}...` : 'NULL');
-          }
-        } catch (storageError) {
-          console.error('❌ Error checking AsyncStorage keys:', storageError);
-        }
+        logger.warn(TAG, 'No token found in secure storage');
       }
       
-      // Log para debugging en desarrollo
       if (__DEV__) {
-        console.log('🔵 API Request:', {
+        logger.debug(TAG, {
           method: config.method?.toUpperCase(),
           url: (config.baseURL || '') + (config.url || ''),
           hasAuth: !!config.headers.Authorization,
-          headers: config.headers,
-          data: config.data,
         });
       }
     } catch (error) {
-      console.error('❌ Error getting auth token:', error);
+      logger.error(TAG, `Error getting auth token: ${error}`);
     }
     
     return config;
   },
   (error) => {
-    console.error('❌ Request interceptor error:', error);
+    logger.error(TAG, `Request interceptor error: ${error}`);
     return Promise.reject(error);
   }
 );
@@ -75,25 +52,21 @@ api.interceptors.request.use(
 // Interceptor para responses - Manejo de errores y logs
 api.interceptors.response.use(
   (response: AxiosResponse) => {
-    // Log para debugging en desarrollo
     if (__DEV__) {
-      console.log('🟢 API Response:', {
+      logger.debug(TAG, {
         status: response.status,
         url: response.config.url,
-        data: response.data,
       });
     }
     
     return response;
   },
   async (error: AxiosError) => {
-    // Log para debugging
     if (__DEV__) {
-      console.log('🔴 API Error:', {
+      logger.debug(TAG, {
         status: error.response?.status,
         url: error.config?.url,
         message: error.message,
-        data: error.response?.data,
       });
     }
 
@@ -101,22 +74,17 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Token expirado o inválido
       try {
-        await AsyncStorage.multiRemove([
-          STORAGE_CONFIG.authTokenKey,
-          STORAGE_CONFIG.userDataKey
-        ]);
-        
-        // Navegar al login (se implementará en los componentes)
-        console.log('Token expired, user logged out');
+        await secureStorageService.clearAuthData();
+        logger.log(TAG, '⚠️ Token expired, user logged out');
       } catch (storageError) {
-        console.error('Error clearing storage:', storageError);
+        logger.error(TAG, `Error clearing storage: ${storageError}`);
       }
     }
     
     // Manejo de errores de red
     if (!error.response) {
       // Error de conexión
-      console.error('Network error - no response received');
+      logger.error(TAG, 'Network error - no response received');
       return Promise.reject({
         message: 'Error de conexión. Verifica tu internet.',
         type: 'NETWORK_ERROR'
