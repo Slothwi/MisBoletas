@@ -1,6 +1,7 @@
 import { Link, Stack } from 'expo-router';
+import React from 'react'; // 👈 Aseguramos importar React
 import { StyleSheet } from 'react-native';
-import { ThemedText, ThemedView } from '@/src/components'; // Importación correcta
+import { ThemedText, ThemedView } from '@/src/components';
 
 export default function NotFoundScreen() {
   return (
@@ -17,15 +18,14 @@ export default function NotFoundScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 20,
-    },
-    link: {
-        marginTop: 15,
-        paddingVertical: 15,
-    },
-    }
-);
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  link: {
+    marginTop: 15,
+    paddingVertical: 15,
+  },
+});

@@ -224,12 +224,12 @@ const CategoriasScreen = () => {
             </TouchableOpacity>
             
             <View style={[containers.row, { justifyContent: 'flex-end', marginTop: 4 }]}>
-               <TouchableOpacity onPress={() => handleAbrirEdicion(cat)} style={{ marginRight: 16 }}>
-                 <ThemedText style={{ color: colors.secondary, fontSize: 14 }}>Editar</ThemedText>
-               </TouchableOpacity>
-               <TouchableOpacity onPress={() => handleEliminarCategoria(cat)}>
-                 <ThemedText style={{ color: colors.alert, fontSize: 14 }}>Eliminar</ThemedText>
-               </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleAbrirEdicion(cat)} style={{ marginRight: 16 }}>
+                <ThemedText style={{ color: colors.secondary, fontSize: 14 }}>Editar</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleEliminarCategoria(cat)}>
+                <ThemedText style={{ color: colors.alert, fontSize: 14 }}>Eliminar</ThemedText>
+              </TouchableOpacity>
             </View>
           </View>
         ))}

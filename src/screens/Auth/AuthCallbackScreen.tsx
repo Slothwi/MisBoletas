@@ -1,22 +1,20 @@
-// src/screens/Auth/AuthCallbackScreen.tsx
-// Maneja los deep links desde emails de confirmación
-
-import { AppStyles, ThemedText, ThemedView } from '@/src/components';
+import { ThemedText, ThemedView } from '@/src/components';
 import { API_ENDPOINTS, BASE_URL, STORAGE_CONFIG } from '@/src/constants/config';
 import { useAuth } from '@/src/hooks/useAuth';
+// 👇 CORRECCIÓN: Importamos estilos del tema
+import { colors, containers, spacing, text } from '@/src/theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
 import { ActivityIndicator } from 'react-native';
 
-export function AuthCallback() {
+export default function AuthCallbackScreen() {
   const router = useRouter();
   const searchParams = useLocalSearchParams();
   const { checkAuthStatus } = useAuth();
 
   useEffect(() => {
     handleCallback();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCallback = async () => {
@@ -28,117 +26,78 @@ export function AuthCallback() {
       const refreshToken = Array.isArray(searchParams.refresh_token) ? searchParams.refresh_token[0] : searchParams.refresh_token;
       const userId = Array.isArray(searchParams.user_id) ? searchParams.user_id[0] : searchParams.user_id;
 
-      console.log('🔗 Deep Link Callback recibido:', { accessToken: !!accessToken, token: !!token, type, email });
-
-      // ✅ FLUJO NUEVO: Si el backend envió el access_token directamente
       if (accessToken && refreshToken) {
-        console.log('✅ Access token recibido del puente. Autenticando...');
-        
         try {
-          // Guardar tokens directamente
           await AsyncStorage.setItem(STORAGE_CONFIG.authTokenKey, accessToken);
-          if (refreshToken) {
-            await AsyncStorage.setItem('refresh_token', refreshToken);
-          }
+          if (refreshToken) await AsyncStorage.setItem('refresh_token', refreshToken);
           if (userId) {
             await AsyncStorage.setItem(STORAGE_CONFIG.userDataKey, JSON.stringify({
               id_usuario: userId,
               email: email || '',
             }));
           }
-          console.log('💾 Tokens y usuario guardados en AsyncStorage');
-
-          // Verificar estado de autenticación
           await new Promise(resolve => setTimeout(resolve, 1000));
           await checkAuthStatus();
-          
-          console.log('✅ Usuario autenticado correctamente');
           router.replace('/(tabs)');
         } catch (storageError) {
-          console.error('❌ Error guardando tokens:', storageError);
           router.replace('/(auth)/login');
         }
         return;
       }
 
-      // ✅ FLUJO LEGACY: Si solo tenemos el OTP token (fallback)
       if (!token || !email) {
-        console.error('❌ Token o email no proporcionado en deep link');
         router.replace('/bienvenida');
         return;
       }
 
-      // Si es confirmación de email (signup)
       if (type === 'signup') {
-        console.log('📧 Verificando OTP recibido...');
-        
-        // Hacer llamado al backend para obtener la sesión
         const response = await fetch(`${BASE_URL}${API_ENDPOINTS.auth.verifyOTP}`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: email,
-            token: token,
-            type: 'signup',
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, token, type: 'signup' }),
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          console.error('❌ Error verificando OTP:', errorData.detail || 'Unknown error');
           router.replace('/(auth)/login');
           return;
         }
 
         const authResponse = await response.json();
-        console.log('✅ Email confirmado y usuario autenticado');
         
-        // Guardar el token en AsyncStorage
         if (authResponse.access_token) {
           try {
             await AsyncStorage.setItem(STORAGE_CONFIG.authTokenKey, authResponse.access_token);
             if (authResponse.user) {
               await AsyncStorage.setItem(STORAGE_CONFIG.userDataKey, JSON.stringify(authResponse.user));
             }
-            console.log('💾 Token y usuario guardados en AsyncStorage');
           } catch (storageError) {
-            console.error('❌ Error guardando datos:', storageError);
+            console.error(storageError);
           }
         }
 
-        // Verificar estado de autenticación
         await new Promise(resolve => setTimeout(resolve, 1000));
         await checkAuthStatus();
         
-        // Redirigir a home
         setTimeout(() => {
           router.replace('/(tabs)/home');
         }, 1500);
       } else if (type === 'recovery') {
-        console.log('🔑 Link de recuperación de contraseña');
-        // Futuro: Implementar reset de contraseña
         router.replace('/(auth)/login');
       } else {
-        console.warn('⚠️ Tipo de OTP no soportado:', type);
         router.replace('/(auth)/login');
       }
 
     } catch (error) {
-      console.error('❌ Error procesando deep link:', error);
       router.replace('/bienvenida');
     }
   };
 
   return (
-    <ThemedView style={AppStyles.containers.centered}>
-      <ActivityIndicator size="large" color={AppStyles.colors.primary} />
-      <ThemedText style={[AppStyles.text.label, { marginTop: AppStyles.spacing.lg }]}>
+    <ThemedView style={containers.centered}>
+      <ActivityIndicator size="large" color={colors.primary} />
+      <ThemedText style={[text.label, { marginTop: spacing.lg }]}>
         Confirmando email...
       </ThemedText>
     </ThemedView>
   );
 }
-
-export default AuthCallback;
