@@ -1,7 +1,15 @@
+// ========================================================================
+// INICIO: MOVER A /src/components/ThemedTextInput.tsx
+//
+// NOTA: Una vez movido, el import de './styles' deberá ser actualizado
+// para apuntar a la nueva ubicación del sistema de diseño (ej: '../theme').
+// ========================================================================
+
 import { useThemeColor } from '@/src/hooks/useThemeColor';
+import AppStyles from '@/src/theme';
 import React, { useState } from 'react';
 import { TextInput, type TextInputProps } from 'react-native';
-import AppStyles from './styles';
+
 
 export type ThemedTextInputProps = TextInputProps & {
   lightColor?: string;
@@ -49,3 +57,7 @@ export function ThemedTextInput({
     />
   );
 }
+
+// ========================================================================
+// FIN: MOVER A /src/components/ThemedTextInput.tsx
+// ========================================================================

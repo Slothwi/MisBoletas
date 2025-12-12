@@ -1,25 +1,23 @@
-import { AppStyles, ThemedText, ThemedView } from '@/components';
+import { ThemedText, ThemedView } from '@/src/components';
 import { useAuth } from '@/src/hooks/useAuth';
+import { containers, text } from '@/src/theme';
 import { Redirect } from 'expo-router';
 import React from 'react';
 
 export default function Index() {
   const { authState } = useAuth();
 
-  // Mostrar loading mientras se verifica el estado de autenticación
   if (authState.isLoading) {
     return (
-      <ThemedView style={AppStyles.containers.centered}>
-        <ThemedText style={AppStyles.text.label}>Cargando...</ThemedText>
+      <ThemedView style={containers.centered}>
+        <ThemedText style={text.label}>Cargando...</ThemedText>
       </ThemedView>
     );
   }
 
-  // Si está autenticado, ir directamente a los productos (home)
   if (authState.isAuthenticated) {
     return <Redirect href="/(tabs)/home" />;
   }
 
-  // Si no está autenticado, ir a bienvenida
   return <Redirect href="/bienvenida" />;
 }

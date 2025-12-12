@@ -221,13 +221,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
-      if (!authState.user?.idUsuario) {
+      if (!authState.user?.id_usuario) {
         throw new Error('Usuario no encontrado');
       }
       
       const updatedUser = await authService.updateProfile({
         ...userData,
-        idUsuario: authState.user.idUsuario,
+        id_usuario: authState.user.id_usuario,
       });
       
       setAuthState(prev => ({

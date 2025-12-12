@@ -1,3 +1,7 @@
+// ========================================================================
+// INICIO: MOVER A /src/components/ThemedText.tsx
+// ========================================================================
+
 import React from 'react';
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
@@ -59,3 +63,7 @@ const styles = StyleSheet.create({
     color: '#0a7ea4',
   },
 });
+
+// ========================================================================
+// FIN: MOVER A /src/components/ThemedText.tsx
+// ========================================================================
