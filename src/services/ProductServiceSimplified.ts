@@ -1,5 +1,8 @@
 import { apiService } from './api';
 import { API_ENDPOINTS } from '../constants/config';
+import { logger } from '../utils/logger';
+
+const TAG = 'ProductService';
 
 // Interfaces para productos (Supabase schema)
 export interface Producto {
