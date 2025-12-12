@@ -1,77 +1,44 @@
-import { ThemedText } from "@/src/components";
-// 👇 Importamos estilos del tema
-import { cards, colors, containers, misc, text } from '@/src/theme';
+import { ThemedText, ThemedView } from "@/src/components";
+import { useColorScheme } from '@/src/hooks/useColorScheme';
+import { cards, colors, containers, misc, spacing, text } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Alert, Linking, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Linking, ScrollView, TouchableOpacity, View } from 'react-native';
 
 const InformacionScreen = () => {
     const router = useRouter();
+    const colorScheme = useColorScheme();
+    const cardBg = colorScheme === 'dark' ? '#1E1E1E' : colors.primaryLight;
+    const iconColor = colorScheme === 'dark' ? '#fff' : colors.primary;
 
-    const handleVolverAConfiguracion = () => {
-        router.push('/configuracion_tab');
-    };
+    const abrirURL = (url: string) => Linking.openURL(url).catch(err => console.error("Error", err));
 
-    const abrirURL = async (url: string, nombre: string) => {
-        try {
-            const soportado = await Linking.canOpenURL(url);
-            if (soportado) {
-                await Linking.openURL(url);
-            } else {
-                Alert.alert("Error", `No se puede abrir ${nombre}`);
-            }
-        } catch (error) {
-            Alert.alert("Error", `Error al abrir ${nombre}`);
-            console.error(`Error abriendo ${url}:`, error);
-        }
-    };
+    const InfoCard = ({ title, url }: { title: string, url: string }) => (
+        <TouchableOpacity 
+            style={[cards.interactive, { backgroundColor: cardBg }]}
+            onPress={() => abrirURL(url)}
+        >
+            <ThemedText style={text.cardText}>{title}</ThemedText>
+            <Ionicons name="open-outline" size={24} color={iconColor} />
+        </TouchableOpacity>
+    );
 
     return (
-        <View style={containers.page}>
-            <TouchableOpacity 
-                style={misc.backButton}
-                onPress={handleVolverAConfiguracion}
-            >
+        <ThemedView style={[containers.page, { backgroundColor: undefined }]}>
+            <TouchableOpacity style={misc.backButton} onPress={() => router.back()}>
                 <Ionicons name="arrow-back" size={24} color={colors.primary} />
-                <ThemedText style={misc.backButtonText}>Volver a configuraciones</ThemedText>
+                <ThemedText style={misc.backButtonText}>Volver</ThemedText>
             </TouchableOpacity>
 
-            <ScrollView contentContainerStyle={containers.scrollContent}>
-                <TouchableOpacity 
-                    style={cards.interactive}
-                    testID='card-terminos'
-                    onPress={() => abrirURL('https://www.bcn.cl/leychile', 'Términos y condiciones')}
-                >
-                    <ThemedText style={text.cardText}>Términos y condiciones</ThemedText>
-                    <View style={misc.linkCard}>
-                        <Ionicons name="open-outline" size={24} color={colors.primary} />
-                    </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                    style={cards.interactive}
-                    testID='card-ley-consumidor'
-                    onPress={() => abrirURL('https://www.bcn.cl/leychile', 'Ley del consumidor')}
-                >
-                    <ThemedText style={text.cardText}>Ley del consumidor</ThemedText>
-                    <View style={misc.linkCard}>
-                        <Ionicons name="open-outline" size={24} color={colors.primary} />
-                    </View>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                    style={cards.interactive}
-                    testID='card-sernac'
-                    onPress={() => abrirURL('https://www.sernac.cl', 'Página oficial del SERNAC')}
-                >
-                    <ThemedText style={text.cardText}>Página oficial del SERNAC</ThemedText>
-                    <View style={misc.linkCard}>
-                        <Ionicons name="open-outline" size={24} color={colors.primary} />
-                    </View>
-                </TouchableOpacity>
+            <ScrollView style={{ width: '100%' }}>
+                <View style={{ gap: spacing.md }}>
+                    <InfoCard title="Términos y condiciones" url="https://www.bcn.cl/leychile" />
+                    <InfoCard title="Ley del consumidor" url="https://www.bcn.cl/leychile" />
+                    <InfoCard title="Página oficial del SERNAC" url="https://www.sernac.cl" />
+                </View>
             </ScrollView>
-        </View>
+        </ThemedView>
     );
 };
 

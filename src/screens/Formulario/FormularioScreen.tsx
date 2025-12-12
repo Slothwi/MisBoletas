@@ -1,85 +1,56 @@
-import { ThemedText } from "@/src/components";
+import { ThemedText, ThemedTextInput, ThemedView } from "@/src/components";
 import { useAuth } from '@/src/hooks/useAuth';
+import { useColorScheme } from '@/src/hooks/useColorScheme';
 import categoriaService, { Categoria } from '@/src/services/CategoriaServiceSimplified';
 import documentoService from '@/src/services/DocumentoService';
 import productoService from '@/src/services/ProductServiceSimplified';
-// 👇 Importamos todo desde el tema
 import { buttons, cards, colors, containers, inputs, misc, pickers, spacing, text } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
+import * as MediaLibrary from 'expo-media-library';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, Platform, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Platform, ScrollView, TouchableOpacity, View } from 'react-native';
 
 const SelectCategoria = (props: { 
   categorias: Categoria[];
   categoriaSeleccionada: Categoria | null;
   onChange: (categoria: Categoria) => void;
   cargando: boolean;
+  colorScheme: 'light' | 'dark' | null;
 }) => {
   const [mostrarOpciones, setMostrarOpciones] = useState(false);
+  const cardBg = props.colorScheme === 'dark' ? '#333' : '#fff'; // Fondo para dropdown
 
-  if (props.cargando) {
-    return (
-      <View style={pickers.base}>
-        <ThemedText style={text.helperText}>Cargando categorías...</ThemedText>
-      </View>
-    );
-  }
-
-  if (props.categorias.length === 0) {
-    return (
-      <View style={pickers.base}>
-        <ThemedText style={text.helperText}>No hay categorías creadas</ThemedText>
-      </View>
-    );
-  }
+  if (props.cargando) return <View style={pickers.base}><ThemedText>Cargando...</ThemedText></View>;
+  if (props.categorias.length === 0) return <View style={pickers.base}><ThemedText>Sin categorías</ThemedText></View>;
 
   return (
     <View style={{ flex: 1 }}>
-      <TouchableOpacity 
-        style={pickers.base}
-        onPress={() => setMostrarOpciones(!mostrarOpciones)}
-      >
+      <TouchableOpacity style={pickers.base} onPress={() => setMostrarOpciones(!mostrarOpciones)}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {props.categoriaSeleccionada && (
-              <View 
-                style={{ 
-                  width: 12, height: 12, borderRadius: 6, 
-                  backgroundColor: props.categoriaSeleccionada.color, marginRight: 8 
-                }} 
-              />
-            )}
-            <ThemedText style={{ fontSize: 16, color: props.categoriaSeleccionada ? colors.textDark : '#999' }}>
-              {props.categoriaSeleccionada?.nombre || 'Seleccionar categoría...'}
-            </ThemedText>
+            {props.categoriaSeleccionada && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: props.categoriaSeleccionada.color, marginRight: 8 }} />}
+            <ThemedText style={{ fontSize: 16 }}>{props.categoriaSeleccionada?.nombre || 'Seleccionar...'}</ThemedText>
           </View>
           <Ionicons name={mostrarOpciones ? "chevron-up" : "chevron-down"} size={20} color={colors.primary} />
         </View>
       </TouchableOpacity>
 
       {mostrarOpciones && (
-        <View style={pickers.optionsContainer}>
-          <ScrollView style={pickers.optionsScroll}>
-            {props.categorias.map((categoria) => (
+        <View style={[pickers.optionsContainer, { backgroundColor: cardBg }]}>
+          <ScrollView style={pickers.optionsScroll} nestedScrollEnabled>
+            {props.categorias.map((cat) => (
               <TouchableOpacity
-                key={categoria.id_categoria}
-                style={[
-                  pickers.optionItem,
-                  props.categoriaSeleccionada?.id_categoria === categoria.id_categoria && pickers.optionSelected
-                ]}
-                onPress={() => {
-                  props.onChange(categoria);
-                  setMostrarOpciones(false);
-                }}
+                key={cat.id_categoria}
+                style={[pickers.optionItem, { borderBottomColor: '#444' }]}
+                onPress={() => { props.onChange(cat); setMostrarOpciones(false); }}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: categoria.color, marginRight: 10 }} />
-                  <ThemedText style={[text.cardText, props.categoriaSeleccionada?.id_categoria === categoria.id_categoria && { color: colors.primary }]}>
-                    {categoria.nombre}
-                  </ThemedText>
+                  <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: cat.color, marginRight: 10 }} />
+                  <ThemedText>{cat.nombre}</ThemedText>
                 </View>
               </TouchableOpacity>
             ))}
@@ -94,8 +65,9 @@ const FormularioScreen = () => {
   const router = useRouter();
   const { authState } = useAuth();
   const params = useLocalSearchParams();
-  
-  // Estados del formulario
+  const colorScheme = useColorScheme();
+  const cardBg = colorScheme === 'dark' ? '#1E1E1E' : colors.primaryLight;
+
   const [nombreProducto, setNombreProducto] = useState('');
   const [fechaCompra, setFechaCompra] = useState<Date | null>(null);
   const [duracionGarantia, setDuracionGarantia] = useState('');
@@ -103,289 +75,243 @@ const FormularioScreen = () => {
   const [modelo, setModelo] = useState('');
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<Categoria | null>(null);
   const [tienda, setTienda] = useState('');
+  const [precio, setPrecio] = useState('');
   const [notas, setNotas] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessingOCR, setIsProcessingOCR] = useState(false);
-  const [ocrStatus, setOcrStatus] = useState<string>('');
-  const [archivoSeleccionado, setArchivoSeleccionado] = useState<{
-    uri: string; name: string; type?: string; size?: number; tipoDocumento?: 'boleta' | 'garantia' | 'manual' | 'otro';
-  } | null>(null);
-  
+  const [ocrStatus, setOcrStatus] = useState('');
+  const [archivoSeleccionado, setArchivoSeleccionado] = useState<any>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [cargandoCategorias, setCargandoCategorias] = useState(true);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [productoEditando, setProductoEditando] = useState<any>(null);
-  const MAX_LENGTH = 200;
+  const [categoriasCargas, setCategoriasCargas] = useState(false);
 
   useEffect(() => {
-    const modoEdicionStr = params.modoEdicion as string;
-    const productoStr = params.producto as string;
-    
-    if (productoStr && modoEdicionStr === 'true') {
-      try {
-        const producto = JSON.parse(productoStr);
-        setProductoEditando(producto);
-        setModoEdicion(true);
-        setNombreProducto(producto.nombre || '');
-        setMarca(producto.marca || '');
-        setModelo(producto.modelo || '');
-        setTienda(producto.tienda || '');
-        setNotas(producto.notas || '');
-        
-        if (producto.duracion_garantia_meses) setDuracionGarantia(producto.duracion_garantia_meses.toString());
-        if (producto.fecha_compra) setFechaCompra(new Date(producto.fecha_compra));
-      } catch (error) {
-        Alert.alert('Error', 'No se pudieron cargar los datos del producto para editar.');
-      }
+    if (params.producto && params.modoEdicion === 'true') {
+        try {
+            const p = JSON.parse(params.producto as string);
+            setProductoEditando(p); setModoEdicion(true);
+            setNombreProducto(p.nombre || ''); setMarca(p.marca || ''); setModelo(p.modelo || '');
+            setTienda(p.tienda || ''); setPrecio(p.precio || ''); setNotas(p.notas || '');
+            if (p.duracion_garantia_meses) setDuracionGarantia(p.duracion_garantia_meses.toString());
+            if (p.fecha_compra) setFechaCompra(new Date(p.fecha_compra));
+        } catch { Alert.alert('Error', 'Datos inválidos'); }
     }
-  }, [params.producto, params.modoEdicion]);
+  }, [params]);
 
   useEffect(() => {
-    const cargarCategorias = async () => {
-      try {
-        setCargandoCategorias(true);
-        const categoriasDelServidor = await categoriaService.getAll();
-        setCategorias(categoriasDelServidor);
-        
-        if (productoEditando && productoEditando.categoria_ids && productoEditando.categoria_ids.length > 0) {
-          const categoriaId = productoEditando.categoria_ids[0];
-          const categoria = categoriasDelServidor.find(c => c.id_categoria === categoriaId);
-          if (categoria) setCategoriaSeleccionada(categoria);
-        }
-      } catch (error) {
-        setCategorias([]);
-      } finally {
-        setCargandoCategorias(false);
-      }
-    };
+    if (authState.isAuthenticated && !categoriasCargas) {
+        setCategoriasCargas(true);
+        categoriaService.getAll().then(res => {
+            setCategorias(res);
+            if (productoEditando?.categoria_ids?.[0]) {
+                const cat = res.find(c => c.id_categoria === productoEditando.categoria_ids[0]);
+                if (cat) setCategoriaSeleccionada(cat);
+            }
+        }).catch(() => setCategorias([])).finally(() => setCargandoCategorias(false));
+    }
+  }, [authState.isAuthenticated]);
 
-    if (authState.isAuthenticated) cargarCategorias();
-  }, [authState.isAuthenticated, productoEditando]);
-
-  const handleFileClick = async (tipoDocumento: 'boleta' | 'garantia' | 'manual') => {
+  const handleFileClick = async (tipo: string) => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const asset = result.assets[0];
-        setArchivoSeleccionado({
-          uri: asset.uri,
-          name: asset.name || 'documento',
-          type: asset.mimeType || 'application/octet-stream',
-          size: asset.size,
-          tipoDocumento: tipoDocumento,
-        });
-        Alert.alert('📎 Archivo seleccionado', 'Archivo listo para subir');
-      }
-    } catch (error) {
-      Alert.alert('Error', 'No se pudo seleccionar el archivo');
-    }
+        const res = await DocumentPicker.getDocumentAsync({ type: '*/*', copyToCacheDirectory: true });
+        if (!res.canceled && res.assets[0]) {
+            setArchivoSeleccionado({ uri: res.assets[0].uri, name: res.assets[0].name, type: res.assets[0].mimeType, tipoDocumento: tipo });
+            Alert.alert('Archivo', 'Seleccionado correctamente');
+        }
+    } catch { Alert.alert('Error', 'No se pudo seleccionar'); }
   };
 
-  const formatDate = (date: Date) => {
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+  const handleProcesarOCR = async () => {
+    if (!archivoSeleccionado) {
+        Alert.alert('Error', 'Selecciona un documento primero');
+        return;
+    }
+    
+    setIsProcessingOCR(true);
+    setOcrStatus('Validando imagen...');
+    
+    try {
+        // ✅ VALIDA ANTES de procesar
+        const fileInfo = await FileSystem.getInfoAsync(archivoSeleccionado.uri);
+        
+        // Validar tamaño (máximo 5MB)
+        if (fileInfo.size > 5 * 1024 * 1024) {
+            Alert.alert('Error', `Imagen muy grande (${(fileInfo.size / 1024 / 1024).toFixed(1)}MB). Máximo 5MB`);
+            setIsProcessingOCR(false);
+            return;
+        }
+        
+        // ✅ Validar resolución mínima (800x600) para OCR - Evita procesar imágenes muy pequeñas
+        if (archivoSeleccionado.uri.match(/\.(jpg|jpeg|png|gif|bmp)$/i)) {
+            try {
+                const { width, height } = await Image.getSize(archivoSeleccionado.uri);
+                if (width < 800 || height < 600) {
+                    Alert.alert('Error', `Imagen muy pequeña (${width}x${height}px).\nMínimo: 800x600px`);
+                    setIsProcessingOCR(false);
+                    return;
+                }
+            } catch (e) {
+                // Si no puede obtener tamaño, deja pasar (ej: documentos PDF)
+            }
+        }
+        
+        // Crear producto temporal
+        const dataTemp = {
+            nombre: nombreProducto || 'Sin nombre',
+            fecha_compra: fechaCompra?.toISOString().split('T')[0],
+            duracion_garantia_meses: parseInt(duracionGarantia) || undefined,
+            marca, modelo, tienda, precio: precio ? parseFloat(precio) : undefined, notas,
+            categoria_ids: categoriaSeleccionada ? [categoriaSeleccionada.id_categoria] : []
+        };
+
+        let prodId = productoEditando?.id_producto;
+        if (!prodId) {
+            setOcrStatus('Creando producto...');
+            const prod = await productoService.create(dataTemp);
+            prodId = prod.id_producto;
+        }
+
+        // Subir y procesar OCR
+        setOcrStatus('Subiendo documento (será comprimido)...');
+        const docResponse = await documentoService.uploadDocument(prodId, archivoSeleccionado);
+        
+        if (docResponse.id_documento) {
+            setOcrStatus('Extrayendo datos (OCR)...');
+            const ocrResult = await fetch(
+                `https://misboletas-backend.onrender.com/api/v1/documentos/${docResponse.id_documento}/process-ocr`,
+                { 
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${authState.token}`,
+                        'Content-Type': 'application/json' 
+                    },
+                    timeout: 45000  // 45 segundos timeout máximo
+                }
+            ).then(r => r.json());
+
+            if (ocrResult.parsed_data) {
+                const { comercio, fecha, total, marca: marcaOcr, modelo: modeloOcr, garantia } = ocrResult.parsed_data;
+                
+                // Auto-rellenar campos
+                if (comercio && !tienda) setTienda(comercio);
+                if (fecha && !fechaCompra) {
+                    const partes = fecha.split(/[-/]/);
+                    if (partes.length === 3) {
+                        setFechaCompra(new Date(`${partes[2]}-${partes[1]}-${partes[0]}`));
+                    }
+                }
+                if (total && !precio) setPrecio(total.toString());
+                if (marcaOcr && !marca) setMarca(marcaOcr);
+                if (modeloOcr && !modelo) setModelo(modeloOcr);
+                if (garantia && !duracionGarantia) setDuracionGarantia(garantia.toString());
+                
+                Alert.alert('✨ Éxito', 'Datos extraídos y campos actualizados');
+            }
+        }
+    } catch (e: any) {
+        Alert.alert('Error', e.message || 'Error procesando documento');
+    } finally {
+        setIsProcessingOCR(false);
+        setOcrStatus('');
+    }
   };
 
   const handleGuardar = async () => {
+    if (!nombreProducto.trim()) return Alert.alert('Error', 'Nombre requerido');
+    setIsLoading(true);
+    
+    const data = {
+        nombre: nombreProducto,
+        fecha_compra: fechaCompra?.toISOString().split('T')[0],
+        duracion_garantia_meses: parseInt(duracionGarantia) || undefined,
+        marca, modelo, tienda, precio: precio ? parseFloat(precio) : undefined, notas,
+        categoria_ids: categoriaSeleccionada ? [categoriaSeleccionada.id_categoria] : []
+    };
+
     try {
-      if (!nombreProducto.trim()) {
-        Alert.alert('Error', 'El nombre del producto es requerido');
-        return;
-      }
-      setIsLoading(true);
+        let prod;
+        if (modoEdicion && productoEditando?.id_producto) prod = await productoService.update(productoEditando.id_producto, data);
+        else prod = await productoService.create(data);
 
-      const productoData = {
-        nombre: nombreProducto.trim(),
-        fecha_compra: fechaCompra ? fechaCompra.toISOString().split('T')[0] : undefined,
-        duracion_garantia_meses: duracionGarantia ? parseInt(duracionGarantia) : undefined,
-        marca: marca.trim() || undefined,
-        modelo: modelo.trim() || undefined,
-        tienda: tienda.trim() || undefined,
-        notas: notas.trim() || undefined,
-        categoria_ids: categoriaSeleccionada ? [categoriaSeleccionada.id_categoria] : [],
-      };
-
-      let productoGuardado;
-      if (modoEdicion && productoEditando?.id_producto) {
-        productoGuardado = await productoService.update(productoEditando.id_producto, productoData);
-      } else {
-        productoGuardado = await productoService.create(productoData);
-      }
-
-      // --- LOGICA OCR CORREGIDA ---
-      if (archivoSeleccionado && productoGuardado.id_producto) {
-        try {
-          setIsProcessingOCR(true);
-          setOcrStatus('Subiendo y analizando boleta...'); // Feedback visual
-          
-          const tipoDocumento = archivoSeleccionado.tipoDocumento || 'boleta';
-
-          // 1. Subir y esperar análisis
-          const { ocrData } = await documentoService.uploadAndWaitOCR(
-            productoGuardado.id_producto,
-            { uri: archivoSeleccionado.uri, type: archivoSeleccionado.type, name: archivoSeleccionado.name },
-            tipoDocumento
-          );
-
-          // 2. [FIX] Verificar y GUARDAR datos del OCR
-          if (tipoDocumento === 'boleta' && ocrData && ocrData.parsed_data) {
-            const { comercio, fecha } = ocrData.parsed_data;
-            const datosActualizar: any = {};
-            let huboCambios = false;
-
-            // Solo autocompletar si el usuario no escribió nada (para no sobrescribir)
-            if (comercio && !tienda) {
-                datosActualizar.tienda = comercio;
-                huboCambios = true;
-            }
-            
-            if (fecha && !fechaCompra) {
-                try {
-                  // Asumimos formato del regex: DD-MM-YYYY o DD/MM/YYYY
-                  const partes = fecha.split(/[-/]/);
-                  if (partes.length === 3) {
-                      // Crear fecha (Mes es 0-indexado)
-                      const fechaObj = new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
-                      if (!isNaN(fechaObj.getTime())) {
-                          datosActualizar.fecha_compra = fechaObj.toISOString().split('T')[0];
-                          huboCambios = true;
-                      }
-                    }
-                } catch (e) { console.log('Error parseando fecha OCR', e); }
-            }
-
-             // 3. ACTUALIZAR BASE DE DATOS
-            if (huboCambios) {
-                console.log("🤖 OCR encontró datos, guardando...", datosActualizar);
-                await productoService.update(productoGuardado.id_producto, datosActualizar);
-                
-                Alert.alert(
-                  '✨ ¡Magia!',
-                  `Hemos detectado datos en tu boleta:\n\nTienda: ${comercio || 'No detectada'}\nFecha: ${fecha || 'No detectada'}\n\nSe han guardado automáticamente.`
-                );
-            }
-          }
-        } catch (ocrError) {
-          console.error('Error OCR:', ocrError);
-          Alert.alert('Advertencia', 'El producto se guardó, pero hubo un problema analizando el documento.');
-        }
-      }
-
-      Alert.alert(
-        'Éxito', 
-        'Producto guardado correctamente', 
-        [{ text: 'OK', onPress: () => router.replace('/(tabs)/home') }]
-      );
-
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'No se pudo guardar el producto.');
-    } finally {
-      setIsLoading(false);
-      setIsProcessingOCR(false);
-      setOcrStatus('');
-    }
+        Alert.alert('Éxito', 'Producto guardado', [{ text: 'OK', onPress: () => router.replace('/(tabs)/home') }]);
+    } catch (e: any) { Alert.alert('Error', e.message); } 
+    finally { setIsLoading(false); }
   };
 
   return (
-    <ScrollView style={containers.scrollPage}>
-      <View style={containers.pageContent}>
+    <ThemedView style={[containers.page, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : colors.background }]}>
+      <ScrollView style={{ width: '100%' }} contentContainerStyle={{ paddingBottom: 40 }}>
         <TouchableOpacity style={misc.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color={colors.primary} />
           <ThemedText style={misc.backButtonText}>Volver</ThemedText>
         </TouchableOpacity>
         
-        <View style={cards.base}>
+        <View style={[cards.base, { backgroundColor: cardBg }]}>
           <View style={inputs.container}>
-            <ThemedText style={text.label}>{modoEdicion ? '✏️ Editar Producto' : 'Nombre Producto'}</ThemedText>
-            <TextInput style={inputs.base} placeholder="Ingrese nombre" value={nombreProducto} onChangeText={setNombreProducto} />
+            <ThemedText style={text.label}>Nombre Producto</ThemedText>
+            <ThemedTextInput style={inputs.base} placeholder="Ej: Televisor" value={nombreProducto} onChangeText={setNombreProducto} />
           </View>
-          
+
           <View style={inputs.container}>
-            <ThemedText style={text.label}>Fecha de compra</ThemedText>
+            <ThemedText style={text.label}>Fecha de Compra</ThemedText>
             <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-              <View style={{ position: 'relative' }}>
-                <TextInput style={inputs.base} value={fechaCompra ? formatDate(fechaCompra) : ''} editable={false} placeholder="DD/MM/AAAA" />
-                <Ionicons name="calendar-outline" size={20} color={colors.primary} style={{ position: 'absolute', right: 12, top: 14 }} />
-              </View>
+                <View pointerEvents="none">
+                    <ThemedTextInput style={inputs.base} placeholder="DD/MM/AAAA" value={fechaCompra ? fechaCompra.toLocaleDateString() : ''} editable={false} />
+                </View>
+                <Ionicons name="calendar" size={20} color={colors.primary} style={{ position: 'absolute', right: 10, top: 12 }} />
             </TouchableOpacity>
-            {showDatePicker && (
-              <DateTimePicker
-                value={fechaCompra || new Date()} mode="date" display={Platform.OS === 'android' ? 'calendar' : 'spinner'}
-                onChange={(event, selectedDate) => { setShowDatePicker(false); if (selectedDate) setFechaCompra(selectedDate); }}
-                maximumDate={new Date()}
-              />
-            )}
+            {showDatePicker && <DateTimePicker value={fechaCompra || new Date()} mode="date" onChange={(e, d) => { setShowDatePicker(false); if(d) setFechaCompra(d); }} />}
           </View>
 
           <View style={inputs.container}>
             <ThemedText style={text.label}>Categoría</ThemedText>
-            <SelectCategoria categorias={categorias} categoriaSeleccionada={categoriaSeleccionada} onChange={setCategoriaSeleccionada} cargando={cargandoCategorias} />
+            <SelectCategoria categorias={categorias} categoriaSeleccionada={categoriaSeleccionada} onChange={setCategoriaSeleccionada} cargando={cargandoCategorias} colorScheme={colorScheme ?? null} />
           </View>
 
           <View style={inputs.container}>
-            <ThemedText style={text.label}>Duración Garantía (Meses)</ThemedText>
-            <TextInput 
-                style={inputs.base} 
-                value={duracionGarantia} 
-                onChangeText={setDuracionGarantia} 
-                placeholder="Ej: 12" 
-                keyboardType="numeric"
-            />
+            <ThemedText style={text.label}>Meses Garantía</ThemedText>
+            <ThemedTextInput style={inputs.base} placeholder="12" keyboardType="numeric" value={duracionGarantia} onChangeText={setDuracionGarantia} />
           </View>
 
-          <View style={inputs.container}>
-            <ThemedText style={text.label}>Marca</ThemedText>
-            <TextInput style={inputs.base} value={marca} onChangeText={setMarca} placeholder="Marca" />
-          </View>
+          <View style={inputs.container}><ThemedText style={text.label}>Marca</ThemedText><ThemedTextInput style={inputs.base} value={marca} onChangeText={setMarca} /></View>
+          <View style={inputs.container}><ThemedText style={text.label}>Modelo</ThemedText><ThemedTextInput style={inputs.base} value={modelo} onChangeText={setModelo} /></View>
+          <View style={inputs.container}><ThemedText style={text.label}>Tienda</ThemedText><ThemedTextInput style={inputs.base} value={tienda} onChangeText={setTienda} /></View>
+          <View style={inputs.container}><ThemedText style={text.label}>Precio ($)</ThemedText><ThemedTextInput style={inputs.base} placeholder="0" keyboardType="decimal-pad" value={precio} onChangeText={setPrecio} /></View>
+          <View style={inputs.container}><ThemedText style={text.label}>Notas</ThemedText><ThemedTextInput style={[inputs.base, { height: 80 }]} multiline value={notas} onChangeText={setNotas} /></View>
 
-          <View style={inputs.container}>
-            <ThemedText style={text.label}>Tienda</ThemedText>
-            <TextInput style={inputs.base} value={tienda} onChangeText={setTienda} placeholder="Tienda" />
-          </View>
-
-          <View style={inputs.container}>
-            <ThemedText style={text.label}>Documentos</ThemedText>
-            
-            <View style={{ marginBottom: spacing.md }}>
-              <TouchableOpacity
-                onPress={() => handleFileClick('boleta')}
-                style={[
-                  buttons.secondary,
-                  archivoSeleccionado?.tipoDocumento === 'boleta' && { backgroundColor: '#e0e0e0' }
-                ]}
-              >
+          <View style={{ marginVertical: 10 }}>
+            <TouchableOpacity style={buttons.secondary} onPress={() => handleFileClick('boleta')} disabled={isProcessingOCR}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                    <Ionicons name="receipt-outline" size={20} color={colors.primary} style={{ marginRight: 8 }} />
-                    <ThemedText style={text.buttonTextSmall}>
-                    {archivoSeleccionado?.tipoDocumento === 'boleta' ? `✅ ${archivoSeleccionado.name}` : 'Subir Boleta (OCR)'}
-                    </ThemedText>
+                    <Ionicons name="camera" size={20} color={colors.primary} style={{ marginRight: 8 }} />
+                    <ThemedText style={{ color: colors.primary }}>{archivoSeleccionado ? '✓ Archivo seleccionado' : 'Seleccionar documento'}</ThemedText>
+                </View>
+            </TouchableOpacity>
+            
+            {archivoSeleccionado && (
+              <TouchableOpacity style={[buttons.primary, { marginTop: 10 }]} onPress={handleProcesarOCR} disabled={isProcessingOCR}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="scan" size={20} color="#fff" style={{ marginRight: 8 }} />
+                    <ThemedText style={text.buttonText}>{isProcessingOCR ? 'Procesando...' : 'Procesar documento o boleta'}</ThemedText>
                 </View>
               </TouchableOpacity>
-            </View>
+            )}
           </View>
 
-          {/* Estado del OCR */}
-          {isProcessingOCR && (
-            <View style={{ alignItems: 'center', marginVertical: 10 }}>
-                <ThemedText style={{ color: colors.primary, fontWeight: 'bold' }}>{ocrStatus}</ThemedText>
-            </View>
-          )}
+          {isProcessingOCR && <ThemedText style={{ textAlign: 'center', color: colors.primary, marginBottom: 10 }}>{ocrStatus}</ThemedText>}
 
-          <View style={{ flexDirection: 'row', gap: spacing.md, marginTop: spacing.lg }}>
-            <TouchableOpacity style={[buttons.secondary, { flex: 1 }]} onPress={() => router.back()} disabled={isLoading}>
-              <ThemedText style={[text.buttonTextColorless, { color: colors.secondary}]}>Cancelar</ThemedText>
-            </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <TouchableOpacity style={[buttons.secondary, { flex: 1 }]} onPress={() => router.back()}><ThemedText style={{ color: colors.secondary, textAlign: 'center' }}>Cancelar</ThemedText></TouchableOpacity>
             <TouchableOpacity style={[buttons.primary, { flex: 1 }]} onPress={handleGuardar} disabled={isLoading || isProcessingOCR}>
-              <ThemedText style={text.buttonText}>{isLoading ? 'Guardando...' : 'Guardar'}</ThemedText>
+                <ThemedText style={text.buttonText}>{isLoading ? 'Guardando...' : 'Guardar'}</ThemedText>
             </TouchableOpacity>
           </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </ThemedView>
   );
-}
+};
 
 export default FormularioScreen;
