@@ -232,9 +232,9 @@ const CategoriasScreen = () => {
                   {productoSeleccionado.marca}
                 </ThemedText>
               )}
-              {productoSeleccionado.descripcion && (
+              {productoSeleccionado.notas && (
                 <ThemedText style={[text.cardText, { marginTop: 12, textAlign: 'center', fontSize: 13, color: colors.textMuted }]}>
-                  {productoSeleccionado.descripcion}
+                  {productoSeleccionado.notas}
                 </ThemedText>
               )}
               {productoSeleccionado.fecha_compra && (
