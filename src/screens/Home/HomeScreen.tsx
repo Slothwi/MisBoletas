@@ -175,7 +175,7 @@ const HomeScreen = () => {
           <View style={[cards.base, { backgroundColor: cardBg }]}>
             <View style={containers.row}><Ionicons name="document-text" size={24} color={colors.primary} /><ThemedText style={[text.cardTitle, { marginLeft: 10 }]}>Documentos</ThemedText></View>
             {cargandoDocumentos ? <ThemedText style={misc.loadingText}>Cargando...</ThemedText> : 
-             documentos.length === 0 ? <ThemedText style={{ fontStyle: 'italic', textAlign: 'center', marginTop: 10, color: '#888' }}>Sin documentos</ThemedText> : 
+             documentos.length === 0 ? <View style={{ alignItems: 'center', marginTop: 10 }}><ThemedText style={{ fontStyle: 'italic', textAlign: 'center', color: '#888' }}>Sin documentos</ThemedText></View> : 
              (
                 <View style={{ gap: 10, marginTop: 10 }}>
                     {documentos.map((doc, idx) => (
@@ -229,7 +229,9 @@ const HomeScreen = () => {
             renderItem={({ item }) => {
                 const estado = calcularTiempoRestante(item.fecha_compra, item.duracion_garantia_meses);
                 // Mostrar indicador de documentos si existe
-                const tieneDocumentos = item.numero_documentos && item.numero_documentos > 0;
+                const tieneDocumentos = (item.numero_documentos ?? 0) > 0;
+                const numDocs = String(item.numero_documentos || 0);
+                const estadoTexto = String(estado.textoFormato || '');
                 return (
                     <TouchableOpacity 
                         style={[cards.interactive, { backgroundColor: cardBg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
@@ -239,15 +241,15 @@ const HomeScreen = () => {
                             <MaterialCommunityIcons name="package-variant" size={24} color={colors.primary} />
                             <View style={{ marginLeft: 12, flex: 1 }}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <ThemedText style={[text.cardText, { flexShrink: 1 }]} numberOfLines={1}>{item.nombre}</ThemedText>
+                                    <ThemedText style={[text.cardText, { flexShrink: 1 }]} numberOfLines={1}>{String(item.nombre || '')}</ThemedText>
                                     {tieneDocumentos && (
                                         <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8, backgroundColor: colors.secondary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
                                             <Ionicons name="document" size={12} color="#fff" />
-                                            <ThemedText style={{ fontSize: 10, color: '#fff', marginLeft: 3, fontWeight: 'bold' }}>{item.numero_documentos}</ThemedText>
+                                            <ThemedText style={{ fontSize: 10, color: '#fff', marginLeft: 3, fontWeight: 'bold' }}>{numDocs}</ThemedText>
                                         </View>
                                     )}
                                 </View>
-                                <ThemedText style={{ fontSize: 12, color: estado.color, fontWeight: 'bold', marginTop: 4 }}>{estado.textoFormato}</ThemedText>
+                                <ThemedText style={{ fontSize: 12, color: estado.color, fontWeight: 'bold', marginTop: 4 }}>{estadoTexto}</ThemedText>
                             </View>
                         </View>
                         <Ionicons name="chevron-forward" size={24} color={iconColor} />

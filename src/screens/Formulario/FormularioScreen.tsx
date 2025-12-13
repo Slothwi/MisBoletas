@@ -148,22 +148,20 @@ const FormularioScreen = () => {
                 const update: any = {};
                 let notasOcr = `📄 Datos extraídos de documento:\n`;
                 
-                if (comercio) { update.tienda = comercio; notasOcr += `• Tienda: ${comercio}\n`; }
+                if (comercio) { update.tienda = comercio; }
                 if (fecha && !fechaCompra) {
                     const partes = fecha.split(/[-/]/);
                     if (partes.length===3) update.fecha_compra = `${partes[2]}-${partes[1]}-${partes[0]}`;
-                    notasOcr += `• Fecha: ${fecha}\n`;
                 }
-                // Solo aceptar total si está en rango válido (0 a 500 millones CLP)
+                // Agregar total al precio y a las notas
                 if (total && total > 0 && total < 500000000) { 
-                    update.precio = total; 
-                    notasOcr += `• Monto: $${total.toLocaleString()}\n`; 
+                    update.precio = total;
+                    notasOcr += `$${total.toLocaleString()}\n`; 
                 }
-                if (marcaOcr && !marca) { update.marca = marcaOcr; notasOcr += `• Marca: ${marcaOcr}\n`; }
-                if (modeloOcr && !modelo) { update.modelo = modeloOcr; notasOcr += `• Modelo: ${modeloOcr}\n`; }
+                if (marcaOcr && !marca) { update.marca = marcaOcr; }
+                if (modeloOcr && !modelo) { update.modelo = modeloOcr; }
                 if (garantia && garantia > 0 && garantia <= 120) { 
                     update.duracion_garantia_meses = garantia; 
-                    notasOcr += `• Garantía: ${garantia} meses\n`; 
                 }
                 
                 if (Object.keys(update).length > 0) {
