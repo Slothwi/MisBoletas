@@ -21,8 +21,8 @@ import {
 
 const TAG = 'LoginScreen';
 
-// Base de datos de prueba local
-const usuariosPrueba = [
+// ✅ ARREGLADO: Base de datos de prueba local (fuera del componente para evitar memory leak)
+const localUsersDB = [
   { id: "3", nombre: "test", contrasena: "test123", email: "test@ejemplo.com" }
 ];
 
@@ -35,7 +35,7 @@ export default function LoginScreen() {
   const { login, authState, clearError } = useAuth();
 
   const autenticarLocal = (correo: string, contrasena: string) => {
-    const usuario = usuariosPrueba.find(
+    const usuario = localUsersDB.find(
       user => user.email === correo && user.contrasena === contrasena
     );
     if (usuario) {
@@ -47,16 +47,16 @@ export default function LoginScreen() {
   };
 
   const registrarLocal = (correo: string, contrasena: string) => {
-    if (usuariosPrueba.some(user => user.email === correo)) {
+    if (localUsersDB.some(user => user.email === correo)) {
       return { success: false, error: "El email ya está registrado" };
     }
     const nuevoUsuario = {
-      id: (usuariosPrueba.length + 1).toString(),
+      id: (localUsersDB.length + 1).toString(),
       nombre: correo.split('@')[0],
       contrasena,
       email: correo
     };
-    usuariosPrueba.push(nuevoUsuario);
+    localUsersDB.push(nuevoUsuario);
     return { success: true, message: "Usuario registrado correctamente" };
   };
 

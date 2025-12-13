@@ -9,14 +9,15 @@ import { Linking, ScrollView, TouchableOpacity, View } from 'react-native';
 const InformacionScreen = () => {
     const router = useRouter();
     const colorScheme = useColorScheme();
-    const cardBg = colorScheme === 'dark' ? '#1E1E1E' : colors.primaryLight;
-    const iconColor = colorScheme === 'dark' ? '#fff' : colors.primary;
+    const isDark = colorScheme === 'dark';
+    const cardBg = isDark ? colors.cardDark : colors.primaryLight;
+    const iconColor = isDark ? '#fff' : colors.primary;
 
     const abrirURL = (url: string) => Linking.openURL(url).catch(err => console.error("Error", err));
 
     const InfoCard = ({ title, url }: { title: string, url: string }) => (
         <TouchableOpacity 
-            style={[cards.interactive, { backgroundColor: cardBg }]}
+            style={[cards.interactive, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1 }]}
             onPress={() => abrirURL(url)}
         >
             <ThemedText style={text.cardText}>{title}</ThemedText>
@@ -25,11 +26,15 @@ const InformacionScreen = () => {
     );
 
     return (
-        <ThemedView style={[containers.page, { backgroundColor: undefined }]}>
-            <TouchableOpacity style={misc.backButton} onPress={() => router.back()}>
-                <Ionicons name="arrow-back" size={24} color={colors.primary} />
-                <ThemedText style={misc.backButtonText}>Volver</ThemedText>
-            </TouchableOpacity>
+        <ThemedView style={[containers.page, { backgroundColor: isDark ? colors.backgroundDark : colors.background }]}>
+                <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center' }}>
+                  <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginLeft: -8 }}>
+                    <Ionicons name="arrow-back" size={26} color={colors.primary} />
+                  </TouchableOpacity>
+                  <ThemedText style={[text.detailTitle, { marginTop: 0, marginBottom: 0, flex: 1, marginHorizontal: 0 }]}>
+                    Información Legal
+                </ThemedText>
+            </View>
 
             <ScrollView style={{ width: '100%' }}>
                 <View style={{ gap: spacing.md }}>

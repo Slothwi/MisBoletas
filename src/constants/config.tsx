@@ -106,6 +106,8 @@ export const API_ENDPOINTS = {
     categorias: '/productos/:id/categorias',
     addToCategory: '/productos/:id/categorias/:categoryId',
     removeFromCategory: '/productos/:id/categorias/:categoryId',
+    historialEliminados: '/productos/historial/eliminados',
+    restaurar: '/productos/:id/restaurar',
   },
   // Documentos
   documentos: {

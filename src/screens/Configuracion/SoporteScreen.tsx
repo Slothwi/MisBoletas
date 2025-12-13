@@ -10,7 +10,8 @@ import { ActivityIndicator, Alert, ScrollView, TouchableOpacity, View } from "re
 export default function SoporteScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
-  const cardBg = colorScheme === 'dark' ? '#1E1E1E' : colors.primaryLight;
+  const isDark = colorScheme === 'dark';
+  const cardBg = isDark ? colors.cardDark : colors.primaryLight;
   
   const [asunto, setAsunto] = useState("");
   const [mensaje, setMensaje] = useState("");
@@ -27,14 +28,17 @@ export default function SoporteScreen() {
   };
 
   return (
-    <ThemedView style={[containers.page, { backgroundColor: undefined }]}>
-      <TouchableOpacity style={misc.backButton} onPress={() => router.back()}>
-        <Ionicons name="arrow-back" size={24} color={colors.primary} />
-        <ThemedText style={misc.backButtonText}>Volver</ThemedText>
-      </TouchableOpacity>
+    <ThemedView style={[containers.page, { backgroundColor: isDark ? colors.backgroundDark : colors.background }]}>
+        <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginLeft: -8 }}>
+            <Ionicons name="arrow-back" size={26} color={colors.primary} />
+          </TouchableOpacity>
+          <ThemedText style={[text.detailTitle, { marginTop: 0, marginBottom: 0, flex: 1, marginHorizontal: 0 }]}>
+          Soporte Técnico
+        </ThemedText>
+      </View>
 
       <ScrollView style={{ width: '100%' }}>
-        <ThemedText style={[text.detailTitle, { marginBottom: 16 }]}>Soporte Técnico</ThemedText>
 
         <View style={[cards.base, { backgroundColor: cardBg }]}>
           <ThemedText style={text.label}>Asunto</ThemedText>

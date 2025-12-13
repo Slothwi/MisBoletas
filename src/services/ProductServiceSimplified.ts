@@ -18,6 +18,7 @@ export interface Producto {
   precio?: number;
   numero_documentos?: number;
   fecha_creacion?: string;
+  fecha_eliminacion?: string;
   categorias?: {
     id_categoria: string;  // Cambio: Era "CategoriaID: number" → Ahora UUID string
     nombre: string;        // Cambio: Era "NombreCategoria" → Ahora "nombre"
@@ -46,15 +47,48 @@ export interface ProductoUpdate {
   tienda?: string;
   notas?: string;
   precio?: number;
+  categoria_ids?: string[]; // ✅ ARREGLADO: Agregar categorías al actualizar
+}
+
+// ✅ CACHÉ LOCAL PARA AHORRO DE API CALLS EN FREE TIER
+interface CacheData {
+  productos: Producto[];
+  timestamp: number;
 }
 
 class ProductoService {
+  private static cache: CacheData | null = null;
+  private static readonly CACHE_TIME = 5 * 60 * 1000; // 5 minutos
+
+  // ✅ NUEVO: Validar si caché sigue siendo válido
+  private static isCacheValid(): boolean {
+    if (!this.cache) return false;
+    const now = Date.now();
+    return now - this.cache.timestamp < this.CACHE_TIME;
+  }
+
+  // ✅ NUEVO: Invalidar caché cuando hay cambios
+  private static invalidateCache(): void {
+    console.log('🗑️ Cache invalidated');
+    this.cache = null;
+  }
+
   // Obtener todos los productos del usuario
   async getAll(): Promise<Producto[]> {
     try {
+      // ✅ ARREGLADO: Devolver caché si sigue siendo válido (ahorro de API call)
+      if (ProductoService.isCacheValid() && ProductoService.cache) {
+        console.log('📦 Returning cached products');
+        return ProductoService.cache.productos;
+      }
+
       console.log('📦 Fetching user products');
       const productos = await apiService.get<Producto[]>(API_ENDPOINTS.productos.list);
       console.log(`✅ ${productos.length} products fetched successfully`);
+      
+      // ✅ Guardar en caché
+      ProductoService.cache = { productos, timestamp: Date.now() };
+      
       return productos;
     } catch (error) {
       console.error('❌ Failed to fetch products:', error);
@@ -91,12 +125,13 @@ class ProductoService {
   // Crear nuevo producto
   async create(productoData: ProductoCreate): Promise<Producto> {
     try {
-      console.log('📝 Creating new product:', productoData.nombre); // Cambio: Era "productoData.NombreProducto" → Ahora "productoData.nombre"
+      console.log('📝 Creating new product:', productoData.nombre);
       const producto = await apiService.post<Producto>(
         API_ENDPOINTS.productos.create,
         productoData
       );
       console.log('✅ Product created successfully');
+      ProductoService.invalidateCache(); // ✅ Invalidar caché
       return producto;
     } catch (error) {
       console.error('❌ Failed to create product:', error);
@@ -113,6 +148,7 @@ class ProductoService {
         productoData
       );
       console.log('✅ Product updated successfully');
+      ProductoService.invalidateCache(); // ✅ Invalidar caché
       return producto;
     } catch (error) {
       console.error('❌ Failed to update product:', error);
@@ -126,6 +162,7 @@ class ProductoService {
       console.log('🗑️ Deleting product:', id);
       await apiService.delete(`${API_ENDPOINTS.productos.delete}${id}`);
       console.log('✅ Product deleted successfully');
+      ProductoService.invalidateCache(); // ✅ Invalidar caché
     } catch (error) {
       console.error('❌ Failed to delete product:', error);
       throw error;
@@ -186,6 +223,33 @@ class ProductoService {
     
     // Icono por defecto
     return 'package-variant';
+  }
+  // ... métodos existentes ...
+
+  // Obtener historial (Papelera)
+  async getDeleted(): Promise<Producto[]> {
+    try {
+      console.log('📦 Fetching deleted products');
+      const productos = await apiService.get<Producto[]>(API_ENDPOINTS.productos.historialEliminados);
+      console.log(`✅ ${productos.length} deleted products fetched successfully`);
+      return productos;
+    } catch (error) {
+      console.error('❌ Error fetching deleted products:', error);
+      return [];
+    }
+  }
+
+  // Restaurar producto
+  async restore(id: string): Promise<void> {
+    try {
+      console.log('🔄 Restoring product:', id);
+      const endpoint = API_ENDPOINTS.productos.restaurar.replace(':id', id);
+      await apiService.put(endpoint, {});
+      console.log('✅ Product restored successfully');
+    } catch (error) {
+      console.error('❌ Error restoring product:', error);
+      throw error;
+    }
   }
 }
 

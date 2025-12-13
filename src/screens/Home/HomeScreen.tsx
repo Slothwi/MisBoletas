@@ -37,7 +37,7 @@ const HomeScreen = () => {
   const colorScheme = useColorScheme();
   
   // Colores dinámicos
-  const cardBg = colorScheme === 'dark' ? '#1E1E1E' : colors.primaryLight;
+  const cardBg = colorScheme === 'dark' ? colors.cardDark : colors.primaryLight;
   const iconColor = colorScheme === 'dark' ? '#fff' : colors.primary;
 
   const [productos, setProductos] = useState<Producto[]>([]);
@@ -60,12 +60,12 @@ const HomeScreen = () => {
       setCargando(false);
       setRefreshing(false);
     }
-  }, [authState.isAuthenticated]);
+  }, []); // ✅ ARREGLADO: Sin authState en deps - accede via closure
 
   useEffect(() => {
     if (authState.isAuthenticated && !authState.isLoading) cargarProductos();
     else if (!authState.isLoading && !authState.isAuthenticated) { setProductos([]); setCargando(false); }
-  }, [authState.isAuthenticated, authState.isLoading, cargarProductos]);
+  }, [authState.isAuthenticated, authState.isLoading]); // ✅ ARREGLADO: Removida cargarProductos de deps
 
   useEffect(() => {
     if (productoSeleccionado?.id_producto) cargarDocumentos(productoSeleccionado.id_producto);
@@ -84,14 +84,21 @@ const HomeScreen = () => {
     Alert.alert('Eliminar', `¿Borrar "${producto.nombre}"?`, [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Eliminar', style: 'destructive', onPress: async () => {
+            // ✅ OPTIMISTIC UPDATE: Remover inmediatamente de la UI
+            setProductos(prev => prev.filter(p => p.id_producto !== producto.id_producto));
+            handleVolverALista();
+            
             try {
                 if (producto.id_producto) {
                     await productoService.delete(producto.id_producto);
                     Alert.alert('Éxito', 'Eliminado');
-                    cargarProductos();
-                    handleVolverALista();
+                    // No necesita cargarProductos() porque ya se eliminó de la UI
                 }
-            } catch { Alert.alert('Error', 'No se pudo eliminar'); }
+            } catch (error) {
+                // ✅ ROLLBACK: Si falla, volver a agregar
+                Alert.alert('Error', 'No se pudo eliminar');
+                setProductos(prev => [...prev, producto]);
+            }
         }}
     ]);
   };
@@ -129,9 +136,19 @@ const HomeScreen = () => {
     Alert.alert('Eliminar', '¿Borrar documento?', [
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Eliminar', style: 'destructive', onPress: async () => {
-            try { await documentoService.delete(id); Alert.alert('Éxito', 'Eliminado'); 
-            if (productoSeleccionado?.id_producto) cargarDocumentos(productoSeleccionado.id_producto); } 
-            catch { Alert.alert('Error', 'No se pudo eliminar'); }
+            // ✅ OPTIMISTIC UPDATE: Remover inmediatamente
+            const idStr = id.toString();
+            const documentoEliminado = documentos.find(d => (d.documentoid === id) || (d.id_documento === idStr));
+            setDocumentos(prev => prev.filter(d => (d.documentoid !== id && d.id_documento !== idStr)));
+            
+            try {
+                await documentoService.delete(id);
+                Alert.alert('Éxito', 'Eliminado');
+            } catch (error) {
+                // ✅ ROLLBACK: Si falla, restaurar documento
+                Alert.alert('Error', 'No se pudo eliminar');
+                if (documentoEliminado) setDocumentos(prev => [...prev, documentoEliminado]);
+            }
         }}
     ]);
   };
@@ -144,18 +161,17 @@ const HomeScreen = () => {
   // --- VISTA: DETALLE PRODUCTO ---
   if (productoSeleccionado) {
     return (
-      <ThemedView style={[containers.page, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : colors.background }]}>
-        <TouchableOpacity style={misc.backButton} onPress={handleVolverALista}>
-          <Ionicons name="arrow-back" size={24} color={colors.primary} />
-          <ThemedText style={misc.backButtonText}>Volver a la lista</ThemedText>
-        </TouchableOpacity>
+      <ThemedView style={[containers.page, { backgroundColor: colorScheme === 'dark' ? colors.backgroundDark : colors.background }]}>
+        <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={handleVolverALista} style={{ padding: 8, marginLeft: -8 }}>
+            <Ionicons name="arrow-back" size={26} color={colors.primary} />
+          </TouchableOpacity>
+          <ThemedText style={[text.detailTitle, { marginTop: 0, marginBottom: 0, flex: 1, marginHorizontal: 0 }]}>
+            {productoSeleccionado.nombre}
+          </ThemedText>
+        </View>
 
         <ScrollView style={{ flex: 1, width: '100%' }} contentContainerStyle={{ paddingBottom: 40 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-          <View style={{ alignItems: 'center', marginBottom: 20 }}>
-            <MaterialCommunityIcons name="package-variant" size={48} color={colors.primary} />
-            <ThemedText style={[text.detailTitle, { textAlign: 'center' }]}>{productoSeleccionado.nombre}</ThemedText>
-          </View>
-
           <View style={[cards.base, { backgroundColor: cardBg }]}>
             {productoSeleccionado.marca && <View style={containers.rowSpaceBetween}><ThemedText style={text.infoLabel}>Marca:</ThemedText><ThemedText style={text.infoValue}>{productoSeleccionado.marca}</ThemedText></View>}
             {productoSeleccionado.modelo && <View style={containers.rowSpaceBetween}><ThemedText style={text.infoLabel}>Modelo:</ThemedText><ThemedText style={text.infoValue}>{productoSeleccionado.modelo}</ThemedText></View>}
@@ -177,20 +193,27 @@ const HomeScreen = () => {
             {cargandoDocumentos ? <ThemedText style={misc.loadingText}>Cargando...</ThemedText> : 
              documentos.length === 0 ? <View style={{ alignItems: 'center', marginTop: 10 }}><ThemedText style={{ fontStyle: 'italic', textAlign: 'center', color: '#888' }}>Sin documentos</ThemedText></View> : 
              (
-                <View style={{ gap: 10, marginTop: 10 }}>
-                    {documentos.map((doc, idx) => (
-                        <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colorScheme==='dark'?'#333':'#f8f9fa', padding: 10, borderRadius: 8, justifyContent: 'space-between' }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10 }}>
-                                <Ionicons name="document" size={24} color={colors.primary} />
-                                <ThemedText style={{ flex: 1 }} numberOfLines={1}>{doc.nombrearchivo || doc.NombreArchivo || 'Archivo'}</ThemedText>
-                            </View>
-                            <View style={{ flexDirection: 'row', gap: 10 }}>
-                                <TouchableOpacity onPress={() => handleVerDocumento(doc.url_gcs || doc.URL_GCS || '')}><Ionicons name="eye" size={20} color="#4CAF50" /></TouchableOpacity>
-                                <TouchableOpacity onPress={() => handleEliminarDocumento(doc.documentoid || doc.DocumentoID)}><Ionicons name="trash" size={20} color="#f44336" /></TouchableOpacity>
-                            </View>
-                        </View>
-                    ))}
-                </View>
+                // ✅ ARREGLADO: FlatList para optimizar listas grandes de documentos
+                <FlatList
+                  data={documentos}
+                  keyExtractor={(item) => item.id_documento || item.documentoid?.toString() || Math.random().toString()}
+                  scrollEnabled={false} // No scroll anidado
+                  removeClippedSubviews={true} // No renderizar items fuera de viewport
+                  maxToRenderPerBatch={10} // Renderizar máximo 10 items por batch
+                  updateCellsBatchingPeriod={50} // Esperar 50ms antes de siguiente batch
+                  renderItem={({ item: doc }) => (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colorScheme==='dark'?colors.cardDark:'#f8f9fa', padding: 10, borderRadius: 8, justifyContent: 'space-between', marginBottom: 10 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 10 }}>
+                        <Ionicons name="document" size={24} color={colors.primary} />
+                        <ThemedText style={{ flex: 1 }} numberOfLines={1}>{doc.nombrearchivo || doc.NombreArchivo || 'Archivo'}</ThemedText>
+                      </View>
+                      <View style={{ flexDirection: 'row', gap: 10 }}>
+                        <TouchableOpacity onPress={() => handleVerDocumento(doc.url_gcs || doc.URL_GCS || '')}><Ionicons name="eye" size={20} color="#4CAF50" /></TouchableOpacity>
+                        <TouchableOpacity onPress={() => handleEliminarDocumento(doc.documentoid || doc.DocumentoID)}><Ionicons name="trash" size={20} color="#f44336" /></TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
+                />
              )}
              <TouchableOpacity style={[buttons.primary, { marginTop: 15 }]} onPress={handleSubirDocumento}><ThemedText style={text.buttonText}>Subir Documento</ThemedText></TouchableOpacity>
           </View>
@@ -206,8 +229,8 @@ const HomeScreen = () => {
 
   // --- VISTA: LISTA PRINCIPAL (HOME) ---
   return (
-    <ThemedView style={[containers.page, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : colors.background }]}>
-      <ThemedText type="title" style={{ fontSize: 24, textAlign: 'center', marginTop: 40, marginBottom: 20 }}>Tus Productos</ThemedText>
+    <ThemedView style={[containers.page, { backgroundColor: colorScheme === 'dark' ? colors.backgroundDark : colors.background }]}>
+      <ThemedText style={text.detailTitle}>Tus Productos</ThemedText>
 
       {cargando ? (
         <View style={containers.centered}><ThemedText>Cargando...</ThemedText></View>
@@ -234,14 +257,14 @@ const HomeScreen = () => {
                 const estadoTexto = String(estado.textoFormato || '');
                 return (
                     <TouchableOpacity 
-                        style={[cards.interactive, { backgroundColor: cardBg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+                        style={[cards.interactive, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
                         onPress={() => handleVerProducto(item)}
                     >
                         <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                             <MaterialCommunityIcons name="package-variant" size={24} color={colors.primary} />
                             <View style={{ marginLeft: 12, flex: 1 }}>
                                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <ThemedText style={[text.cardText, { flexShrink: 1 }]} numberOfLines={1}>{String(item.nombre || '')}</ThemedText>
+                                    <ThemedText style={[text.cardText, { flexShrink: 1, color: colors.textDark }]} numberOfLines={1}>{String(item.nombre || '')}</ThemedText>
                                     {tieneDocumentos && (
                                         <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8, backgroundColor: colors.secondary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
                                             <Ionicons name="document" size={12} color="#fff" />

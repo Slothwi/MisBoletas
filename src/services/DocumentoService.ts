@@ -1,5 +1,6 @@
 import { apiService } from './api';
 import { API_ENDPOINTS } from '../constants/config';
+import * as ImageManipulator from 'expo-image-manipulator'; // ✅ Para comprimir imágenes
 
 // Interfaces para documentos (basadas en tu backend real)
 export interface Documento {
@@ -53,6 +54,23 @@ export interface OCRData {
 }
 
 class DocumentoService {
+  // ✅ NUEVO: Comprimir imagen antes de subir (ahorro de ancho de banda)
+  private async compressImage(uri: string): Promise<string> {
+    try {
+      console.log('🖼️ Compressing image...');
+      const manipResult = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 1200, height: 1200 } }], // Máximo 1200px
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG } // 70% quality
+      );
+      console.log('✅ Image compressed successfully');
+      return manipResult.uri;
+    } catch (error) {
+      console.warn('⚠️ Image compression failed, using original:', error);
+      return uri; // Fallback al original si falla
+    }
+  }
+
   // Subir documento a un producto
   async upload(
     productoId: string | number, 
@@ -61,12 +79,18 @@ class DocumentoService {
     try {
       console.log('📎 Uploading document for product:', productoId);
       
+      // ✅ ARREGLADO: Comprimir imagen si es JPEG/PNG
+      let finalUri = file.uri;
+      if (file.type?.includes('image')) {
+        finalUri = await this.compressImage(file.uri);
+      }
+      
       // Crear FormData para el upload
       const formData = new FormData();
       
       // En React Native, FormData acepta archivos de esta forma
       formData.append('file', {
-        uri: file.uri,
+        uri: finalUri, // ✅ URI comprimida
         type: file.type || 'image/jpeg', // Tipo MIME por defecto
         name: file.name,
       } as any);

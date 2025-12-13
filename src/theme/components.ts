@@ -73,25 +73,21 @@ export const buttons = StyleSheet.create({
     ...shadows.lg,
   },
   danger: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.alert,
     paddingVertical: spacing.lg - 8,
     paddingHorizontal: spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: borderRadius.md,
-    borderColor: colors.alert,
-    borderWidth: 1,
     ...shadows.lg,
   },
   edit: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: colors.secondary,
     paddingVertical: spacing.lg - 8,
     paddingHorizontal: spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: borderRadius.md,
-    borderColor: colors.secondary,
-    borderWidth: 1,
     ...shadows.lg,
   },
   disabled: {
@@ -137,7 +133,7 @@ export const inputs = StyleSheet.create({
     borderWidth: 2,
   },
   disabled: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.primaryLight,
     borderColor: '#ddd',
     color: colors.textMuted,
   },
@@ -176,10 +172,10 @@ export const pickers = StyleSheet.create({
   optionItem: {
     padding: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: colors.border,
   },
   optionSelected: {
-    backgroundColor: '#e3f2fd',
+    backgroundColor: colors.secondary,
   },
 });
 

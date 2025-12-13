@@ -13,7 +13,7 @@ const ConfiguracionScreen = () => {
     const colorScheme = useColorScheme();
     
     // Adaptación para modo oscuro
-    const cardBg = colorScheme === 'dark' ? '#1E1E1E' : colors.primaryLight;
+    const cardBg = colorScheme === 'dark' ? colors.cardDark : colors.primaryLight;
     const iconColor = colorScheme === 'dark' ? '#fff' : colors.primary;
 
     const userData = (authState.user as any) || {
@@ -56,17 +56,17 @@ const ConfiguracionScreen = () => {
 
     const MenuOption = ({ title, route, testID }: { title: string, route: string, testID?: string }) => (
         <TouchableOpacity 
-            style={[cards.interactive, { backgroundColor: cardBg }]} 
+            style={[cards.interactive, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1 }]} 
             testID={testID} 
             onPress={() => router.push(route as Href)}
         >
-            <ThemedText style={text.cardText}>{title}</ThemedText> 
-            <Ionicons name="chevron-forward" size={24} color={iconColor} />
+            <ThemedText style={[text.cardText, { color: colors.textDark }]}>{title}</ThemedText> 
+            <Ionicons name="chevron-forward" size={24} color={colors.primary} />
         </TouchableOpacity>
     );
 
     return (
-        <ThemedView style={[containers.page, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : colors.background }]}>
+        <ThemedView style={[containers.page, { backgroundColor: colorScheme === 'dark' ? colors.backgroundDark : colors.background }]}>
             <ScrollView 
                 style={{ width: '100%', flex: 1 }} 
                 contentContainerStyle={{ flexGrow: 1, paddingBottom: 40, alignItems: 'center' }}

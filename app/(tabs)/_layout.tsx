@@ -1,24 +1,29 @@
 import { useColorScheme } from '@/src/hooks/useColorScheme';
+import { Colors } from '@/src/theme/colors'; // 👈 Importamos el tema centralizado
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import React from 'react';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  // Obtenemos los colores del tema actual (light o dark)
+  const themeColors = Colors[colorScheme ?? 'light'];
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colorScheme === 'dark' ? '#fff' : '#e77573',
-        tabBarInactiveTintColor: colorScheme === 'dark' ? '#888' : '#999',
+        // Usamos las variables del tema
+        tabBarActiveTintColor: themeColors.tabIconSelected,
+        tabBarInactiveTintColor: themeColors.tabIconDefault,
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colorScheme === 'dark' ? '#000' : '#fff',
+          // Tab bar siempre blanca
+          backgroundColor: '#fff',
+          borderTopColor: '#ddd',
         },
       }}
       initialRouteName="home">
 
-      {/* Pantalla de Categorías */}
       <Tabs.Screen
         name="categorias"
         options={{
@@ -33,7 +38,6 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Pantalla de Inicio */}
       <Tabs.Screen
         name="home"
         options={{
@@ -48,7 +52,6 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Pantalla de Configuración (si existe) */}
       <Tabs.Screen
         name="configuracion_tab"
         options={{

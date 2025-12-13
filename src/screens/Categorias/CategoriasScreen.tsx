@@ -1,11 +1,12 @@
 import { ThemedText } from "@/src/components";
 import { useAuth } from "@/src/hooks/useAuth";
+import { useColorScheme } from "@/src/hooks/useColorScheme";
 import categoriaService, { Categoria } from "@/src/services/CategoriaServiceSimplified";
 import productoService, { Producto } from "@/src/services/ProductServiceSimplified";
 // Importamos todos los estilos necesarios del tema
 import { buttons, cards, colors, containers, inputs, misc, text } from '@/src/theme';
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import { Alert, Linking, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
 
@@ -13,8 +14,11 @@ import { Alert, Linking, ScrollView, TextInput, TouchableOpacity, View } from "r
 const CategoriasScreen = () => {
   const router = useRouter();
   const { authState } = useAuth();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [todosProductos, setTodosProductos] = useState<Producto[]>([]);
 
   // Estados
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<Categoria | null>(null);
@@ -44,7 +48,9 @@ const CategoriasScreen = () => {
     }
     try {
       const categoriasDelServidor = await categoriaService.getAll();
+      const productosDelServidor = await productoService.getAll();
       setCategorias(categoriasDelServidor);
+      setTodosProductos(productosDelServidor);
     } catch (error: any) {
       Alert.alert('Error', error.message || 'No se pudieron cargar las categorías.');
     } finally {
@@ -60,6 +66,13 @@ const CategoriasScreen = () => {
       setCargando(false);
     }
   }, [authState.isAuthenticated, authState.isLoading, cargarCategorias]);
+
+  // ✅ ARREGLADO: Recargar datos cuando la pantalla se enfoca (vuelve del formulario)
+  useFocusEffect(
+    useCallback(() => {
+      cargarCategorias();
+    }, [cargarCategorias])
+  );
 
   const obtenerProductosPorCategoria = async (categoriaId: string) => {
     try {
@@ -168,18 +181,78 @@ const CategoriasScreen = () => {
 
   // DETALLE PRODUCTO
   if (productoSeleccionado) {
+    const handleEditarProducto = (producto: Producto) => {
+      if (!producto.id_producto) return;
+      router.push({ pathname: '/formulario', params: { producto: JSON.stringify(producto), modoEdicion: 'true' } } as any);
+    };
+
     return (
-      <View style={containers.page}>
-        <TouchableOpacity style={misc.backButton} onPress={handleVolverALista}>
-          <Ionicons name="arrow-back" size={24} color={colors.primary} />
-          <ThemedText style={misc.backButtonText}>Volver</ThemedText>
-        </TouchableOpacity>
-        <ScrollView style={{ flex: 1 }}>
-          <View style={[cards.base, { alignItems: 'center' }]}>
-            <MaterialCommunityIcons name="package-variant" size={48} color={colors.primary} />
-            <ThemedText style={text.detailTitle}>{productoSeleccionado.nombre}</ThemedText>
-            {productoSeleccionado.marca && <ThemedText style={text.cardSubtitle}>{productoSeleccionado.marca}</ThemedText>}
+      <View style={[containers.page, { backgroundColor: isDark ? colors.backgroundDark : colors.background }]}>
+        {/* Header con botón atrás */}
+        <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => setProductoSeleccionado(null)} style={{ padding: 8, marginLeft: -8 }}>
+            <Ionicons name="arrow-back" size={26} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
+          {/* Tarjeta principal con producto */}
+          <View style={[cards.base, { backgroundColor: isDark ? colors.cardDark : '#fff', position: 'relative', marginBottom: 24 }]}>
+            {/* Botón editar superpuesto */}
+            <TouchableOpacity 
+              onPress={() => handleEditarProducto(productoSeleccionado)}
+              style={{ 
+                position: 'absolute', 
+                top: 12, 
+                right: 12, 
+                backgroundColor: colors.primary, 
+                width: 44, 
+                height: 44, 
+                borderRadius: 22,
+                justifyContent: 'center',
+                alignItems: 'center',
+                elevation: 4,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.2,
+                shadowRadius: 4,
+              }}
+            >
+              <MaterialCommunityIcons name="pencil" size={22} color="#fff" />
+            </TouchableOpacity>
+
+            {/* Contenido */}
+            <View style={{ alignItems: 'center', paddingRight: 50 }}>
+              <MaterialCommunityIcons name="package-variant" size={56} color={colors.primary} style={{ marginBottom: 12 }} />
+              <ThemedText style={[text.detailTitle, { marginTop: 0, marginBottom: 8, textAlign: 'center' }]}>
+                {productoSeleccionado.nombre}
+              </ThemedText>
+              {productoSeleccionado.marca && (
+                <ThemedText style={[text.cardSubtitle, { textAlign: 'center', fontSize: 14 }]}>
+                  {productoSeleccionado.marca}
+                </ThemedText>
+              )}
+              {productoSeleccionado.descripcion && (
+                <ThemedText style={[text.cardText, { marginTop: 12, textAlign: 'center', fontSize: 13, color: colors.textMuted }]}>
+                  {productoSeleccionado.descripcion}
+                </ThemedText>
+              )}
+              {productoSeleccionado.fecha_compra && (
+                <ThemedText style={[text.cardSubtitle, { marginTop: 12, fontSize: 12 }]}>
+                  Comprado: {new Date(productoSeleccionado.fecha_compra).toLocaleDateString()}
+                </ThemedText>
+              )}
+            </View>
           </View>
+
+          {/* Botón eliminar */}
+          <TouchableOpacity 
+            style={[buttons.danger, { marginBottom: 20 }]} 
+            onPress={() => handleEliminarProducto(productoSeleccionado)}
+          >
+            <Ionicons name="trash" size={18} color="#fff" style={{ marginRight: 8 }} />
+            <ThemedText style={[text.buttonText]}>Eliminar Producto</ThemedText>
+          </TouchableOpacity>
         </ScrollView>
       </View>
     );
@@ -188,16 +261,20 @@ const CategoriasScreen = () => {
   // LISTA PRODUCTOS
   if (categoriaSeleccionada) {
     return (
-      <View style={containers.page}>
-        <TouchableOpacity style={misc.backButton} onPress={handleVolverACategorias}>
-          <Ionicons name="arrow-back" size={24} color={colors.primary} />
-          <ThemedText style={misc.backButtonText}>Volver</ThemedText>
-        </TouchableOpacity>
-        <ThemedText style={text.detailTitle}>{categoriaSeleccionada.nombre}</ThemedText>
-        <ScrollView style={{ width: '100%', marginTop: 20 }}>
+      <View style={[containers.page, { backgroundColor: isDark ? colors.backgroundDark : colors.background }]}>
+        <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={handleVolverACategorias} style={{ padding: 8, marginLeft: -8 }}>
+            <Ionicons name="arrow-back" size={26} color={colors.primary} />
+          </TouchableOpacity>
+          <ThemedText style={[text.detailTitle, { marginTop: 0, marginBottom: 0, flex: 1, marginHorizontal: 0 }]}>
+            {categoriaSeleccionada.nombre}
+          </ThemedText>
+        </View>
+        <ThemedText style={[text.cardTitle, { marginHorizontal: 16, marginBottom: 12, color: colors.primary, fontSize: 18, fontWeight: '600' }]}>Tus Productos</ThemedText>
+        <ScrollView style={{ width: '100%', flex: 1, paddingHorizontal: 16 }}>
           {productosDeCategoria.map(prod => (
-            <TouchableOpacity key={prod.id_producto} style={cards.interactive} onPress={() => handleVerProducto(prod)}>
-              <ThemedText style={text.cardText}>{prod.nombre}</ThemedText>
+            <TouchableOpacity key={prod.id_producto} style={[cards.interactive, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1, marginBottom: 12 }]} onPress={() => handleVerProducto(prod)}>
+              <ThemedText style={[text.cardText, { color: colors.textDark }]}>{prod.nombre}</ThemedText>
               <Ionicons name="chevron-forward" size={24} color={colors.primary} />
             </TouchableOpacity>
           ))}
@@ -209,18 +286,24 @@ const CategoriasScreen = () => {
 
   // LISTA CATEGORÍAS (PRINCIPAL)
   return (
-    <View style={containers.page}>
-      <ThemedText style={[text.detailTitle, { marginBottom: 20 }]}>Tus Categorías</ThemedText>
+    <View style={[containers.page, { backgroundColor: isDark ? colors.backgroundDark : colors.background }]}>
+      <ThemedText style={text.detailTitle}>Tus Categorías</ThemedText>
       
-      <ScrollView style={{ flex: 1, width: "100%" }}>
-        {categorias.map((cat) => (
+      <ScrollView style={{ flex: 1, width: "100%", paddingHorizontal: 16, marginTop: 8 }}>
+        {categorias.map((cat) => {
+          const numProductos = todosProductos.filter(p => 
+            p.categorias?.some(c => c.id_categoria === cat.id_categoria)
+          ).length || 0;
+          return (
           <View key={cat.id_categoria} style={{ marginBottom: 16 }}>
-            <TouchableOpacity style={cards.interactive} onPress={() => handleVerCategoria(cat)}>
+            <TouchableOpacity style={[cards.interactive, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1 }]} onPress={() => handleVerCategoria(cat)}>
               <View style={containers.row}>
                 <View style={[misc.colorIndicator, { backgroundColor: cat.color }]} />
-                <ThemedText style={text.cardText}>{cat.nombre}</ThemedText>
+                <View style={{ flex: 1 }}>
+                  <ThemedText style={[text.cardText, { color: colors.textDark }]}>{cat.nombre}</ThemedText>
+                  <ThemedText style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>{numProductos} {numProductos === 1 ? 'producto' : 'productos'}</ThemedText>
+                </View>
               </View>
-              <Ionicons name="chevron-forward" size={24} color={colors.primary} />
             </TouchableOpacity>
             
             <View style={[containers.row, { justifyContent: 'flex-end', marginTop: 4 }]}>
@@ -232,7 +315,8 @@ const CategoriasScreen = () => {
               </TouchableOpacity>
             </View>
           </View>
-        ))}
+        );
+        })}
 
         {mostrandoFormulario ? (
             <View style={cards.base}>

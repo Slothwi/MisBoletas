@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as DocumentPicker from 'expo-document-picker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Alert, Platform, ScrollView, TouchableOpacity, View } from 'react-native';
 
 const SelectCategoria = (props: { 
@@ -64,7 +64,7 @@ const FormularioScreen = () => {
   const { authState } = useAuth();
   const params = useLocalSearchParams();
   const colorScheme = useColorScheme();
-  const cardBg = colorScheme === 'dark' ? '#1E1E1E' : colors.primaryLight;
+  const cardBg = colorScheme === 'dark' ? colors.cardDark : colors.primaryLight;
 
   const [nombreProducto, setNombreProducto] = useState('');
   const [fechaCompra, setFechaCompra] = useState<Date | null>(null);
@@ -85,30 +85,55 @@ const FormularioScreen = () => {
   const [modoEdicion, setModoEdicion] = useState(false);
   const [productoEditando, setProductoEditando] = useState<any>(null);
 
+  // ✅ ARREGLADO: useRef para detectar si ya cargó los params (una sola vez)
+  const paramsLoadedRef = useRef(false);
+
+  // Primero: Cargar params del producto
   useEffect(() => {
-    if (params.producto && params.modoEdicion === 'true') {
+    if (!paramsLoadedRef.current && params.producto && params.modoEdicion === 'true') {
+        paramsLoadedRef.current = true; // Marcar como cargado
         try {
             const p = JSON.parse(params.producto as string);
-            setProductoEditando(p); setModoEdicion(true);
-            setNombreProducto(p.nombre || ''); setMarca(p.marca || ''); setModelo(p.modelo || '');
-            setTienda(p.tienda || ''); setPrecio(p.precio || ''); setNotas(p.notas || '');
+            setProductoEditando(p); 
+            setModoEdicion(true);
+            setNombreProducto(p.nombre || ''); 
+            setMarca(p.marca || ''); 
+            setModelo(p.modelo || '');
+            setTienda(p.tienda || ''); 
+            setPrecio(p.precio || ''); 
+            setNotas(p.notas || '');
             if (p.duracion_garantia_meses) setDuracionGarantia(p.duracion_garantia_meses.toString());
             if (p.fecha_compra) setFechaCompra(new Date(p.fecha_compra));
         } catch { Alert.alert('Error', 'Datos inválidos'); }
     }
-  }, [params]);
+  }, []); // ✅ ARREGLADO: Sin dependencias - se ejecuta UNA SOLA VEZ al montar
 
+  // Segundo: Cargar categorías y seleccionar la del producto
   useEffect(() => {
-    if (authState.isAuthenticated) {
-        categoriaService.getAll().then(res => {
-            setCategorias(res);
-            if (productoEditando?.categoria_ids?.[0]) {
-                const cat = res.find(c => c.id_categoria === productoEditando.categoria_ids[0]);
-                if (cat) setCategoriaSeleccionada(cat);
+    if (!authState.isAuthenticated) return;
+    
+    setCargandoCategorias(true);
+    categoriaService.getAll().then(res => {
+        setCategorias(res);
+        
+        // Si estamos editando, buscar la categoría del producto
+        if (modoEdicion && productoEditando) {
+            // El backend devuelve categorias como un array de objetos
+            // Necesitamos obtener la categoría del producto
+            const categoriasDelProducto = productoEditando.categorias || [];
+            if (categoriasDelProducto.length > 0) {
+                const catDelProducto = res.find(c => c.id_categoria === categoriasDelProducto[0].id_categoria);
+                if (catDelProducto) {
+                    setCategoriaSeleccionada(catDelProducto);
+                }
             }
-        }).catch(() => setCategorias([])).finally(() => setCargandoCategorias(false));
-    }
-  }, [authState.isAuthenticated, productoEditando]);
+        }
+        setCargandoCategorias(false);
+    }).catch(() => {
+        setCategorias([]);
+        setCargandoCategorias(false);
+    });
+  }, [authState.isAuthenticated, modoEdicion, productoEditando]);
 
   const handleFileClick = async (tipo: string) => {
     try {
@@ -179,12 +204,16 @@ const FormularioScreen = () => {
   };
 
   return (
-    <ThemedView style={[containers.page, { backgroundColor: colorScheme === 'dark' ? '#1a1a1a' : colors.background }]}>
+    <ThemedView style={[containers.page, { backgroundColor: colorScheme === 'dark' ? colors.backgroundDark : colors.background }]}>
+        <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginLeft: -8 }}>
+            <Ionicons name="arrow-back" size={26} color={colors.primary} />
+          </TouchableOpacity>
+          <ThemedText style={[text.detailTitle, { marginTop: 0, marginBottom: 0, flex: 1, marginHorizontal: 0 }]}>
+          {modoEdicion ? 'Editar Producto' : 'Nuevo Producto'}
+        </ThemedText>
+      </View>
       <ScrollView style={{ width: '100%' }} contentContainerStyle={{ paddingBottom: 40 }}>
-        <TouchableOpacity style={misc.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color={colors.primary} />
-          <ThemedText style={misc.backButtonText}>Volver</ThemedText>
-        </TouchableOpacity>
         
         <View style={[cards.base, { backgroundColor: cardBg }]}>
           <View style={inputs.container}>
