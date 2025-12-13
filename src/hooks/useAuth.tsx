@@ -43,20 +43,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => {};
   }, []);
 
-  // ✅ Keep-Alive: Evita cold start de Render
-  useEffect(() => {
-    if (!authState.token) return;
-    
-    const keepAliveInterval = setInterval(() => {
-      fetch('https://misboletas-backend.onrender.com/health', {
-        method: 'GET',
-        headers: { 'Accept': 'application/json' }
-      }).catch(() => {}); // Silent fail
-    }, 25 * 60 * 1000); // Cada 25 minutos (Render espera 30)
-    
-    return () => clearInterval(keepAliveInterval);
-  }, [authState.token]);
-
   // Función para verificar el estado de autenticación
   const checkAuthStatus = async () => {
     try {

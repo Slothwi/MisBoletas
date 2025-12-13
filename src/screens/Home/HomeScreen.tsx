@@ -228,6 +228,8 @@ const HomeScreen = () => {
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             renderItem={({ item }) => {
                 const estado = calcularTiempoRestante(item.fecha_compra, item.duracion_garantia_meses);
+                // Mostrar indicador de documentos si existe
+                const tieneDocumentos = item.numero_documentos && item.numero_documentos > 0;
                 return (
                     <TouchableOpacity 
                         style={[cards.interactive, { backgroundColor: cardBg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
@@ -236,10 +238,16 @@ const HomeScreen = () => {
                         <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
                             <MaterialCommunityIcons name="package-variant" size={24} color={colors.primary} />
                             <View style={{ marginLeft: 12, flex: 1 }}>
-                                <ThemedText style={[text.cardText, { flexShrink: 1 }]} numberOfLines={1}>{item.nombre}</ThemedText>
-                                {estado.diasRestantes <= 30 && estado.diasRestantes >= -1 && (
-                                    <ThemedText style={{ fontSize: 12, color: estado.color, fontWeight: 'bold' }}>{estado.textoFormato}</ThemedText>
-                                )}
+                                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <ThemedText style={[text.cardText, { flexShrink: 1 }]} numberOfLines={1}>{item.nombre}</ThemedText>
+                                    {tieneDocumentos && (
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8, backgroundColor: colors.secondary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                                            <Ionicons name="document" size={12} color="#fff" />
+                                            <ThemedText style={{ fontSize: 10, color: '#fff', marginLeft: 3, fontWeight: 'bold' }}>{item.numero_documentos}</ThemedText>
+                                        </View>
+                                    )}
+                                </View>
+                                <ThemedText style={{ fontSize: 12, color: estado.color, fontWeight: 'bold', marginTop: 4 }}>{estado.textoFormato}</ThemedText>
                             </View>
                         </View>
                         <Ionicons name="chevron-forward" size={24} color={iconColor} />

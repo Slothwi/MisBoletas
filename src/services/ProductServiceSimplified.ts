@@ -16,6 +16,7 @@ export interface Producto {
   tienda?: string;
   notas?: string;
   precio?: number;
+  numero_documentos?: number;
   fecha_creacion?: string;
   categorias?: {
     id_categoria: string;  // Cambio: Era "CategoriaID: number" → Ahora UUID string

@@ -77,12 +77,13 @@ const FormularioScreen = () => {
   const [notas, setNotas] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isProcessingOCR, setIsProcessingOCR] = useState(false);
+  const [ocrStatus, setOcrStatus] = useState('');
   const [archivoSeleccionado, setArchivoSeleccionado] = useState<any>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [cargandoCategorias, setCargandoCategorias] = useState(true);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [productoEditando, setProductoEditando] = useState<any>(null);
-  const [categoriasCargas, setCategoriasCargas] = useState(false);
 
   useEffect(() => {
     if (params.producto && params.modoEdicion === 'true') {
@@ -98,8 +99,7 @@ const FormularioScreen = () => {
   }, [params]);
 
   useEffect(() => {
-    if (authState.isAuthenticated && !categoriasCargas) {
-        setCategoriasCargas(true);
+    if (authState.isAuthenticated) {
         categoriaService.getAll().then(res => {
             setCategorias(res);
             if (productoEditando?.categoria_ids?.[0]) {
@@ -108,7 +108,7 @@ const FormularioScreen = () => {
             }
         }).catch(() => setCategorias([])).finally(() => setCargandoCategorias(false));
     }
-  }, [authState.isAuthenticated]);
+  }, [authState.isAuthenticated, productoEditando]);
 
   const handleFileClick = async (tipo: string) => {
     try {
@@ -133,67 +133,51 @@ const FormularioScreen = () => {
     };
 
     try {
-        // Crear/actualizar producto primero
         let prod;
         if (modoEdicion && productoEditando?.id_producto) prod = await productoService.update(productoEditando.id_producto, data);
         else prod = await productoService.create(data);
 
-        // Si hay documento seleccionado, procesarlo
-        let ocrCompleted = false;
+        // OCR Logic
         if (archivoSeleccionado && prod.id_producto) {
-            try {
-                // Subir documento
-                const docResponse = await documentoService.upload(prod.id_producto, archivoSeleccionado);
-                console.log('[DEBUG] Documento subido:', docResponse);
+            setIsProcessingOCR(true);
+            setOcrStatus('Analizando...');
+            const { ocrData } = await documentoService.uploadAndWaitOCR(prod.id_producto, archivoSeleccionado, archivoSeleccionado.tipoDocumento);
+            
+            if (ocrData?.parsed_data) {
+                const { comercio, fecha, total, marca: marcaOcr, modelo: modeloOcr, garantia } = ocrData.parsed_data;
+                const update: any = {};
+                let notasOcr = `📄 Datos extraídos de documento:\n`;
                 
-                // Procesar OCR SÍNCRONO si se subió correctamente
-                if (docResponse.documento?.id_documento) {
-                    const ocrResponse = await fetch(
-                        `https://misboletas-backend.onrender.com/api/v1/documentos/${docResponse.documento.id_documento}/process-ocr`,
-                        { 
-                            method: 'POST',
-                            headers: { 
-                                'Authorization': `Bearer ${authState.token}`,
-                                'Content-Type': 'application/json' 
-                            }
-                        }
-                    );
-                    
-                    console.log('[DEBUG] OCR Response status:', ocrResponse.status);
-                    if (ocrResponse.ok) {
-                        const ocrData = await ocrResponse.json();
-                        console.log('[DEBUG] OCR Data recibido:', ocrData);
-                        
-                        // Llenar formulario con datos OCR extraídos
-                        if (ocrData) {
-                            console.log('[DEBUG] Actualizando campos con OCR data');
-                            if (ocrData.nombre) { console.log('Setting nombre:', ocrData.nombre); setNombreProducto(ocrData.nombre); }
-                            if (ocrData.marca) { console.log('Setting marca:', ocrData.marca); setMarca(ocrData.marca); }
-                            if (ocrData.modelo) { console.log('Setting modelo:', ocrData.modelo); setModelo(ocrData.modelo); }
-                            if (ocrData.tienda) { console.log('Setting tienda:', ocrData.tienda); setTienda(ocrData.tienda); }
-                            if (ocrData.precio) { console.log('Setting precio:', ocrData.precio); setPrecio(ocrData.precio.toString()); }
-                            if (ocrData.fecha_compra) { console.log('Setting fecha:', ocrData.fecha_compra); setFechaCompra(new Date(ocrData.fecha_compra)); }
-                            if (ocrData.duracion_garantia_meses) { console.log('Setting garantía:', ocrData.duracion_garantia_meses); setDuracionGarantia(ocrData.duracion_garantia_meses.toString()); }
-                            ocrCompleted = true;
-                            Alert.alert('OCR Completado', 'Datos extraídos correctamente');
-                        }
-                    } else {
-                        const errorText = await ocrResponse.text();
-                        console.warn('OCR processing failed:', ocrResponse.status, errorText);
-                        Alert.alert('Aviso', 'Documento guardado pero OCR no procesó correctamente');
-                    }
+                if (comercio) { update.tienda = comercio; notasOcr += `• Tienda: ${comercio}\n`; }
+                if (fecha && !fechaCompra) {
+                    const partes = fecha.split(/[-/]/);
+                    if (partes.length===3) update.fecha_compra = `${partes[2]}-${partes[1]}-${partes[0]}`;
+                    notasOcr += `• Fecha: ${fecha}\n`;
                 }
-            } catch (docError) {
-                console.error('Error procesando documento:', docError);
-                Alert.alert('Aviso', 'Documento guardado pero hubo error en OCR');
+                // Solo aceptar total si está en rango válido (0 a 500 millones CLP)
+                if (total && total > 0 && total < 500000000) { 
+                    update.precio = total; 
+                    notasOcr += `• Monto: $${total.toLocaleString()}\n`; 
+                }
+                if (marcaOcr && !marca) { update.marca = marcaOcr; notasOcr += `• Marca: ${marcaOcr}\n`; }
+                if (modeloOcr && !modelo) { update.modelo = modeloOcr; notasOcr += `• Modelo: ${modeloOcr}\n`; }
+                if (garantia && garantia > 0 && garantia <= 120) { 
+                    update.duracion_garantia_meses = garantia; 
+                    notasOcr += `• Garantía: ${garantia} meses\n`; 
+                }
+                
+                if (Object.keys(update).length > 0) {
+                    if (notas) update.notas = notas + '\n' + notasOcr;
+                    else update.notas = notasOcr;
+                    
+                    await productoService.update(prod.id_producto, update);
+                    Alert.alert('✨ OCR', `Datos detectados y guardados`);
+                }
             }
         }
-
-        if (ocrCompleted || !archivoSeleccionado) {
-            Alert.alert('Éxito', 'Producto guardado', [{ text: 'OK', onPress: () => router.replace('/(tabs)/home') }]);
-        }
+        Alert.alert('Éxito', 'Guardado', [{ text: 'OK', onPress: () => router.replace('/(tabs)/home') }]);
     } catch (e: any) { Alert.alert('Error', e.message); } 
-    finally { setIsLoading(false); }
+    finally { setIsLoading(false); setIsProcessingOCR(false); }
   };
 
   return (
@@ -241,14 +225,16 @@ const FormularioScreen = () => {
             <TouchableOpacity style={buttons.secondary} onPress={() => handleFileClick('boleta')}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                     <Ionicons name="camera" size={20} color={colors.primary} style={{ marginRight: 8 }} />
-                    <ThemedText style={{ color: colors.primary }}>{archivoSeleccionado ? '✓ Archivo seleccionado' : 'Seleccionar documento'}</ThemedText>
+                    <ThemedText style={{ color: colors.primary }}>{archivoSeleccionado ? 'Archivo seleccionado' : 'Subir Boleta (OCR)'}</ThemedText>
                 </View>
             </TouchableOpacity>
           </View>
 
+          {isProcessingOCR && <ThemedText style={{ textAlign: 'center', color: colors.primary, marginBottom: 10 }}>{ocrStatus}</ThemedText>}
+
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <TouchableOpacity style={[buttons.secondary, { flex: 1 }]} onPress={() => router.back()}><ThemedText style={{ color: colors.secondary, textAlign: 'center' }}>Cancelar</ThemedText></TouchableOpacity>
-            <TouchableOpacity style={[buttons.primary, { flex: 1 }]} onPress={handleGuardar} disabled={isLoading}>
+            <TouchableOpacity style={[buttons.primary, { flex: 1 }]} onPress={handleGuardar} disabled={isLoading || isProcessingOCR}>
                 <ThemedText style={text.buttonText}>{isLoading ? 'Guardando...' : 'Guardar'}</ThemedText>
             </TouchableOpacity>
           </View>
