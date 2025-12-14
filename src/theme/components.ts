@@ -5,14 +5,14 @@ import { borderRadius, shadows } from './foundations';
 
 export const cards = StyleSheet.create({
   base: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: '#ffffff',
     borderRadius: borderRadius.md,
     padding: spacing.md,
     marginBottom: spacing.lg,
     ...shadows.sm,
   },
   interactive: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: '#ffffff',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -23,7 +23,7 @@ export const cards = StyleSheet.create({
     ...shadows.sm,
   },
   profile: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: '#ffffff',
     borderRadius: borderRadius.lg,
     padding: spacing.xl,
     marginBottom: spacing.xxl,
@@ -119,21 +119,22 @@ export const inputs = StyleSheet.create({
   },
   base: {
     width: '100%',
-    backgroundColor: colors.primaryLight,
+    backgroundColor: '#ffffff',
     borderRadius: borderRadius.md,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
     fontSize: 16,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: colors.border,
     color: colors.textDark,
+    fontWeight: '500',
   },
   focused: {
     borderColor: colors.primary,
     borderWidth: 2,
   },
   disabled: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: '#f5f5f5',
     borderColor: '#ddd',
     color: colors.textMuted,
   },
@@ -145,19 +146,24 @@ export const inputs = StyleSheet.create({
 
 export const pickers = StyleSheet.create({
   base: {
-    backgroundColor: colors.primaryLight,
+    backgroundColor: '#ffffff',
     borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 2,
+    borderColor: colors.primary,
     padding: spacing.md,
     justifyContent: 'center',
   },
+  baseFocused: {
+    borderColor: colors.primary,
+    borderWidth: 2,
+    backgroundColor: '#ffffff',
+  },
   optionsContainer: {
     marginTop: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderWidth: 2,
+    borderColor: colors.primary,
     borderRadius: borderRadius.md,
-    backgroundColor: colors.backgroundLight,
+    backgroundColor: '#ffffff',
     maxHeight: 200,
     elevation: 5,
     shadowColor: colors.shadow,
@@ -173,9 +179,13 @@ export const pickers = StyleSheet.create({
     padding: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    backgroundColor: 'transparent',
   },
   optionSelected: {
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.primary,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+    paddingLeft: spacing.md - 4,
   },
 });
 

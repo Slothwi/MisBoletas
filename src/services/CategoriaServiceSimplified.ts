@@ -7,25 +7,29 @@ console.log('🔧 [CategoriaService] API_ENDPOINTS.categorias.list:', API_ENDPOI
 
 // Interfaces para categorías (Supabase schema)
 export interface Categoria {
-  id_categoria: string;  // Cambio: Era "CategoriaID?: number" → Ahora UUID string
-  id_usuario: string;    // Cambio: Era "UsuarioID?: number" → Ahora UUID string
-  nombre: string;        // Cambio: Era "NombreCategoria" → Ahora "nombre"
+  id_categoria: string;
+  id_usuario: string;
+  nombre: string;
   color: string;
-  fecha_creacion?: string; // Nuevo campo agregado
+  fecha_creacion?: string;
+  // ✅ ESTA ES LA LÍNEA QUE TE FALTA 👇
+  numero_productos?: number; 
 }
 
 export interface CategoriaCreate {
-  nombre: string;      // Cambio: Era "NombreCategoria" → Ahora "nombre"
+  nombre: string;
   color: string;
 }
 
 export interface CategoriaUpdate {
-  nombre?: string;     // Cambio: Era "NombreCategoria?" → Ahora "nombre?"
+  nombre?: string;
   color?: string;
 }
 
+// Esta interfaz ya no es estrictamente necesaria si usas la de arriba, 
+// pero la dejamos por compatibilidad.
 export interface CategoriaWithProducts extends Categoria {
-  total_productos: number; // Cambio: Era "TotalProductos" → Ahora "total_productos" (snake_case)
+  total_productos: number; 
 }
 
 // Colores predefinidos que coinciden con el backend
@@ -51,36 +55,24 @@ class CategoriaServiceSimplified {
     
     try {
       const endpoint = API_ENDPOINTS.categorias.list;
-      console.log('📂 [CategoriaService] Using endpoint:', endpoint);
       
       if (!endpoint) {
         throw new Error('Endpoint no definido para categorías');
       }
       
-      console.log('📂 [CategoriaService] Calling apiService.get with:', endpoint);
+      // El backend ahora enviará objetos con "numero_productos" incluido
       const categorias = await apiService.get<Categoria[]>(endpoint);
-      
-      console.log('✅ [CategoriaService] Success! Response:', categorias);
-      console.log('✅ [CategoriaService] Response type:', typeof categorias);
-      console.log('✅ [CategoriaService] Is array:', Array.isArray(categorias));
       
       if (!Array.isArray(categorias)) {
         console.warn('⚠️ [CategoriaService] Response is not array, converting...');
         return [];
       }
       
-      console.log(`✅ [CategoriaService] ${categorias.length} categories fetched successfully`);
       return categorias;
       
     } catch (error: any) {
-      console.error('❌ [CategoriaService] === ERROR CAUGHT ===');
-      console.error('❌ [CategoriaService] Error object:', error);
-      console.error('❌ [CategoriaService] Error constructor:', error.constructor.name);
-      console.error('❌ [CategoriaService] Error stack:', error.stack);
-      
-      // Re-throw con mensaje más claro
+      console.error('❌ [CategoriaService] Error loading categories:', error);
       const message = error.message || 'Error desconocido al cargar categorías';
-      console.error('❌ [CategoriaService] Throwing error with message:', message);
       throw new Error(message);
     }
   }
@@ -88,9 +80,7 @@ class CategoriaServiceSimplified {
   // Obtener categoría por ID
   async getById(id: string): Promise<Categoria> {
     try {
-      console.log('📂 Fetching category by ID:', id);
       const categoria = await apiService.get<Categoria>(`${API_ENDPOINTS.categorias.list}${id}`);
-      console.log('✅ Category fetched successfully');
       return categoria;
     } catch (error) {
       console.error('❌ Failed to fetch category:', error);
@@ -101,19 +91,14 @@ class CategoriaServiceSimplified {
   // Crear nueva categoría
   async create(categoriaData: CategoriaCreate): Promise<Categoria> {
     try {
-      console.log('📝 Creating new category:', categoriaData.nombre);
-      console.log('🔗 POST endpoint:', API_ENDPOINTS.categorias.create);
-      
       const categoria = await apiService.post<Categoria>(
         API_ENDPOINTS.categorias.create,
         categoriaData
       );
-      console.log('✅ Category created successfully');
       return categoria;
     } catch (error: any) {
       console.error('❌ Failed to create category:', error);
       
-      // Manejo de errores específico  
       let message = 'Error creando categoría';
       if (error.type === 'NETWORK_ERROR') {
         message = 'No se puede conectar al servidor. Verifica tu conexión.';
@@ -132,14 +117,12 @@ class CategoriaServiceSimplified {
   }
 
   // Actualizar categoría
-  async update(id: string, categoriaData: CategoriaUpdate): Promise<Categoria> { // Cambio: Era "id: number" → Ahora "id: string" (UUID)
+  async update(id: string, categoriaData: CategoriaUpdate): Promise<Categoria> {
     try {
-      console.log('📝 Updating category:', id);
       const categoria = await apiService.put<Categoria>(
         `${API_ENDPOINTS.categorias.update}${id}`,
         categoriaData
       );
-      console.log('✅ Category updated successfully');
       return categoria;
     } catch (error) {
       console.error('❌ Failed to update category:', error);
@@ -148,11 +131,9 @@ class CategoriaServiceSimplified {
   }
 
   // Eliminar categoría
-  async delete(id: string): Promise<void> { // Cambio: Era "id: number" → Ahora "id: string" (UUID)
+  async delete(id: string): Promise<void> {
     try {
-      console.log('🗑️ Deleting category:', id);
       await apiService.delete(`${API_ENDPOINTS.categorias.delete}${id}`);
-      console.log('✅ Category deleted successfully');
     } catch (error) {
       console.error('❌ Failed to delete category:', error);
       throw error;
@@ -181,7 +162,7 @@ class CategoriaServiceSimplified {
     };
   }
 
-  // Obtener color aleatorio de los predefinidos
+  // Obtener color aleatorio
   getRandomColor(): string {
     const colors = Object.values(PREDEFINED_COLORS);
     return colors[Math.floor(Math.random() * colors.length)];
@@ -196,7 +177,6 @@ class CategoriaServiceSimplified {
   }
 }
 
-// Singleton instance
 const categoriaServiceSimplified = new CategoriaServiceSimplified();
 
 export default categoriaServiceSimplified;

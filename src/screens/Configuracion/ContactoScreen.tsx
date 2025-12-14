@@ -16,17 +16,23 @@ export default function ContactoScreen() {
 
   return (
     <ThemedView style={[containers.page, { backgroundColor: isDark ? colors.backgroundDark : colors.background }]}>
-        <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginLeft: -8 }}>
+        
+        {/* ✅ HEADER CORREGIDO */}
+        <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginLeft: -8, width: 40 }}>
             <Ionicons name="arrow-back" size={26} color={colors.primary} />
           </TouchableOpacity>
-          <ThemedText style={[text.detailTitle, { marginTop: 0, marginBottom: 0, flex: 1, marginHorizontal: 0 }]}>
-          Contacto
-        </ThemedText>
-      </View>
+          
+          <ThemedText style={[text.detailTitle, { marginTop: 0, marginBottom: 0, flex: 1, marginHorizontal: 0, textAlign: 'center' }]}>
+            Contacto
+          </ThemedText>
+
+          {/* Elemento fantasma para centrar */}
+          <View style={{ width: 40 }} />
+        </View>
       
       <ScrollView style={{ width: '100%' }} contentContainerStyle={{ paddingBottom: 40 }}>
-        
+        {/* ... (resto del código igual) ... */}
         <View style={[cards.base, { backgroundColor: cardBg }]}>
           <ThemedText style={text.label}>Nombre</ThemedText>
           <ThemedTextInput

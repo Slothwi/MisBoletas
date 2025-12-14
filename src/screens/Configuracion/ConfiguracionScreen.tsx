@@ -32,10 +32,10 @@ const ConfiguracionScreen = () => {
             [
                 {
                     text: "Cancelar",
-                    style: "cancel"
+                    style: "cancel", 
                 },
                 {
-                    text: "Cerrar Sesión",
+                    text: "Cerrar Sesión", 
                     style: "destructive",
                     onPress: cerrarSesion
                 }
@@ -101,12 +101,12 @@ const ConfiguracionScreen = () => {
                     <MenuOption title="Historial y Papelera" route="/configuracion_tab/historial" />
 
                     <TouchableOpacity 
-                        style={[buttons.primary, containers.row, { marginTop: 10, justifyContent: 'center' }]}
+                        style={[buttons.primary, containers.row, { marginTop: 10, justifyContent: 'center'}]}
                         onPress={handleCerrarSesion}
                         testID='boton-cerrar-sesion'
                     >
                         <Ionicons name="log-out-outline" size={24} color="#FFF" />
-                        <ThemedText style={text.buttonText}>Cerrar Sesión</ThemedText>
+                        <ThemedText style={{ color: colors.textWithed, marginLeft: -10}}>Cerrar Sesión</ThemedText>
                     </TouchableOpacity>
                 </View>
 

@@ -18,12 +18,13 @@ export const colors = {
   
   // Tarjetas / Superficies
   cardLight: '#f5f7fa',
-  cardDark: '#1e293b',      // Azul grisáceo oscuro (Para que las tarjetas resalten en modo oscuro)
+  cardDark: '#f5f7fa',      // Azul grisáceo oscuro (Para que las tarjetas resalten en modo oscuro)
 
   // Textos
   textDark: '#222222',      // Texto principal en modo claro
-  textLight: '#f0f4f8',     // Texto principal en modo oscuro
+  textLight: '#222222',     // Texto principal en modo oscuro
   textMuted: '#666666',     // Texto secundario (gris)
+  textWithed: '#ffffff',   // Texto en fondos oscuros
   
   // Bordes y otros
   border: '#ddd',

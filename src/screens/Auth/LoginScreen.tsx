@@ -1,6 +1,6 @@
 import { ThemedText } from "@/src/components";
 import { useAuth } from "@/src/hooks/useAuth";
-// 👇 CORRECCIÓN: Importamos estilos del tema
+import { useThemeColor } from '@/src/hooks/useThemeColor'; // ✅ IMPORTACIÓN AGREGADA
 import { buttons, colors, containers, inputs, misc, text } from '@/src/theme';
 import { validateEmail } from '@/src/utils/validators';
 import secureStorageService from '@/src/services/secureStorageService';
@@ -21,7 +21,6 @@ import {
 
 const TAG = 'LoginScreen';
 
-// ✅ ARREGLADO: Base de datos de prueba local (fuera del componente para evitar memory leak)
 const localUsersDB = [
   { id: "3", nombre: "test", contrasena: "test123", email: "test@ejemplo.com" }
 ];
@@ -33,6 +32,9 @@ export default function LoginScreen() {
   const [usarBackend, setUsarBackend] = useState(true);
   
   const { login, authState, clearError } = useAuth();
+  
+  // ✅ OBTENER COLOR DE FONDO DINÁMICO
+  const backgroundColor = useThemeColor({}, 'background');
 
   const autenticarLocal = (correo: string, contrasena: string) => {
     const usuario = localUsersDB.find(
@@ -116,7 +118,6 @@ export default function LoginScreen() {
       const resultado = autenticarLocal(correo, contrasena);
       if (resultado.success && resultado.token && resultado.user) {
         try {
-          // Usar secureStorageService en lugar de AsyncStorage directo
           await secureStorageService.storeToken(resultado.token);
           await secureStorageService.storeUser({
             id_usuario: resultado.user.id,
@@ -148,7 +149,8 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView 
-      style={{ flex: 1, backgroundColor: colors.background }} 
+      // ✅ USO DE VARIABLE DE FONDO DINÁMICA
+      style={{ flex: 1, backgroundColor: backgroundColor }} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView 

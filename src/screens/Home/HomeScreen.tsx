@@ -6,7 +6,7 @@ import productoService, { Producto } from '@/src/services/ProductServiceSimplifi
 import { buttons, cards, colors, containers, misc, spacing, text } from '@/src/theme';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import { Href, useRouter } from 'expo-router';
+import { Href, useRouter, useFocusEffect } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, FlatList, Linking, RefreshControl, ScrollView, TouchableOpacity, View } from 'react-native';
 import Toast from 'react-native-toast-message';
@@ -67,6 +67,17 @@ const HomeScreen = () => {
     if (authState.isAuthenticated && !authState.isLoading) cargarProductos();
     else if (!authState.isLoading && !authState.isAuthenticated) { setProductos([]); setCargando(false); }
   }, [authState.isAuthenticated, authState.isLoading]); // ✅ ARREGLADO: Removida cargarProductos de deps
+
+  // Recargar productos cuando vuelves de otra pantalla (después de restaurar del historial o editar)
+  useFocusEffect(
+    useCallback(() => {
+      if (authState.isAuthenticated) {
+        cargarProductos();
+        // Limpiar producto seleccionado para forzar recargar datos
+        setProductoSeleccionado(null);
+      }
+    }, [authState.isAuthenticated, cargarProductos])
+  );
 
   useEffect(() => {
     if (productoSeleccionado?.id_producto) cargarDocumentos(productoSeleccionado.id_producto);
@@ -215,8 +226,8 @@ const HomeScreen = () => {
                     </View>
                   )}
                 />
-             )}
-             <TouchableOpacity style={[buttons.primary, { marginTop: 15 }]} onPress={handleSubirDocumento}><ThemedText style={text.buttonText}>Subir Documento</ThemedText></TouchableOpacity>
+              )}
+              <TouchableOpacity style={[buttons.primary, { marginTop: 15 }]} onPress={handleSubirDocumento}><ThemedText style={text.buttonText}>Subir Documento</ThemedText></TouchableOpacity>
           </View>
 
           <View style={{ flexDirection: 'row', gap: 10 }}>

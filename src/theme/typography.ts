@@ -44,10 +44,12 @@ export const text = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    fontWeight: '600',
-    color: colors.textDark,
-    marginTop: spacing.sm,
+    fontWeight: '700',
+    color: colors.primary,
+    marginTop: spacing.md,
     marginBottom: spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   detailTitle: {
     fontSize: 22,

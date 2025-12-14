@@ -3,347 +3,293 @@ import { useAuth } from "@/src/hooks/useAuth";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
 import categoriaService, { Categoria } from "@/src/services/CategoriaServiceSimplified";
 import productoService, { Producto } from "@/src/services/ProductServiceSimplified";
-// Importamos todos los estilos necesarios del tema
 import { buttons, cards, colors, containers, inputs, misc, text } from '@/src/theme';
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { Alert, Linking, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Linking, Modal, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
 
-// 👇 DEFINICIÓN DEL COMPONENTE
 const CategoriasScreen = () => {
   const router = useRouter();
   const { authState } = useAuth();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+
+  // ✅ 1. ESTILOS DINÁMICOS (IGUAL QUE EN HOME)
+  const bgColor = isDark ? colors.backgroundDark : colors.background;
+  const cardBg = isDark ? colors.cardDark : '#ffffff';
+  const textColor = isDark ? colors.textLight : colors.textDark;
+  const subTextColor = isDark ? '#aaaaaa' : '#666666';
+  const borderColor = isDark ? '#333' : '#ddd';
+  const iconColor = isDark ? '#fff' : colors.primary;
+
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [todosProductos, setTodosProductos] = useState<Producto[]>([]);
-
-  // Estados
+  
+  // Estados para manejo de datos
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<Categoria | null>(null);
   const [productosDeCategoria, setProductosDeCategoria] = useState<Producto[]>([]);
+  
+  // Estados para Crear Categoría
   const [mostrandoFormulario, setMostrandoFormulario] = useState(false);
   const [nuevoNombreCategoria, setNuevoNombreCategoria] = useState("");
-  const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
 
-  // Estados de edición
-  const [categoriasEdicion, setCategoriaEdicion] = useState<Categoria | null>(null);
+  // Estados para Editar Categoría
+  const [categoriaAEditar, setCategoriaAEditar] = useState<Categoria | null>(null);
   const [nombreEdicion, setNombreEdicion] = useState("");
-  const [colorEdicion, setColorEdicion] = useState("");
   const [mostrandoEdicion, setMostrandoEdicion] = useState(false);
 
-  const handleAbrirTutorial = () => {
-    Linking.openURL('https://www.youtube.com/@misBoletas-App');
-  }
-
-  const handleAgregarProducto = () => {
-    router.push('/formulario');
-  };
-
+  // --- CARGA DE DATOS ---
   const cargarCategorias = useCallback(async () => {
-    if (!authState.isAuthenticated) {
-      setCargando(false);
-      return;
-    }
+    if (!authState.isAuthenticated) return;
     try {
-      const categoriasDelServidor = await categoriaService.getAll();
-      const productosDelServidor = await productoService.getAll();
-      setCategorias(categoriasDelServidor);
-      setTodosProductos(productosDelServidor);
+      const datos = await categoriaService.getAll();
+      setCategorias(datos);
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'No se pudieron cargar las categorías.');
+      console.error(error);
     } finally {
       setCargando(false);
     }
   }, [authState.isAuthenticated]);
 
-  useEffect(() => {
-    if (authState.isAuthenticated && !authState.isLoading) {
-      cargarCategorias();
-    } else if (!authState.isLoading && !authState.isAuthenticated) {
-      setCategorias([]);
-      setCargando(false);
-    }
-  }, [authState.isAuthenticated, authState.isLoading, cargarCategorias]);
-
-  // ✅ ARREGLADO: Recargar datos cuando la pantalla se enfoca (vuelve del formulario)
   useFocusEffect(
     useCallback(() => {
       cargarCategorias();
     }, [cargarCategorias])
   );
 
-  const obtenerProductosPorCategoria = async (categoriaId: string) => {
-    try {
-      const productosFiltrados = await productoService.getByCategory(categoriaId);
-      setProductosDeCategoria(productosFiltrados);
-    } catch (error: any) {
-      Alert.alert('Error', 'No se pudieron cargar los productos de la categoría');
-    }
-  };
-
-  const handleVerCategoria = (categoria: Categoria) => {
+  // --- LÓGICA DE PRODUCTOS ---
+  const handleVerCategoria = async (categoria: Categoria) => {
     setCategoriaSeleccionada(categoria);
-    if (categoria.id_categoria) {
-      obtenerProductosPorCategoria(categoria.id_categoria);
+    try {
+        const prods = await productoService.getByCategory(categoria.id_categoria);
+        setProductosDeCategoria(prods);
+    } catch {
+        setProductosDeCategoria([]);
     }
-  };
-
-  const handleVolverACategorias = () => {
-    setCategoriaSeleccionada(null);
-    setProductosDeCategoria([]);
-  };
-  
-  const handleVolverALista = () => {
-    setProductoSeleccionado(null);
   };
 
   const handleVerProducto = (producto: Producto) => {
-    setProductoSeleccionado(producto);
+    router.push({ 
+        pathname: '/formulario', 
+        params: { producto: JSON.stringify(producto), modoEdicion: 'true' } 
+    } as any);
   };
 
-  const handleEliminarProducto = async (producto: Producto) => {
-    Alert.alert('Eliminar Producto', `¿Eliminar "${producto.nombre}"?`, [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar', style: 'destructive',
-          onPress: async () => {
-            try {
-              await productoService.delete(producto.id_producto);
-              setProductosDeCategoria(p => p.filter(item => item.id_producto !== producto.id_producto));
-              Alert.alert('Éxito', 'Producto eliminado');
-            } catch (e) { Alert.alert('Error', 'No se pudo eliminar'); }
-          }
-        }
-      ]);
-  };
-
-  const handleEliminarCategoria = async (categoria: Categoria) => {
-    Alert.alert('Eliminar Categoría', `¿Eliminar "${categoria.nombre}"?`, [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar', style: 'destructive',
-          onPress: async () => {
-            try {
-              await categoriaService.delete(categoria.id_categoria);
-              setCategorias(c => c.filter(item => item.id_categoria !== categoria.id_categoria));
-              Alert.alert('Éxito', 'Categoría eliminada');
-            } catch (e) { Alert.alert('Error', 'No se pudo eliminar'); }
-          }
-        }
-      ]);
-  };
-
-  const handleAbrirEdicion = (categoria: Categoria) => {
-    setCategoriaEdicion(categoria);
-    setNombreEdicion(categoria.nombre);
-    setColorEdicion(categoria.color);
-    setMostrandoEdicion(true);
-  };
-
-  const handleGuardarEdicion = async () => {
-    if (!categoriasEdicion || !nombreEdicion.trim()) return;
-    try {
-      await categoriaService.update(categoriasEdicion.id_categoria, {
-        nombre: nombreEdicion.trim(),
-        color: colorEdicion,
-      });
-      setCategorias(c => c.map(cat => cat.id_categoria === categoriasEdicion.id_categoria ? { ...cat, nombre: nombreEdicion.trim(), color: colorEdicion } : cat));
-      setMostrandoEdicion(false);
-      Alert.alert('Éxito', 'Categoría actualizada');
-    } catch (e) { Alert.alert('Error', 'No se pudo actualizar'); }
-  };
-
-  const generarColorAleatorio = () => {
-    const colores = ['#e77573', '#ff9f5f', '#ffcc66', '#66dd77', '#55d9d9', '#a8cbf0', '#a8a8f0', '#d8a8f0'];
-    setColorEdicion(colores[Math.floor(Math.random() * colores.length)]);
-  };
-
+  // --- LÓGICA ABM CATEGORÍAS ---
   const handleGuardarCategoria = async () => {
     if (!nuevoNombreCategoria.trim()) return;
     try {
-      const nueva = await categoriaService.create({
+      await categoriaService.create({
         nombre: nuevoNombreCategoria.trim(),
         color: categoriaService.getRandomColor()
       });
-      setCategorias([...categorias, nueva]);
-      setMostrandoFormulario(false);
       setNuevoNombreCategoria("");
+      setMostrandoFormulario(false);
+      cargarCategorias();
       Alert.alert("Éxito", "Categoría creada");
     } catch (e) { Alert.alert("Error", "No se pudo crear"); }
   };
 
+  const handleEliminarCategoria = (cat: Categoria) => {
+    Alert.alert('Eliminar', `¿Borrar "${cat.nombre}"?`, [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Eliminar', style: 'destructive', onPress: async () => {
+            try {
+                await categoriaService.delete(cat.id_categoria);
+                setCategorias(prev => prev.filter(c => c.id_categoria !== cat.id_categoria));
+            } catch { Alert.alert('Error', 'No se pudo eliminar'); }
+        }}
+    ]);
+  };
+
+  const handleIniciarEdicion = (cat: Categoria) => {
+    setCategoriaAEditar(cat);
+    setNombreEdicion(cat.nombre);
+    setMostrandoEdicion(true);
+  };
+
+  const handleGuardarEdicion = async () => {
+    if (!categoriaAEditar || !nombreEdicion.trim()) return;
+    try {
+        await categoriaService.update(categoriaAEditar.id_categoria, {
+            nombre: nombreEdicion.trim(),
+            color: categoriaAEditar.color
+        });
+        setMostrandoEdicion(false);
+        setCategoriaAEditar(null);
+        cargarCategorias();
+        Alert.alert('Actualizado', 'Categoría editada correctamente');
+    } catch {
+        Alert.alert('Error', 'No se pudo actualizar');
+    }
+  };
+
   // --- RENDERIZADO ---
-  if (authState.isLoading) {
-    return <View style={containers.centered}><ThemedText style={text.label}>Cargando...</ThemedText></View>;
-  }
 
-  // DETALLE PRODUCTO
-  if (productoSeleccionado) {
-    const handleEditarProducto = (producto: Producto) => {
-      if (!producto.id_producto) return;
-      router.push({ pathname: '/formulario', params: { producto: JSON.stringify(producto), modoEdicion: 'true' } } as any);
-    };
+  if (cargando) return <View style={containers.centered}><ThemedText style={{color: textColor}}>Cargando...</ThemedText></View>;
 
-    return (
-      <View style={[containers.page, { backgroundColor: isDark ? colors.backgroundDark : colors.background }]}>
-        {/* Header con botón atrás */}
-        <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => setProductoSeleccionado(null)} style={{ padding: 8, marginLeft: -8 }}>
-            <Ionicons name="arrow-back" size={26} color={colors.primary} />
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
-          {/* Tarjeta principal con producto */}
-          <View style={[cards.base, { backgroundColor: isDark ? colors.cardDark : '#fff', position: 'relative', marginBottom: 24 }]}>
-            {/* Botón editar superpuesto */}
-            <TouchableOpacity 
-              onPress={() => handleEditarProducto(productoSeleccionado)}
-              style={{ 
-                position: 'absolute', 
-                top: 12, 
-                right: 12, 
-                backgroundColor: colors.primary, 
-                width: 44, 
-                height: 44, 
-                borderRadius: 22,
-                justifyContent: 'center',
-                alignItems: 'center',
-                elevation: 4,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.2,
-                shadowRadius: 4,
-              }}
-            >
-              <MaterialCommunityIcons name="pencil" size={22} color="#fff" />
-            </TouchableOpacity>
-
-            {/* Contenido */}
-            <View style={{ alignItems: 'center', paddingRight: 50 }}>
-              <MaterialCommunityIcons name="package-variant" size={56} color={colors.primary} style={{ marginBottom: 12 }} />
-              <ThemedText style={[text.detailTitle, { marginTop: 0, marginBottom: 8, textAlign: 'center' }]}>
-                {productoSeleccionado.nombre}
-              </ThemedText>
-              {productoSeleccionado.marca && (
-                <ThemedText style={[text.cardSubtitle, { textAlign: 'center', fontSize: 14 }]}>
-                  {productoSeleccionado.marca}
-                </ThemedText>
-              )}
-              {productoSeleccionado.notas && (
-                <ThemedText style={[text.cardText, { marginTop: 12, textAlign: 'center', fontSize: 13, color: colors.textMuted }]}>
-                  {productoSeleccionado.notas}
-                </ThemedText>
-              )}
-              {productoSeleccionado.fecha_compra && (
-                <ThemedText style={[text.cardSubtitle, { marginTop: 12, fontSize: 12 }]}>
-                  Comprado: {new Date(productoSeleccionado.fecha_compra).toLocaleDateString()}
-                </ThemedText>
-              )}
-            </View>
-          </View>
-
-          {/* Botón eliminar */}
-          <TouchableOpacity 
-            style={[buttons.danger, { marginBottom: 20 }]} 
-            onPress={() => handleEliminarProducto(productoSeleccionado)}
-          >
-            <Ionicons name="trash" size={18} color="#fff" style={{ marginRight: 8 }} />
-            <ThemedText style={[text.buttonText]}>Eliminar Producto</ThemedText>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
-    );
-  }
-
-  // LISTA PRODUCTOS
+  // VISTA: LISTA DE PRODUCTOS DE UNA CATEGORÍA (ESTILO HOME)
   if (categoriaSeleccionada) {
     return (
-      <View style={[containers.page, { backgroundColor: isDark ? colors.backgroundDark : colors.background }]}>
-        <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity onPress={handleVolverACategorias} style={{ padding: 8, marginLeft: -8 }}>
-            <Ionicons name="arrow-back" size={26} color={colors.primary} />
-          </TouchableOpacity>
-          <ThemedText style={[text.detailTitle, { marginTop: 0, marginBottom: 0, flex: 1, marginHorizontal: 0 }]}>
-            {categoriaSeleccionada.nombre}
-          </ThemedText>
+        <View style={[containers.page, { backgroundColor: bgColor }]}>
+            <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center' }}>
+                <TouchableOpacity onPress={() => setCategoriaSeleccionada(null)} style={{ padding: 8, marginLeft: -8 }}>
+                    <Ionicons name="arrow-back" size={26} color={colors.primary} />
+                </TouchableOpacity>
+                <ThemedText style={[text.detailTitle, { marginTop: 0, marginBottom: 0, flex: 1, marginHorizontal: 0, color: textColor }]}>
+                    {categoriaSeleccionada.nombre}
+                </ThemedText>
+            </View>
+            
+            <ScrollView style={{ flex: 1, width: '100%', paddingHorizontal: 16 }}>
+                {productosDeCategoria.length === 0 ? (
+                    <View style={{ alignItems: 'center', marginTop: 40 }}>
+                        <MaterialCommunityIcons name="package-variant" size={48} color={subTextColor} />
+                        <ThemedText style={{ textAlign: 'center', color: subTextColor, marginTop: 10 }}>Sin productos en esta categoría</ThemedText>
+                    </View>
+                ) : (
+                    productosDeCategoria.map(prod => (
+                        <TouchableOpacity
+                            key={prod.id_producto} 
+                            style={[cards.interactive, { 
+                                backgroundColor: cardBg, 
+                                borderColor: borderColor, 
+                                borderWidth: 1, 
+                                flexDirection: 'row', 
+                                alignItems: 'center', 
+                                justifyContent: 'space-between',
+                                marginBottom: 12
+                            }]}
+                            onPress={() => handleVerProducto(prod)}
+                        >
+                            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                                <MaterialCommunityIcons name="package-variant" size={24} color={colors.primary} />
+                                <View style={{ marginLeft: 12, flex: 1 }}>
+                                    <ThemedText style={[text.cardText, { color: textColor }]} numberOfLines={1}>{prod.nombre}</ThemedText>
+                                    {prod.marca && <ThemedText style={{ fontSize: 12, color: subTextColor }}>{prod.marca}</ThemedText>}
+                                </View>
+                            </View>
+                            <Ionicons name="chevron-forward" size={24} color={iconColor} />
+                        </TouchableOpacity>
+                    ))
+                )}
+            </ScrollView>
         </View>
-        <ThemedText style={[text.cardTitle, { marginHorizontal: 16, marginBottom: 12, color: colors.primary, fontSize: 18, fontWeight: '600' }]}>Tus Productos</ThemedText>
-        <ScrollView style={{ width: '100%', flex: 1, paddingHorizontal: 16 }}>
-          {productosDeCategoria.map(prod => (
-            <TouchableOpacity key={prod.id_producto} style={[cards.interactive, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1, marginBottom: 12 }]} onPress={() => handleVerProducto(prod)}>
-              <ThemedText style={[text.cardText, { color: colors.textDark }]}>{prod.nombre}</ThemedText>
-              <Ionicons name="chevron-forward" size={24} color={colors.primary} />
-            </TouchableOpacity>
-          ))}
-          {productosDeCategoria.length === 0 && <ThemedText style={[text.cardSubtitle, { textAlign: 'center' }]}>Sin productos</ThemedText>}
-        </ScrollView>
-      </View>
     );
   }
 
-  // LISTA CATEGORÍAS (PRINCIPAL)
+  // VISTA PRINCIPAL: LISTA DE CATEGORÍAS
   return (
-    <View style={[containers.page, { backgroundColor: isDark ? colors.backgroundDark : colors.background }]}>
-      <ThemedText style={text.detailTitle}>Tus Categorías</ThemedText>
+    <View style={[containers.page, { backgroundColor: bgColor }]}>
+      <ThemedText style={[text.detailTitle]}>Tus Categorías</ThemedText>
       
-      <ScrollView style={{ flex: 1, width: "100%", paddingHorizontal: 16, marginTop: 8 }}>
-        {categorias.map((cat) => {
-          const numProductos = todosProductos.filter(p => 
-            p.categorias?.some(c => c.id_categoria === cat.id_categoria)
-          ).length || 0;
-          return (
-          <View key={cat.id_categoria} style={{ marginBottom: 16 }}>
-            <TouchableOpacity style={[cards.interactive, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1 }]} onPress={() => handleVerCategoria(cat)}>
-              <View style={containers.row}>
-                <View style={[misc.colorIndicator, { backgroundColor: cat.color }]} />
-                <View style={{ flex: 1 }}>
-                  <ThemedText style={[text.cardText, { color: colors.textDark }]}>{cat.nombre}</ThemedText>
-                  <ThemedText style={{ fontSize: 12, color: colors.textMuted, marginTop: 2 }}>{numProductos} {numProductos === 1 ? 'producto' : 'productos'}</ThemedText>
+      <ScrollView style={{ flex: 1, width: "100%", paddingHorizontal: 16 }}>
+        {categorias.map((cat) => (
+          <View 
+            key={cat.id_categoria} 
+            style={[cards.interactive, { 
+                backgroundColor: cardBg, 
+                borderColor: borderColor,
+                borderWidth: 1,
+                paddingVertical: 12,
+                paddingHorizontal: 12,
+                marginBottom: 12,
+                flexDirection: 'row', 
+                alignItems: 'center', 
+                justifyContent: 'space-between'
+            }]}
+          >
+            {/* IZQUIERDA: Info Categoría */}
+            <TouchableOpacity 
+                style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }} 
+                onPress={() => handleVerCategoria(cat)}
+            >
+                <View style={[misc.colorIndicator, { backgroundColor: cat.color, width: 14, height: 14, borderRadius: 7, marginRight: 12 }]} />
+                <View>
+                    <ThemedText style={{ fontSize: 16, fontWeight: '600', color: textColor }}>{cat.nombre}</ThemedText>
+                    <ThemedText style={{ fontSize: 12, color: subTextColor }}>
+                        {cat.numero_productos || 0} {(cat.numero_productos === 1) ? 'producto' : 'productos'}
+                    </ThemedText>
                 </View>
-              </View>
             </TouchableOpacity>
             
-            <View style={[containers.row, { justifyContent: 'flex-end', marginTop: 4 }]}>
-              <TouchableOpacity onPress={() => handleAbrirEdicion(cat)} style={{ marginRight: 16 }}>
-                <ThemedText style={{ color: colors.secondary, fontSize: 14 }}>Editar</ThemedText>
+            {/* DERECHA: Botones de Acción (Estilizados) */}
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <TouchableOpacity 
+                  onPress={() => handleIniciarEdicion(cat)} 
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={{ padding: 6, backgroundColor: isDark ? '#333' : '#f0f0f0', borderRadius: 20 }}
+              >
+                <Ionicons name="pencil" size={18} color={colors.secondary} />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleEliminarCategoria(cat)}>
-                <ThemedText style={{ color: colors.alert, fontSize: 14 }}>Eliminar</ThemedText>
+
+              <TouchableOpacity 
+                  onPress={() => handleEliminarCategoria(cat)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={{ padding: 6, backgroundColor: isDark ? '#333' : '#f0f0f0', borderRadius: 20 }}
+              >
+                <Ionicons name="trash" size={18} color={colors.alert} />
               </TouchableOpacity>
             </View>
           </View>
-        );
-        })}
+        ))}
 
+        {/* Formulario Nueva Categoría */}
         {mostrandoFormulario ? (
-            <View style={cards.base}>
+            <View style={[cards.base, { backgroundColor: cardBg, marginTop: 10, borderColor: colors.primary, borderWidth: 1 }]}>
+                <ThemedText style={{ marginBottom: 8, fontWeight: 'bold', color: textColor }}>Nueva Categoría</ThemedText>
                 <TextInput 
-                    style={inputs.base} 
-                    placeholder="Nueva categoría" 
+                    style={[inputs.base, { backgroundColor: isDark ? '#222' : '#f9f9f9', color: textColor, borderColor: isDark ? '#444' : '#ddd' }]} 
+                    placeholder="Nombre..." 
+                    placeholderTextColor={subTextColor}
                     value={nuevoNombreCategoria} 
                     onChangeText={setNuevoNombreCategoria}
                 />
-                <View style={[containers.row, { marginTop: 10 }]}>
+                <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
                     <TouchableOpacity style={[buttons.secondary, { flex: 1 }]} onPress={() => setMostrandoFormulario(false)}>
-                        <ThemedText style={[text.buttonTextColorless, { color: colors.primary }]}>Cancelar</ThemedText>
+                        <ThemedText style={{ color: colors.textMuted, textAlign: 'center' }}>Cancelar</ThemedText>
                     </TouchableOpacity>
                     <TouchableOpacity style={[buttons.primary, { flex: 1 }]} onPress={handleGuardarCategoria}>
-                        <ThemedText style={text.buttonText}>Guardar</ThemedText>
+                        <ThemedText style={text.buttonText}>Crear</ThemedText>
                     </TouchableOpacity>
                 </View>
             </View>
         ) : (
-            <TouchableOpacity style={[buttons.secondary, { marginTop: 20 }]} onPress={() => setMostrandoFormulario(true)}>
-                <ThemedText style={[text.buttonTextColorless, { color: colors.primary }]}>+ Nueva Categoría</ThemedText>
+            <TouchableOpacity style={[buttons.secondary, { marginTop: 20, marginBottom: 40 }]} onPress={() => setMostrandoFormulario(true)}>
+                <ThemedText style={{ color: colors.primary, fontWeight: 'bold', textAlign: 'center' }}>+ Nueva Categoría</ThemedText>
             </TouchableOpacity>
         )}
       </ScrollView>
+
+      {/* Modal Edición */}
+      <Modal visible={mostrandoEdicion} transparent animationType="slide">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
+            <View style={{ backgroundColor: cardBg, padding: 20, borderRadius: 12, borderWidth: 1, borderColor: borderColor }}>
+                <ThemedText style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: textColor }}>Editar Categoría</ThemedText>
+                
+                <TextInput 
+                    style={[inputs.base, { backgroundColor: isDark ? '#222' : '#f9f9f9', color: textColor, marginBottom: 20, borderColor: borderColor }]} 
+                    value={nombreEdicion}
+                    onChangeText={setNombreEdicion}
+                    placeholder="Nombre de categoría"
+                    placeholderTextColor={subTextColor}
+                />
+
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <TouchableOpacity style={[buttons.secondary, { flex: 1 }]} onPress={() => setMostrandoEdicion(false)}>
+                        <ThemedText style={{ textAlign: 'center', color: subTextColor }}>Cancelar</ThemedText>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[buttons.primary, { flex: 1 }]} onPress={handleGuardarEdicion}>
+                        <ThemedText style={text.buttonText}>Guardar</ThemedText>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </View>
+      </Modal>
+
     </View>
   );
 };
 
-// 👇 ¡ESTA LÍNEA ES LA MÁS IMPORTANTE!
 export default CategoriasScreen;
