@@ -1,39 +1,31 @@
+// src/types/auth.tsx
+
 // Interfaces que coinciden con el schema Supabase (tabla perfiles)
 export interface User {
-  id_usuario: string;      // UUID de Supabase
-  email: string;           // Email único
-  nombre_completo?: string; // Nombre del usuario
-  fecha_registro?: string;  // Timestamp de registro
+  id_usuario: string;
+  email: string;
+  nombre_completo?: string;
+  avatar_url?: string;      // ✅ (Ya corregido antes)
+  fecha_registro?: string;
 }
 
 export interface LoginCredentials {
-  correo: string;      // Backend espera 'correo'
-  contrasena: string;  // Backend espera 'contrasena'
+  correo: string;
+  contrasena: string;
+  rememberMe?: boolean; // ✅ AGREGADO: Esto soluciona el error "Object literal..."
 }
 
 export interface RegisterData {
   nombre: string;
-  correo: string;     // Backend espera 'correo'
-  contrasena: string; // Backend espera 'contrasena'
+  correo: string;
+  contrasena: string;
 }
 
 export interface AuthResponse {
   access_token: string;
+  refresh_token?: string; // ✅ (Ya corregido antes)
   token_type: string;
   user: User;
-}
-
-export interface LoginResponse {
-  access_token: string;
-  token_type: string;
-  user: User;
-}
-
-export interface RegisterResponse {
-  message: string;
-  user: User;
-  access_token?: string;
-  token_type?: string;
 }
 
 export interface ApiError {
@@ -43,17 +35,17 @@ export interface ApiError {
   type?: string;
 }
 
-// Tipos para formularios
 export interface LoginFormData {
-  correo: string;      // Cambiar 'email' por 'correo'
-  contrasena: string;  // Cambiar 'password' por 'contrasena'
+  correo: string;
+  contrasena: string;
   rememberMe?: boolean;
 }
 
+
 export interface RegisterFormData {
   nombre: string;
-  correo: string;         // Cambiar 'email' por 'correo'
-  contrasena: string;     // Cambiar 'password' por 'contrasena'
+  correo: string;
+  contrasena: string;
   confirmPassword: string;
   acceptTerms: boolean;
 }
@@ -66,10 +58,9 @@ export interface AuthState {
   error: string | null;
 }
 
-// Tipos para contexto de autenticación
 export interface AuthContextType {
   authState: AuthState;
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials & { rememberMe?: boolean }) => Promise<void>; // ✅ Actualizado
   register: (userData: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (userData: Partial<User>) => Promise<void>;

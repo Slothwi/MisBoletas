@@ -13,9 +13,8 @@ import { User } from '../types/auth';
 const TAG = 'SecureStorageService';
 
 class SecureStorageService {
-  /**
-   * Guardar token de forma segura (encriptado)
-   */
+  // --- MÉTODOS EXISTENTES (Mantener) ---
+
   async storeToken(token: string): Promise<void> {
     try {
       await SecureStore.setItemAsync(STORAGE_CONFIG.authTokenKey, token);
@@ -26,94 +25,85 @@ class SecureStorageService {
     }
   }
 
-  /**
-   * Obtener token almacenado de forma segura
-   */
   async getToken(): Promise<string | null> {
     try {
-      const token = await SecureStore.getItemAsync(STORAGE_CONFIG.authTokenKey);
-      if (token) {
-        logger.log(TAG, '✅ Token recuperado desde almacenamiento seguro');
-      } else {
-        logger.log(TAG, '⚠️ No hay token almacenado');
-      }
-      return token;
+      return await SecureStore.getItemAsync(STORAGE_CONFIG.authTokenKey);
     } catch (error) {
-      logger.error(TAG, `Error recuperando token: ${error}`);
       return null;
     }
   }
 
-  /**
-   * Eliminar token
-   */
   async removeToken(): Promise<void> {
     try {
       await SecureStore.deleteItemAsync(STORAGE_CONFIG.authTokenKey);
-      logger.log(TAG, '✅ Token eliminado');
     } catch (error) {
       logger.error(TAG, `Error eliminando token: ${error}`);
     }
   }
 
-  /**
-   * Guardar datos del usuario (no sensible, en AsyncStorage)
-   */
   async storeUser(user: User): Promise<void> {
     try {
       await AsyncStorage.setItem(STORAGE_CONFIG.userDataKey, JSON.stringify(user));
-      logger.log(TAG, `✅ Usuario ${user.email} guardado`);
     } catch (error) {
-      logger.error(TAG, `Error guardando usuario: ${error}`);
       throw error;
     }
   }
 
-  /**
-   * Obtener datos del usuario almacenado
-   */
   async getUser(): Promise<User | null> {
     try {
       const userJson = await AsyncStorage.getItem(STORAGE_CONFIG.userDataKey);
-      if (userJson) {
-        const user = JSON.parse(userJson);
-        logger.log(TAG, `✅ Usuario recuperado: ${user.email}`);
-        return user;
-      }
-      logger.log(TAG, '⚠️ No hay usuario almacenado');
-      return null;
+      return userJson ? JSON.parse(userJson) : null;
     } catch (error) {
-      logger.error(TAG, `Error recuperando usuario: ${error}`);
       return null;
     }
   }
 
-  /**
-   * Limpiar todos los datos de autenticación
-   */
   async clearAuthData(): Promise<void> {
     try {
       await this.removeToken();
       await AsyncStorage.removeItem(STORAGE_CONFIG.userDataKey);
-      logger.log(TAG, '✅ Datos de autenticación limpiados');
+      // ✅ Limpiar también el refresh token al hacer logout
+      await this.deleteItem('refresh_token');
     } catch (error) {
       logger.error(TAG, `Error limpiando datos: ${error}`);
     }
   }
 
+  // --- ✅ NUEVOS MÉTODOS GENÉRICOS (Agregar esto soluciona el error) ---
+
   /**
-   * Obtener todos los datos de autenticación (token + user)
+   * Guardar un item genérico en SecureStore (ej: refresh_token)
    */
-  async getAuthData(): Promise<{ token: string | null; user: User | null }> {
+  async saveItem(key: string, value: string): Promise<void> {
     try {
-      const token = await this.getToken();
-      const user = await this.getUser();
-      return { token, user };
+      await SecureStore.setItemAsync(key, value);
     } catch (error) {
-      logger.error(TAG, `Error obteniendo datos de auth: ${error}`);
-      return { token: null, user: null };
+      logger.error(TAG, `Error guardando item ${key}: ${error}`);
+    }
+  }
+
+  /**
+   * Obtener un item genérico de SecureStore
+   */
+  async getItem(key: string): Promise<string | null> {
+    try {
+      return await SecureStore.getItemAsync(key);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Eliminar un item genérico de SecureStore
+   */
+  async deleteItem(key: string): Promise<void> {
+    try {
+      await SecureStore.deleteItemAsync(key);
+    } catch (error) {
+      logger.error(TAG, `Error eliminando item ${key}: ${error}`);
     }
   }
 }
 
 export default new SecureStorageService();
+export { SecureStorageService };
