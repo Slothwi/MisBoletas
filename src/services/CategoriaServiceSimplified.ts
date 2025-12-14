@@ -80,7 +80,7 @@ class CategoriaServiceSimplified {
   // Obtener categoría por ID
   async getById(id: string): Promise<Categoria> {
     try {
-      const categoria = await apiService.get<Categoria>(`${API_ENDPOINTS.categorias.list}${id}`);
+      const categoria = await apiService.get<Categoria>(`${API_ENDPOINTS.categorias.list}/${id}`);
       return categoria;
     } catch (error) {
       console.error('❌ Failed to fetch category:', error);
@@ -120,7 +120,7 @@ class CategoriaServiceSimplified {
   async update(id: string, categoriaData: CategoriaUpdate): Promise<Categoria> {
     try {
       const categoria = await apiService.put<Categoria>(
-        `${API_ENDPOINTS.categorias.update}${id}`,
+        `${API_ENDPOINTS.categorias.update}/${id}`,
         categoriaData
       );
       return categoria;
@@ -133,7 +133,7 @@ class CategoriaServiceSimplified {
   // Eliminar categoría
   async delete(id: string): Promise<void> {
     try {
-      await apiService.delete(`${API_ENDPOINTS.categorias.delete}${id}`);
+      await apiService.delete(`${API_ENDPOINTS.categorias.delete}/${id}`);
     } catch (error) {
       console.error('❌ Failed to delete category:', error);
       throw error;

@@ -89,20 +89,20 @@ export const API_ENDPOINTS = {
   },
   // Categorías
   categorias: {
-    list: '/categorias/',
-    create: '/categorias/',
-    update: '/categorias/',
-    delete: '/categorias/',
-    search: '/categorias/buscar/nombre/',
+    list: '/categorias',
+    create: '/categorias',
+    update: '/categorias',
+    delete: '/categorias',
+    search: '/categorias/buscar/nombre',
     colors: '/categorias/colores/predefinidos',
     stats: '/categorias/estadisticas/resumen',
   },
   // Productos
   productos: {
-    list: '/productos/',  // Cambio: Era "/products/" → Ahora "/productos/" (coincide con backend)
-    create: '/productos/',
-    update: '/productos/',
-    delete: '/productos/',
+    list: '/productos',
+    create: '/productos',
+    update: '/productos',
+    delete: '/productos',
     categorias: '/productos/:id/categorias',
     addToCategory: '/productos/:id/categorias/:categoryId',
     removeFromCategory: '/productos/:id/categorias/:categoryId',

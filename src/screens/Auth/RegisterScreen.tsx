@@ -1,7 +1,7 @@
 import { ThemedText } from '@/src/components';
 import { useAuth } from '@/src/hooks/useAuth';
-// 👇 CORRECCIÓN: Importamos estilos del tema
 import { buttons, colors, inputs, misc, text } from '@/src/theme';
+import { Ionicons } from '@expo/vector-icons'; 
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -25,6 +25,9 @@ export default function RegisterScreen() {
     contrasena: '',
     confirmPassword: '',
   });
+
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
+  const [recibirNovedades, setRecibirNovedades] = useState(false);
 
   useEffect(() => {
     if (authState.error) {
@@ -55,6 +58,11 @@ export default function RegisterScreen() {
       return;
     }
 
+    if (!aceptaTerminos) {
+        Alert.alert('⚠️ Atención', 'Debes aceptar los Términos y Condiciones para registrarte.');
+        return;
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.correo)) {
       Alert.alert('❌ Error', 'Por favor ingresa un correo válido');
@@ -72,10 +80,7 @@ export default function RegisterScreen() {
         Alert.alert(
           '✅ ¡Cuenta creada!',
           'Te hemos enviado un email de confirmación.',
-          [{ 
-            text: 'OK',
-            onPress: () => router.replace('/(auth)/login')
-          }]
+          [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
         );
       } else {
         Alert.alert('✅ ¡Registro exitoso!', 'Tu cuenta ha sido creada correctamente');
@@ -84,6 +89,28 @@ export default function RegisterScreen() {
       console.log('❌ Error en registro:', err.message);
     }
   };
+
+  // ✅ COMPONENTE CHECKBOX MEJORADO
+  // Ahora acepta 'string' O un componente 'ReactNode' para estilos personalizados
+  const Checkbox = ({ label, value, onChange, onLabelPress }: { label: string | React.ReactNode, value: boolean, onChange: () => void, onLabelPress?: () => void }) => (
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 15 }}>
+        <TouchableOpacity onPress={onChange} style={{ padding: 5 }}>
+            <Ionicons 
+                name={value ? "checkbox" : "square-outline"} 
+                size={24} 
+                color={value ? colors.primary : '#999'} 
+            />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={onLabelPress || onChange} style={{ flex: 1, marginLeft: 8 }}>
+            {typeof label === 'string' ? (
+                <ThemedText style={{ fontSize: 14, color: '#333' }}>{label}</ThemedText>
+            ) : (
+                // Si es un componente personalizado (como texto con estilos), lo renderizamos directo
+                label
+            )}
+        </TouchableOpacity>
+    </View>
+  );
 
   return (
     <KeyboardAvoidingView 
@@ -140,7 +167,7 @@ export default function RegisterScreen() {
 
             <ThemedText style={text.label}>Confirmar Contraseña *</ThemedText>
             <TextInput
-                style={inputs.base}
+                style={[inputs.base, { marginBottom: 20 }]}
                 placeholder="Repite tu contraseña"
                 placeholderTextColor="#999"
                 value={formData.confirmPassword}
@@ -149,8 +176,32 @@ export default function RegisterScreen() {
                 editable={!authState.isLoading}
             />
 
+            {/* ✅ CHECKBOX CON ESTILO DE ENLACE */}
+            <Checkbox 
+                label={
+                    <ThemedText style={{ fontSize: 14, color: '#333' }}>
+                        Acepto los{' '}
+                        <ThemedText style={{ color: colors.primary, fontWeight: 'bold', textDecorationLine: 'underline' }}>
+                            Términos y Condiciones
+                        </ThemedText>
+                    </ThemedText>
+                }
+                value={aceptaTerminos} 
+                onChange={() => setAceptaTerminos(!aceptaTerminos)}
+                onLabelPress={() => {
+                    // Usamos la ruta pública
+                    router.push('/terminos' as any);
+                }}
+            />
+            
+            <Checkbox 
+                label="Quiero recibir novedades y promociones" 
+                value={recibirNovedades} 
+                onChange={() => setRecibirNovedades(!recibirNovedades)}
+            />
+
             <TouchableOpacity 
-                style={[buttons.primary, authState.isLoading && buttons.disabled]}
+                style={[buttons.primary, (authState.isLoading || !aceptaTerminos) && buttons.disabled]}
                 onPress={handleRegister}
                 disabled={authState.isLoading}
                 >
@@ -160,7 +211,7 @@ export default function RegisterScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity 
-                style={{ marginTop: 15, padding: 10, alignItems: 'center' }}
+                style={{ marginTop: 0, padding: 10, alignItems: 'center' }}
                 onPress={() => router.push('/login')}
                 disabled={authState.isLoading}
             >

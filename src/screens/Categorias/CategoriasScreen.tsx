@@ -7,7 +7,7 @@ import { buttons, cards, colors, containers, inputs, misc, text } from '@/src/th
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { Alert, Linking, Modal, ScrollView, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Modal, ScrollView, TextInput, TouchableOpacity, View, ActivityIndicator } from "react-native";
 
 const CategoriasScreen = () => {
   const router = useRouter();
@@ -15,7 +15,7 @@ const CategoriasScreen = () => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  // ✅ 1. ESTILOS DINÁMICOS (IGUAL QUE EN HOME)
+  // ✅ ESTILOS DINÁMICOS
   const bgColor = isDark ? colors.backgroundDark : colors.background;
   const cardBg = isDark ? colors.cardDark : '#ffffff';
   const textColor = isDark ? colors.textLight : colors.textDark;
@@ -29,12 +29,11 @@ const CategoriasScreen = () => {
   // Estados para manejo de datos
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<Categoria | null>(null);
   const [productosDeCategoria, setProductosDeCategoria] = useState<Producto[]>([]);
+  const [cargandoProductos, setCargandoProductos] = useState(false);
   
-  // Estados para Crear Categoría
+  // Estados para Crear/Editar Categoría
   const [mostrandoFormulario, setMostrandoFormulario] = useState(false);
   const [nuevoNombreCategoria, setNuevoNombreCategoria] = useState("");
-
-  // Estados para Editar Categoría
   const [categoriaAEditar, setCategoriaAEditar] = useState<Categoria | null>(null);
   const [nombreEdicion, setNombreEdicion] = useState("");
   const [mostrandoEdicion, setMostrandoEdicion] = useState(false);
@@ -60,19 +59,37 @@ const CategoriasScreen = () => {
 
   // --- LÓGICA DE PRODUCTOS ---
   const handleVerCategoria = async (categoria: Categoria) => {
+    // 1. Limpieza inmediata
+    setProductosDeCategoria([]); 
+    setCargandoProductos(true);
     setCategoriaSeleccionada(categoria);
+
     try {
         const prods = await productoService.getByCategory(categoria.id_categoria);
         setProductosDeCategoria(prods);
     } catch {
         setProductosDeCategoria([]);
+    } finally {
+        setCargandoProductos(false);
     }
   };
 
   const handleVerProducto = (producto: Producto) => {
+    // 2. Inyección de Categoría (CORREGIDO)
+    const productoParaEditar = { ...producto };
+    
+    if (categoriaSeleccionada) {
+        // ✅ SOLUCIÓN: Eliminada la propiedad 'id_usuario' que causaba el error de tipos
+        productoParaEditar.categorias = [{
+            id_categoria: categoriaSeleccionada.id_categoria,
+            nombre: categoriaSeleccionada.nombre,
+            color: categoriaSeleccionada.color
+        }];
+    }
+
     router.push({ 
         pathname: '/formulario', 
-        params: { producto: JSON.stringify(producto), modoEdicion: 'true' } 
+        params: { producto: JSON.stringify(productoParaEditar), modoEdicion: 'true' } 
     } as any);
   };
 
@@ -127,30 +144,35 @@ const CategoriasScreen = () => {
 
   // --- RENDERIZADO ---
 
-  if (cargando) return <View style={containers.centered}><ThemedText style={{color: textColor}}>Cargando...</ThemedText></View>;
+  if (cargando) return <View style={containers.centered}><ActivityIndicator color={colors.primary} /></View>;
 
-  // VISTA: LISTA DE PRODUCTOS DE UNA CATEGORÍA (ESTILO HOME)
+  // VISTA: LISTA DE PRODUCTOS DE UNA CATEGORÍA
   if (categoriaSeleccionada) {
     return (
         <View style={[containers.page, { backgroundColor: bgColor }]}>
-            <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center' }}>
-                <TouchableOpacity onPress={() => setCategoriaSeleccionada(null)} style={{ padding: 8, marginLeft: -8 }}>
+            <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <TouchableOpacity onPress={() => setCategoriaSeleccionada(null)} style={{ padding: 8, marginLeft: -8, width: 40 }}>
                     <Ionicons name="arrow-back" size={26} color={colors.primary} />
                 </TouchableOpacity>
-                <ThemedText style={[text.detailTitle, { marginTop: 0, marginBottom: 0, flex: 1, marginHorizontal: 0, color: textColor }]}>
+                <ThemedText style={[text.detailTitle, { marginTop: 0, marginBottom: 0, flex: 1, marginHorizontal: 0, color: textColor, textAlign: 'center' }]}>
                     {categoriaSeleccionada.nombre}
                 </ThemedText>
+                <View style={{ width: 40 }} /> 
             </View>
             
             <ScrollView style={{ flex: 1, width: '100%', paddingHorizontal: 16 }}>
-                {productosDeCategoria.length === 0 ? (
+                {cargandoProductos ? (
+                    <View style={{ marginTop: 20 }}>
+                        <ActivityIndicator size="large" color={colors.primary} />
+                    </View>
+                ) : productosDeCategoria.length === 0 ? (
                     <View style={{ alignItems: 'center', marginTop: 40 }}>
                         <MaterialCommunityIcons name="package-variant" size={48} color={subTextColor} />
                         <ThemedText style={{ textAlign: 'center', color: subTextColor, marginTop: 10 }}>Sin productos en esta categoría</ThemedText>
                     </View>
                 ) : (
                     productosDeCategoria.map(prod => (
-                        <TouchableOpacity
+                        <TouchableOpacity 
                             key={prod.id_producto} 
                             style={[cards.interactive, { 
                                 backgroundColor: cardBg, 
@@ -182,7 +204,7 @@ const CategoriasScreen = () => {
   // VISTA PRINCIPAL: LISTA DE CATEGORÍAS
   return (
     <View style={[containers.page, { backgroundColor: bgColor }]}>
-      <ThemedText style={[text.detailTitle]}>Tus Categorías</ThemedText>
+      <ThemedText style={[text.detailTitle, { color: textColor }]}>Tus Categorías</ThemedText>
       
       <ScrollView style={{ flex: 1, width: "100%", paddingHorizontal: 16 }}>
         {categorias.map((cat) => (
@@ -200,7 +222,6 @@ const CategoriasScreen = () => {
                 justifyContent: 'space-between'
             }]}
           >
-            {/* IZQUIERDA: Info Categoría */}
             <TouchableOpacity 
                 style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }} 
                 onPress={() => handleVerCategoria(cat)}
@@ -214,7 +235,6 @@ const CategoriasScreen = () => {
                 </View>
             </TouchableOpacity>
             
-            {/* DERECHA: Botones de Acción (Estilizados) */}
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <TouchableOpacity 
                   onPress={() => handleIniciarEdicion(cat)} 
@@ -235,7 +255,6 @@ const CategoriasScreen = () => {
           </View>
         ))}
 
-        {/* Formulario Nueva Categoría */}
         {mostrandoFormulario ? (
             <View style={[cards.base, { backgroundColor: cardBg, marginTop: 10, borderColor: colors.primary, borderWidth: 1 }]}>
                 <ThemedText style={{ marginBottom: 8, fontWeight: 'bold', color: textColor }}>Nueva Categoría</ThemedText>

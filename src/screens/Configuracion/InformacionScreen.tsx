@@ -12,23 +12,24 @@ const InformacionScreen = () => {
     const isDark = colorScheme === 'dark';
     const cardBg = isDark ? colors.cardDark : colors.primaryLight;
     const iconColor = isDark ? '#fff' : colors.primary;
+    const borderColor = isDark ? '#333' : '#ddd';
+    const textColor = isDark ? colors.textLight : colors.textDark;
 
     const abrirURL = (url: string) => Linking.openURL(url).catch(err => console.error("Error", err));
 
-    const InfoCard = ({ title, url }: { title: string, url: string }) => (
+    const InfoCard = ({ title, url, onPress }: { title: string, url?: string, onPress?: () => void }) => (
         <TouchableOpacity 
-            style={[cards.interactive, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1 }]}
-            onPress={() => abrirURL(url)}
+            style={[cards.interactive, { backgroundColor: cardBg, borderColor: borderColor, borderWidth: 1 }]}
+            onPress={onPress ? onPress : () => url && abrirURL(url)}
         >
-            <ThemedText style={text.cardText}>{title}</ThemedText>
-            <Ionicons name="open-outline" size={24} color={iconColor} />
+            <ThemedText style={[text.cardText, { color: textColor }]}>{title}</ThemedText>
+            <Ionicons name="chevron-forward" size={24} color={iconColor} />
         </TouchableOpacity>
     );
 
     return (
         <ThemedView style={[containers.page, { backgroundColor: isDark ? colors.backgroundDark : colors.background }]}>
                 
-            {/* ✅ HEADER CORREGIDO */}
             <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginLeft: -8, width: 40 }}>
                     <Ionicons name="arrow-back" size={26} color={colors.primary} />
@@ -41,7 +42,12 @@ const InformacionScreen = () => {
 
             <ScrollView style={{ width: '100%' }}>
                 <View style={{ gap: spacing.md }}>
-                    <InfoCard title="Términos y condiciones" url="https://www.bcn.cl/leychile" />
+                    {/* ✅ ENLACE INTERNO ACTUALIZADO */}
+                    <InfoCard 
+                        title="Términos y condiciones" 
+                        onPress={() => router.push('/configuracion_tab/terminos' as any)} 
+                    />
+                    
                     <InfoCard title="Ley del consumidor" url="https://www.bcn.cl/leychile" />
                     <InfoCard title="Página oficial del SERNAC" url="https://www.sernac.cl" />
                 </View>

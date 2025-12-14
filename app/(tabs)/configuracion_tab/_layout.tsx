@@ -10,30 +10,16 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen 
-          name="index" 
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen 
-          name="detalle_configuracion" 
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen 
-          name="informacion" 
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen 
-          name="nosotros" 
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen 
-          name="contacto" 
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen 
-          name="soporte" 
-          options={{ headerShown: false }}
-        />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="detalle_configuracion" options={{ headerShown: false }} />
+        <Stack.Screen name="informacion" options={{ headerShown: false }} />
+        <Stack.Screen name="nosotros" options={{ headerShown: false }} />
+        <Stack.Screen name="contacto" options={{ headerShown: false }} />
+        <Stack.Screen name="soporte" options={{ headerShown: false }} />
+        <Stack.Screen name="editar_perfil" options={{ headerShown: false }} />
+        <Stack.Screen name="historial" options={{ headerShown: false }} />
+        <Stack.Screen name="terminos" options={{ headerShown: false }} />
+
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>

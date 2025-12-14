@@ -100,7 +100,7 @@ class ProductoService {
   async getById(id: string): Promise<Producto> { // Cambio: Era "id: number" → Ahora "id: string" (UUID)
     try {
       console.log('📦 Fetching product by ID:', id);
-      const producto = await apiService.get<Producto>(`${API_ENDPOINTS.productos.list}${id}`);
+      const producto = await apiService.get<Producto>(`${API_ENDPOINTS.productos.list}/${id}`);
       console.log('✅ Product fetched successfully');
       return producto;
     } catch (error) {
@@ -144,7 +144,7 @@ class ProductoService {
     try {
       console.log('📝 Updating product:', id);
       const producto = await apiService.put<Producto>(
-        `${API_ENDPOINTS.productos.update}${id}`,
+        `${API_ENDPOINTS.productos.update}/${id}`,
         productoData
       );
       console.log('✅ Product updated successfully');
@@ -160,7 +160,7 @@ class ProductoService {
   async delete(id: string): Promise<void> {
     try {
       console.log('🗑️ Deleting product:', id);
-      await apiService.delete(`${API_ENDPOINTS.productos.delete}${id}`);
+      await apiService.delete(`${API_ENDPOINTS.productos.delete}/${id}`);
       console.log('✅ Product deleted successfully');
       ProductoService.invalidateCache(); // ✅ Invalidar caché
     } catch (error) {
