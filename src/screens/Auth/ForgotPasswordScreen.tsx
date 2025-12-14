@@ -3,6 +3,9 @@ import { buttons, colors, containers, inputs, misc, spacing, text } from '@/src/
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
+import Toast from 'react-native-toast-message';
+
+const API_URL = 'https://api.misboletas.tech/api';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -11,10 +14,51 @@ export default function ForgotPasswordScreen() {
   const [enviado, setEnviado] = useState(false);
 
   const handleRequest = async () => {
-    if (!email) { Alert.alert('Error', 'Ingresa tu correo'); return; }
+    if (!email) { 
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Ingresa tu correo',
+      });
+      return; 
+    }
+    
     setLoading(true);
-    // Simulación de éxito para UI (conecta tu API aquí)
-    setTimeout(() => { setLoading(false); setEnviado(true); }, 1500);
+    try {
+      const response = await fetch(`${API_URL}/v1/users/forgot-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setEnviado(true);
+        Toast.show({
+          type: 'success',
+          text1: '¡Éxito!',
+          text2: 'Revisa tu correo para restablecer tu contraseña',
+        });
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: data.detail || 'No se pudo procesar tu solicitud',
+        });
+      }
+    } catch (error) {
+      console.error('[FORGOT-PASSWORD] Error:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error de conexión',
+        text2: 'Verifica tu conexión e intenta nuevamente',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

@@ -9,6 +9,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { Href, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, FlatList, Linking, RefreshControl, ScrollView, TouchableOpacity, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 // Función auxiliar para calcular fechas (se mantiene igual)
 const calcularTiempoRestante = (fechaCompra: string | undefined, duracionMeses: number | undefined) => {
@@ -91,12 +92,12 @@ const HomeScreen = () => {
             try {
                 if (producto.id_producto) {
                     await productoService.delete(producto.id_producto);
-                    Alert.alert('Éxito', 'Eliminado');
+                    Toast.show({ type: 'success', text1: 'Producto eliminado' });
                     // No necesita cargarProductos() porque ya se eliminó de la UI
                 }
             } catch (error) {
                 // ✅ ROLLBACK: Si falla, volver a agregar
-                Alert.alert('Error', 'No se pudo eliminar');
+                Toast.show({ type: 'error', text1: 'No se pudo eliminar' });
                 setProductos(prev => [...prev, producto]);
             }
         }}
@@ -125,10 +126,10 @@ const HomeScreen = () => {
             await documentoService.upload(productoSeleccionado.id_producto, { 
                 uri: asset.uri, type: asset.mimeType || 'application/octet-stream', name: asset.name 
             });
-            Alert.alert('Éxito', 'Subido correctamente');
+            Toast.show({ type: 'success', text1: 'Documento subido' });
             cargarDocumentos(productoSeleccionado.id_producto);
         }
-    } catch { Alert.alert('Error', 'Fallo al subir'); }
+    } catch { Toast.show({ type: 'error', text1: 'Error al subir documento' }); }
   };
 
   const handleEliminarDocumento = async (id: number | undefined) => {
@@ -143,10 +144,10 @@ const HomeScreen = () => {
             
             try {
                 await documentoService.delete(id);
-                Alert.alert('Éxito', 'Eliminado');
+                Toast.show({ type: 'success', text1: 'Documento eliminado' });
             } catch (error) {
                 // ✅ ROLLBACK: Si falla, restaurar documento
-                Alert.alert('Error', 'No se pudo eliminar');
+                Toast.show({ type: 'error', text1: 'No se pudo eliminar' });
                 if (documentoEliminado) setDocumentos(prev => [...prev, documentoEliminado]);
             }
         }}
@@ -155,7 +156,7 @@ const HomeScreen = () => {
 
   const handleVerDocumento = async (url: string) => {
     if (url && await Linking.canOpenURL(url)) await Linking.openURL(url);
-    else Alert.alert('Error', 'No se puede abrir');
+    else Toast.show({ type: 'error', text1: 'No se puede abrir el documento' });
   };
 
   // --- VISTA: DETALLE PRODUCTO ---
@@ -248,6 +249,10 @@ const HomeScreen = () => {
             contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingBottom: 80 }}
             data={productos}
             keyExtractor={(item) => item.id_producto}
+            initialNumToRender={10}
+            maxToRenderPerBatch={5}
+            windowSize={5}
+            removeClippedSubviews={true}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             renderItem={({ item }) => {
                 const estado = calcularTiempoRestante(item.fecha_compra, item.duracion_garantia_meses);

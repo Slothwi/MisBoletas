@@ -6,6 +6,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, RefreshControl, TouchableOpacity, View } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 const HistorialScreen = () => {
   const router = useRouter();
@@ -43,11 +44,11 @@ const handleRestaurar = (producto: Producto) => {
             try {
                 if (producto.id_producto) {
                 await productoService.restore(producto.id_producto);
-                Alert.alert("Éxito", "Producto restaurado");
+                Toast.show({ type: 'success', text1: 'Producto restaurado' });
                 cargarHistorial(); // Recargar lista
                 }
             } catch {
-                Alert.alert("Error", "No se pudo restaurar");
+                Toast.show({ type: 'error', text1: 'No se pudo restaurar' });
             }
         } 
     }
@@ -82,6 +83,10 @@ useEffect(() => {
             style={{ width: '100%' }}
             data={eliminados}
             keyExtractor={(item) => item.id_producto || Math.random().toString()}
+            initialNumToRender={10}
+            maxToRenderPerBatch={5}
+            windowSize={5}
+            removeClippedSubviews={true}
             refreshControl={<RefreshControl refreshing={loading} onRefresh={cargarHistorial} />}
             renderItem={({ item }) => (
             <View style={[cards.base, { backgroundColor: cardBg, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>

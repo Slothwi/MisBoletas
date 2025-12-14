@@ -98,10 +98,7 @@ export default function ResetPasswordScreen() {
         </ThemedText>
 
         <ThemedView style={[cards.base, { marginTop: spacing.lg, marginBottom: spacing.lg }]}>
-          <ThemedText style={text.helperText}>✓ Mínimo 8 caracteres</ThemedText>
-          <ThemedText style={text.helperText}>✓ Una letra mayúscula</ThemedText>
-          <ThemedText style={text.helperText}>✓ Un número</ThemedText>
-          <ThemedText style={text.helperText}>✓ Un símbolo (!@#$%^&*)</ThemedText>
+          <ThemedText style={text.helperText}>✓ Mínimo 6 caracteres</ThemedText>
         </ThemedView>
 
         <ThemedText style={text.label}>Nueva Contraseña</ThemedText>
