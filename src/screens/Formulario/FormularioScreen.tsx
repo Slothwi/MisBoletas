@@ -159,24 +159,19 @@ const FormularioScreen = () => {
             // Llenar garantía
             if (data.garantia) setDuracionGarantia(data.garantia.toString());
             
-            // Parsear fecha (robusto para múltiples formatos)
+            // Parsear fecha
             if (data.fecha || data.fecha_emision) {
               const fechaStr = (data.fecha || data.fecha_emision).toString().trim();
               try {
                 let nuevaFecha: Date | null = null;
-
-                // Intenta parsear DD/MM/YYYY o DD-MM-YYYY (formato Chile)
                 const regexDMY = /(\d{1,2})[/-](\d{1,2})[/-](\d{4})/;
                 const matchDMY = fechaStr.match(regexDMY);
-                
                 if (matchDMY) {
                   const [, dia, mes, año] = matchDMY;
                   nuevaFecha = new Date(parseInt(año), parseInt(mes) - 1, parseInt(dia));
                 } else {
-                  // Fallback: intenta Date.parse
                   nuevaFecha = new Date(fechaStr);
                 }
-
                 if (nuevaFecha && !isNaN(nuevaFecha.getTime())) {
                   setFechaCompra(nuevaFecha);
                 }
@@ -184,6 +179,20 @@ const FormularioScreen = () => {
                 console.warn('⚠️ No se pudo parsear fecha:', fechaStr, dateError);
               }
             }
+
+            // --- LÓGICA MOVIDA AQUÍ (ESTABA ROMPIENDO EL JSX) ---
+            let resumen = '📄 Datos extraídos automáticamente:';
+            if (data.comercio) resumen += `\nTienda: ${data.comercio}`;
+            if (data.fecha) resumen += `\nFecha: ${data.fecha}`;
+            if (data.total) resumen += `\nPrecio: $${data.total}`;
+            if (data.marca) resumen += `\nMarca: ${data.marca}`;
+            if (data.modelo) resumen += `\nModelo: ${data.modelo}`;
+            if (data.garantia) resumen += `\nGarantía: ${data.garantia} meses`;
+            if (data.numero_boleta) resumen += `\nN° Boleta: ${data.numero_boleta}`;
+            
+            // Solo sobrescribir notas si está vacío o es nuevo
+            setNotas(prev => prev ? prev : resumen);
+            // ----------------------------------------------------
             
             // Guardar URI para subirla al guardar el producto
             if (params.imagenTemporalUri) {
@@ -196,30 +205,26 @@ const FormularioScreen = () => {
                 });
             }
             
-            Alert.alert('✅ Datos cargados', 'Hemos completado el formulario. Verifica los datos antes de guardar.');
+            Alert.alert('✅ Datos cargados', 'Hemos completado el formulario con los datos de tu boleta. Verifica antes de guardar.');
             
         } catch (e) {
             console.error("Error parseando OCR params", e);
-            Alert.alert('Advertencia', 'No se pudieron precargar todos los datos. Completa el formulario manualmente.');
+            Alert.alert('Advertencia', 'No se pudieron precargar todos los datos.');
         }
     }
   }, [params]);
 
-  // 2. Cargar categorías y setear la inicial
+  // 2. Cargar categorías
   useEffect(() => {
     if (!authState.isAuthenticated) return;
-    
     setCargandoCategorias(true);
     categoriaService.getAll().then(res => {
         setCategorias(res);
         if (modoEdicion && productoEditando) {
             const categoriasDelProducto = productoEditando.categorias || [];
             if (categoriasDelProducto.length > 0) {
-                // ✅ CORRECCIÓN 1: Convertimos a String() ambos lados para asegurar comparación correcta
                 const catDelProducto = res.find(c => String(c.id_categoria) === String(categoriasDelProducto[0].id_categoria));
-                if (catDelProducto) {
-                    setCategoriaSeleccionada(catDelProducto);
-                }
+                if (catDelProducto) setCategoriaSeleccionada(catDelProducto);
             }
         }
         setCargandoCategorias(false);
@@ -247,12 +252,9 @@ const FormularioScreen = () => {
 
     setIsLoading(true);
     
-    // Preparar IDs
     const catId = categoriaSeleccionada ? categoriaSeleccionada.id_categoria : null;
     const catIds = catId ? [catId] : [];
 
-    // ✅ CORRECCIÓN 2: Enviamos tanto 'categoria_ids' (plural) como 'categoria_id' (singular)
-    // Esto asegura compatibilidad si el backend espera uno u otro.
     const data: any = { 
         nombre: nombreProducto,
         fecha_compra: fechaCompra?.toISOString().split('T')[0],
@@ -262,46 +264,22 @@ const FormularioScreen = () => {
         tienda: tienda || undefined,
         precio: precio ? parseFloat(precio) : undefined,
         notas: notas || undefined,
-        categoria_ids: catIds, // Para backends modernos
-        categoria_id: catId    // Para backends tradicionales o legacy
+        categoria_ids: catIds,
+        categoria_id: catId
     };
-
-    console.log("📤 Enviando datos:", JSON.stringify(data, null, 2));
 
     try {
         let prod;
         if (modoEdicion && productoEditando?.id_producto) {
-            console.log(`🔄 Actualizando ID: ${productoEditando.id_producto}`);
             prod = await productoService.update(productoEditando.id_producto, data);
         } else {
-            console.log("✨ Creando nuevo producto");
             prod = await productoService.create(data);
         }
 
         if (archivoSeleccionado && prod.id_producto) {
             setIsProcessingOCR(true);
-            setOcrStatus('Analizando documento...');
-            const { ocrData } = await documentoService.uploadAndWaitOCR(prod.id_producto, archivoSeleccionado, archivoSeleccionado.tipoDocumento);
-             if (ocrData?.parsed_data) {
-                // ... lógica OCR ...
-                const { comercio, fecha, total, marca: marcaOcr, modelo: modeloOcr, garantia } = ocrData.parsed_data;
-                const update: any = {};
-                let notasOcr = `📄 Datos extraídos:\n`;
-                if (comercio) update.tienda = comercio;
-                if (fecha && !fechaCompra) {
-                    const partes = fecha.split(/[-/]/);
-                    if (partes.length===3) update.fecha_compra = `${partes[2]}-${partes[1]}-${partes[0]}`;
-                }
-                if (total) { update.precio = total; notasOcr += `$${total}\n`; }
-                if (marcaOcr && !marca) update.marca = marcaOcr;
-                if (modeloOcr && !modelo) update.modelo = modeloOcr;
-                if (garantia) update.duracion_garantia_meses = garantia; 
-                
-                if (Object.keys(update).length > 0) {
-                    update.notas = notas ? (notas + '\n' + notasOcr) : notasOcr;
-                    await productoService.update(prod.id_producto, update);
-                }
-             }
+            setOcrStatus('Subiendo documento...');
+            await documentoService.upload(prod.id_producto, archivoSeleccionado);
         }
 
         Alert.alert('Éxito', 'Guardado correctamente', [
@@ -309,7 +287,6 @@ const FormularioScreen = () => {
         ]);
 
     } catch (e: any) {
-        console.error("❌ Error al guardar:", e);
         Alert.alert('Error', e.message || 'No se pudo guardar');
     } finally {
         setIsLoading(false);
@@ -318,34 +295,33 @@ const FormularioScreen = () => {
   };
 
   return (
-    <ThemedView style={[containers.page, { backgroundColor: colorScheme === 'dark' ? colors.backgroundDark : colors.background }]}>
-      <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center' }}>
-        <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginLeft: -8 }}>
-          <Ionicons name="arrow-back" size={26} color={colors.primary} />
-        </TouchableOpacity>
-        <ThemedText style={[text.detailTitle, { marginTop: 0, marginBottom: 0, flex: 1, marginHorizontal: 0 }]}>
-          {modoEdicion ? 'Editar Producto' : 'Nuevo Producto'}
-        </ThemedText>
-      </View>
+    <ThemedView style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={{ padding: 20 }}>
+        <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 20, marginBottom: 20, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8 }}>
+          <ThemedText style={[{ fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginBottom: 20, color: textColor }]}> 
+            {modoEdicion ? 'Editar Producto' : 'Nuevo Producto'}
+          </ThemedText>
 
-      <ScrollView style={{ width: '100%' }} contentContainerStyle={{ paddingBottom: 40 }}>
-        <View style={[cards.base, { backgroundColor: cardBg }]}>
           <View style={inputs.container}>
-            <ThemedText style={[text.label, { color: textColor }]}>Nombre Producto</ThemedText>
+            <ThemedText style={[text.label, { color: textColor }]}>Nombre del producto</ThemedText>
             <ThemedTextInput 
                 style={[inputs.base, { backgroundColor: inputBg, color: textColor, borderColor: '#ccc' }]} 
-                placeholder="Ej: Televisor" 
+                placeholder="Ej: iPhone 15" 
                 placeholderTextColor={placeholderColor}
                 value={nombreProducto} 
                 onChangeText={setNombreProducto} 
             />
           </View>
+
           <View style={inputs.container}>
             <ThemedText style={[text.label, { color: textColor }]}>Fecha de Compra</ThemedText>
-            <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+            <TouchableOpacity 
+                style={[inputs.base, { justifyContent: 'center', backgroundColor: inputBg, borderColor: '#ccc' }]} 
+                onPress={() => setShowDatePicker(true)}
+            >
                 <View pointerEvents="none">
                     <ThemedTextInput 
-                        style={[inputs.base, { backgroundColor: inputBg, color: textColor, borderColor: '#ccc' }]} 
+                        style={{ color: textColor }} 
                         placeholder="DD/MM/AAAA" 
                         placeholderTextColor={placeholderColor}
                         value={fechaCompra ? fechaCompra.toLocaleDateString() : ''} 
@@ -356,6 +332,7 @@ const FormularioScreen = () => {
             </TouchableOpacity>
             {showDatePicker && <DateTimePicker value={fechaCompra || new Date()} mode="date" onChange={(e, d) => { setShowDatePicker(false); if(d) setFechaCompra(d); }} />}
           </View>
+
           <View style={inputs.container}>
             <ThemedText style={[text.label, { color: textColor }]}>Categoría</ThemedText>
             <SelectCategoria 
@@ -365,6 +342,7 @@ const FormularioScreen = () => {
                 cargando={cargandoCategorias} 
             />
           </View>
+
           <View style={inputs.container}>
             <ThemedText style={[text.label, { color: textColor }]}>Meses Garantía</ThemedText>
             <ThemedTextInput 
@@ -376,18 +354,22 @@ const FormularioScreen = () => {
                 onChangeText={setDuracionGarantia} 
             />
           </View>
+
           <View style={inputs.container}>
              <ThemedText style={[text.label, { color: textColor }]}>Marca</ThemedText>
              <ThemedTextInput style={[inputs.base, { backgroundColor: inputBg, color: textColor, borderColor: '#ccc' }]} value={marca} onChangeText={setMarca} />
           </View>
+
           <View style={inputs.container}>
             <ThemedText style={[text.label, { color: textColor }]}>Modelo</ThemedText>
             <ThemedTextInput style={[inputs.base, { backgroundColor: inputBg, color: textColor, borderColor: '#ccc' }]} value={modelo} onChangeText={setModelo} />
           </View>
+
           <View style={inputs.container}>
             <ThemedText style={[text.label, { color: textColor }]}>Tienda</ThemedText>
             <ThemedTextInput style={[inputs.base, { backgroundColor: inputBg, color: textColor, borderColor: '#ccc' }]} value={tienda} onChangeText={setTienda} />
           </View>
+
           <View style={inputs.container}>
             <ThemedText style={[text.label, { color: textColor }]}>Precio ($)</ThemedText>
             <ThemedTextInput 
@@ -399,6 +381,7 @@ const FormularioScreen = () => {
                 onChangeText={setPrecio} 
             />
           </View>
+
           <View style={inputs.container}>
             <ThemedText style={[text.label, { color: textColor }]}>Notas</ThemedText>
             <ThemedTextInput 
@@ -408,6 +391,7 @@ const FormularioScreen = () => {
                 onChangeText={setNotas} 
             />
           </View>
+
           <View style={{ marginVertical: 10 }}>
             <TouchableOpacity style={buttons.secondary} onPress={() => handleFileClick('boleta')}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
@@ -416,7 +400,9 @@ const FormularioScreen = () => {
                 </View>
             </TouchableOpacity>
           </View>
+
           {isProcessingOCR && <ThemedText style={{ textAlign: 'center', color: colors.primary, marginBottom: 10 }}>{ocrStatus}</ThemedText>}
+
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <TouchableOpacity style={[buttons.secondary, { flex: 1 }]} onPress={() => router.back()}>
                 <ThemedText style={{ color: colors.secondary, textAlign: 'center' }}>Cancelar</ThemedText>
