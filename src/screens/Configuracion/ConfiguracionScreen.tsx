@@ -1,7 +1,9 @@
 import { ThemedText, ThemedView } from '@/src/components';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useColorScheme } from '@/src/hooks/useColorScheme';
-import { buttons, cards, colors, containers, misc, spacing, text } from '@/src/theme';
+import { buttons, cards, colors, containers, misc, text } from '@/src/theme';
+// 👇 Importamos nuestro nuevo helper
+import { getAvatarSource } from '@/src/utils/avatarHelpers'; 
 import { Ionicons } from '@expo/vector-icons';
 import { Href, useRouter } from 'expo-router';
 import React from 'react';
@@ -12,14 +14,15 @@ const ConfiguracionScreen = () => {
     const { logout, authState } = useAuth();
     const colorScheme = useColorScheme();
     
-    // Adaptación para modo oscuro
     const cardBg = colorScheme === 'dark' ? colors.cardDark : colors.primaryLight;
-    const iconColor = colorScheme === 'dark' ? '#fff' : colors.primary;
 
-    const userData = (authState.user as any) || {
-        nombre: 'Usuario',
-        correo: 'usuario@ejemplo.com'
-    };
+    // Datos del usuario (con valores por defecto seguros)
+    const user = authState.user;
+    const nombreUsuario = user?.nombre_completo || 'Usuario';
+    const correoUsuario = user?.email || 'usuario@ejemplo.com';
+    
+    // 👇 Usamos el helper para obtener la imagen correcta (local o remota)
+    const avatarSource = getAvatarSource(user?.avatar_url);
 
     const handleAbrirYoutube = () => {
         Linking.openURL('https://www.youtube.com/@misBoletas-App');
@@ -30,24 +33,15 @@ const ConfiguracionScreen = () => {
             "Cerrar Sesión",
             "¿Estás seguro de que quieres cerrar sesión?",
             [
-                {
-                    text: "Cancelar",
-                    style: "cancel", 
-                },
-                {
-                    text: "Cerrar Sesión", 
-                    style: "destructive",
-                    onPress: cerrarSesion
-                }
+                { text: "Cancelar", style: "cancel" },
+                { text: "Cerrar Sesión", style: "destructive", onPress: cerrarSesion }
             ]
         );
     };
 
     const cerrarSesion = async () => {
         try {
-            console.log('🚪 Cerrando sesión...');
             await logout();
-            console.log('✅ Sesión cerrada exitosamente');
         } catch (error) {
             console.error('❌ Error al cerrar sesión:', error);
             Alert.alert('Error', 'No se pudo cerrar sesión. Intenta nuevamente.');
@@ -75,12 +69,13 @@ const ConfiguracionScreen = () => {
                 {/* Profile Section */}
                 <View style={[cards.profile, { backgroundColor: cardBg, width: '100%' }]}>
                     <View style={containers.centered}>
+                        {/* 👇 Imagen dinámica */}
                         <Image 
-                            source={{ uri: 'https://randomuser.me/api/portraits/lego/1.jpg' }} 
+                            source={avatarSource} 
                             style={misc.logo}
                         />
-                        <ThemedText style={text.profileName}>{userData.nombre}</ThemedText>
-                        <ThemedText style={text.profileEmail}>{userData.correo}</ThemedText>
+                        <ThemedText style={text.profileName}>{nombreUsuario}</ThemedText>
+                        <ThemedText style={text.profileEmail}>{correoUsuario}</ThemedText>
                         
                         <TouchableOpacity 
                             style={[buttons.small, { marginTop: 10 }]} 
@@ -112,7 +107,7 @@ const ConfiguracionScreen = () => {
 
                 {/* BOTÓN YOUTUBE */}
                 <View style={{ width: '100%', alignItems: 'center', marginBottom: 20 }}>
-                    <ThemedText style={[text.youtubeLabel, { color: colors.textMuted, fontSize: 14, marginTop: 0 }]}>
+                    <ThemedText style={[text.youtubeLabel, { color: colors.textMuted, fontSize: 14 }]}>
                         Suscríbete a nuestro canal.
                     </ThemedText>
                     <TouchableOpacity 

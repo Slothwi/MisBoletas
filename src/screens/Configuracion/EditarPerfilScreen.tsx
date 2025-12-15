@@ -1,17 +1,19 @@
 import { ThemedText, ThemedTextInput, ThemedView } from '@/src/components';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useColorScheme } from '@/src/hooks/useColorScheme';
-import authService from '@/src/services/authService'; // ✅ Importar authService
 import { buttons, cards, colors, containers, inputs, misc, text } from '@/src/theme';
+// 👇 Importamos el helper y las claves (keys) para hacer la lista
+import { AVATAR_KEYS, getAvatarSource } from '@/src/utils/avatarHelpers';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, ScrollView, TouchableOpacity, View } from 'react-native';
-import Toast from 'react-native-toast-message'; // ✅ Feedback visual
+import Toast from 'react-native-toast-message';
 
 const EditarPerfilScreen = () => {
   const router = useRouter();
-  const { authState } = useAuth();
+  // Usamos updateProfile del hook useAuth para que actualice todo el estado de la app
+  const { authState, updateProfile } = useAuth();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const cardBg = isDark ? colors.cardDark : colors.primaryLight;
@@ -19,7 +21,11 @@ const EditarPerfilScreen = () => {
   const [nombre, setNombre] = useState(authState.user?.nombre_completo || '');
   const [email] = useState(authState.user?.email || '');
   const [telefono, setTelefono] = useState('');
-  const [cargando, setCargando] = useState(false); // ✅ Estado de carga
+  
+  // Guardamos solo la "clave" (ej: 'lego1'), no la ruta completa
+  const [selectedAvatarKey, setSelectedAvatarKey] = useState(authState.user?.avatar_url || 'lego1');
+  
+  const [cargando, setCargando] = useState(false);
 
   const handleGuardar = async () => {
     if (!nombre.trim()) {
@@ -30,16 +36,15 @@ const EditarPerfilScreen = () => {
     try {
         setCargando(true);
         
-        // ✅ Llamada real al backend
-        await authService.updateProfile({
-            id_usuario: authState.user?.id_usuario, // Aunque endpoint es /me, pasamos referencia si es necesario
+        // Enviamos la "key" (ej: 'lego1') a la base de datos
+        await updateProfile({
             nombre_completo: nombre,
-            // avatar_url: ... (lógica futura de imagen)
+            avatar_url: selectedAvatarKey, 
         });
 
         Toast.show({ type: 'success', text1: 'Perfil actualizado correctamente' });
         
-        // Volver atrás después de un breve delay
+        // Regresamos después de un segundo
         setTimeout(() => router.back(), 1000);
 
     } catch (error) {
@@ -61,18 +66,39 @@ const EditarPerfilScreen = () => {
       </View>
 
       <ScrollView style={{ width: '100%' }}>
-        {/* Avatar */}
-        <View style={{ alignItems: 'center', marginBottom: 30 }}>
+        {/* Avatar Principal (Previsualización) */}
+        <View style={{ alignItems: 'center', marginBottom: 20 }}>
             <View style={{ position: 'relative' }}>
                 <Image 
-                    source={{ uri: authState.user?.avatar_url || 'https://randomuser.me/api/portraits/lego/1.jpg' }} 
+                    source={getAvatarSource(selectedAvatarKey)} 
                     style={[misc.logo, { marginBottom: 0, borderRadius: 50, width: 100, height: 100 }]} 
                 />
-                <TouchableOpacity style={{ position: 'absolute', bottom: 0, right: 0, backgroundColor: colors.primary, padding: 8, borderRadius: 20 }}>
-                    <Ionicons name="camera" size={20} color="#fff" />
-                </TouchableOpacity>
             </View>
             <ThemedText style={{ marginTop: 10, fontSize: 18, fontWeight: 'bold' }}>{nombre || 'Usuario'}</ThemedText>
+        </View>
+
+        {/* ✅ Selector de Avatares Locales */}
+        <View style={{ marginBottom: 20, paddingHorizontal: 16 }}>
+            <ThemedText style={[text.label, { marginBottom: 10 }]}>Elige un avatar</ThemedText>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+                {AVATAR_KEYS.map((key) => (
+                    <TouchableOpacity 
+                        key={key} 
+                        onPress={() => setSelectedAvatarKey(key)}
+                        style={{ 
+                            borderWidth: 3, 
+                            borderColor: selectedAvatarKey === key ? colors.primary : 'transparent', 
+                            borderRadius: 40,
+                            padding: 2
+                        }}
+                    >
+                        <Image 
+                            source={getAvatarSource(key)} 
+                            style={{ width: 60, height: 60, borderRadius: 30 }} 
+                        />
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
         </View>
 
         {/* Formulario */}

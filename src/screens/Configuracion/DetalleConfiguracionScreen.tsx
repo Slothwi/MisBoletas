@@ -1,24 +1,27 @@
 import { ThemedText, ThemedView } from "@/src/components";
 import { useColorScheme } from '@/src/hooks/useColorScheme';
-import { cards, colors, containers, misc, spacing, text } from '@/src/theme';
+import { cards, colors, containers, spacing, text } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Switch, TouchableOpacity, View } from 'react-native';
+import { Alert, Switch, TouchableOpacity, View } from 'react-native';
 
 export default function DetalleConfiguracionScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const [notificaciones, setNotificaciones] = React.useState(true);
-  const [temaOscuro, setTemaOscuro] = React.useState(false);
 
-  const cardBg = isDark ? colors.cardDark : colors.primaryLight;
+  // Acción temporal para el botón de contraseña
+  const handleCambiarPassword = () => {
+    Alert.alert("Próximamente", "Aquí podrás cambiar tu contraseña.");
+    // En el futuro: router.push('/configuracion_tab/cambiar_password');
+  };
 
   return (
     <ThemedView style={[containers.page, { backgroundColor: isDark ? colors.backgroundDark : colors.background }]}>
         
-        {/* ✅ HEADER CORREGIDO */}
+        {/* Header */}
         <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginLeft: -8, width: 40 }}>
             <Ionicons name="arrow-back" size={26} color={colors.primary} />
@@ -32,16 +35,25 @@ export default function DetalleConfiguracionScreen() {
         </View>
       
       <View style={{ width: '100%', gap: spacing.md }}>
-        {/* ... (resto del código igual) ... */}
+        
         <View style={[cards.interactive, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1, cursor: 'auto' }]}>
             <ThemedText style={[text.cardText, { color: colors.textDark }]}>Notificaciones</ThemedText>
             <Switch value={notificaciones} onValueChange={setNotificaciones} />
         </View>
         
-        <View style={[cards.interactive, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1, cursor: 'auto' }]}>
-            <ThemedText style={[text.cardText, { color: colors.textDark }]}>Tema oscuro</ThemedText>
-            <Switch value={temaOscuro} onValueChange={setTemaOscuro} />
-        </View>
+        {/* ✅ Nueva opción: Cambiar Contraseña */}
+        <TouchableOpacity 
+            style={[cards.interactive, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1 }]}
+            onPress={handleCambiarPassword}
+        >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Ionicons name="lock-closed-outline" size={20} color={colors.textDark} />
+                <ThemedText style={[text.cardText, { color: colors.textDark }]}>Cambiar Contraseña</ThemedText>
+            </View>
+            <Ionicons name="chevron-forward" size={24} color={colors.primary} />
+        </TouchableOpacity>
+
+        {/* Se eliminó el switch de Tema Oscuro */}
         
         <View style={[cards.interactive, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1 }]}>
             <ThemedText style={[text.cardText, { color: colors.textDark }]}>Idioma</ThemedText>
