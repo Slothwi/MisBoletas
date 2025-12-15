@@ -204,7 +204,7 @@ const CategoriasScreen = () => {
   // VISTA PRINCIPAL: LISTA DE CATEGORÍAS
   return (
     <View style={[containers.page, { backgroundColor: bgColor }]}>
-      <ThemedText style={[text.detailTitle, { color: textColor }]}>Tus Categorías</ThemedText>
+      <ThemedText style={[text.detailTitle, { color: colors.primary }]}>Tus Categorías</ThemedText>
       
       <ScrollView style={{ flex: 1, width: "100%", paddingHorizontal: 16 }}>
         {categorias.map((cat) => (

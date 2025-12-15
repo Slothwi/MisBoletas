@@ -77,7 +77,7 @@ const EditarPerfilScreen = () => {
                     style={[misc.logo, { marginBottom: 0, borderRadius: 50, width: 100, height: 100 }]} 
                 />
             </View>
-            <ThemedText style={{ marginTop: 10, fontSize: 18, fontWeight: 'bold' }}>{nombre || 'Usuario'}</ThemedText>
+            <ThemedText style={{ marginTop: 10, fontSize: 18, fontWeight: 'bold', color: colors.primary}}>{nombre || 'Usuario'}</ThemedText>
         </View>
 
         {/* Selector de Avatares */}

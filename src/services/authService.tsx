@@ -8,21 +8,24 @@ const TAG = 'AuthService';
 
 class AuthService {
   
-  // 👇 Función TRADUCTORA: Backend (Inglés) -> App (Español)
+  // 👇 Función TRADUCTORA MEJORADA
+  // Busca todas las variantes posibles de nombre para que no falle
   private mapResponseToUser(data: any): User {
+    if (!data) return {} as User;
+    
     return {
       id_usuario: data.id || data.id_usuario,
       email: data.email || data.correo,
-      // Prioridad: full_name (backend) > nombre_completo (app) > nombre > "Usuario"
-      nombre_completo: data.full_name || data.nombre_completo || data.nombre || 'Usuario',
-      avatar_url: data.avatar_url, // Ahora guardará "boletin", "boletina", etc.
+      // Busca full_name, fullName, nombre_completo, nombre, name...
+      nombre_completo: data.full_name || data.fullName || data.nombre_completo || data.nombre || data.name || 'Usuario',
+      avatar_url: data.avatar_url,
       fecha_registro: data.created_at || data.fecha_registro
     };
   }
 
   async login(credentials: LoginCredentials & { rememberMe?: boolean }): Promise<AuthResponse> {
     try {
-      logger.log(TAG, `🔄 Iniciando sesión... Recordarme: ${credentials.rememberMe}`);
+      logger.log(TAG, `🔄 Iniciando sesión...`);
 
       const loginData = {
         correo: credentials.correo,
@@ -44,20 +47,12 @@ class AuthService {
         return { ...response, user: userMapped };
       }
 
-      logger.log(TAG, '✅ Login exitoso');
       return response;
 
     } catch (error: any) {
-      logger.error(TAG, `Error en login: ${error.response?.data || error.message}`);
-      let errorMessage = 'Error en el login.';
-      if (error.response?.status === 401) errorMessage = 'Credenciales incorrectas.';
-      
-      const apiError: ApiError = {
-        message: errorMessage,
-        status: error.response?.status,
-        details: error.response?.data,
-      };
-      throw apiError;
+      logger.error(TAG, `Error en login: ${error.message}`);
+      const errorMessage = error.response?.status === 401 ? 'Credenciales incorrectas.' : 'Error en el login.';
+      throw { message: errorMessage, status: error.response?.status };
     }
   }
 
@@ -66,9 +61,7 @@ class AuthService {
       const refreshToken = await secureStorageService.getItem('refresh_token');
       if (!refreshToken) return false;
 
-      const response: any = await apiService.post('/users/refresh-token', {
-        refresh_token: refreshToken
-      });
+      const response: any = await apiService.post('/users/refresh-token', { refresh_token: refreshToken });
 
       if (response.access_token) {
         const userMapped = this.mapResponseToUser(response.user);
@@ -83,41 +76,51 @@ class AuthService {
   }
 
   async isAuthenticated(): Promise<boolean> {
-    try {
-      const token = await this.getToken();
-      if (token) return true;
-      return await this.tryRefreshSession();
-    } catch (error) {
-      return false;
-    }
+    const token = await this.getToken();
+    if (token) return true;
+    return await this.tryRefreshSession();
   }
 
   async logout(): Promise<void> {
     await secureStorageService.clearAuthData();
   }
 
-  // ✅ CORREGIDO: Envía 'full_name' y traduce la respuesta
+  // ✅ CORRECCIÓN CLAVE: ACTUALIZACIÓN BLINDADA
   async updateProfile(userData: Partial<User>): Promise<User> {
     try {
       logger.log(TAG, '📝 Actualizando perfil');
       
-      // Traducimos App -> Backend
+      // 1. Preparamos los datos para el Backend (Python usa full_name)
       const updatePayload = {
         full_name: userData.nombre_completo, 
         avatar_url: userData.avatar_url
       };
 
+      // 2. Enviamos al servidor
       const response: any = await apiService.put('/users/me', updatePayload);
       
-      // Traducimos Backend -> App
-      const updatedUserMapped = this.mapResponseToUser(response);
-      
+      // 3. Obtenemos el usuario actual guardado
       const currentUser = await secureStorageService.getUser();
-      if (currentUser) {
-        await secureStorageService.storeUser({ ...currentUser, ...updatedUserMapped });
+      
+      // 4. MEZCLA INTELIGENTE (Optimista):
+      // Tomamos el usuario actual y le sobreescribimos lo que acabamos de enviar.
+      // Esto asegura que la App muestre el cambio INMEDIATAMENTE, 
+      // incluso si el backend devuelve un formato raro.
+      const finalUser: User = {
+        ...currentUser!, // Datos viejos
+        ...this.mapResponseToUser(response), // Datos del server (si vienen bien)
+        // 👇 FORZAMOS lo que el usuario escribió para asegurar que se vea
+        nombre_completo: userData.nombre_completo || currentUser?.nombre_completo || 'Usuario',
+        avatar_url: userData.avatar_url || currentUser?.avatar_url
+      };
+      
+      // 5. Guardamos en el celular el usuario corregido
+      const token = await this.getToken();
+      if (token) {
+        await this.storeTokenAndUser(token, finalUser);
       }
       
-      return updatedUserMapped;
+      return finalUser;
     } catch (error: any) {
       logger.error(TAG, `Error actualizando perfil: ${error}`);
       throw new Error('Error actualizando perfil');
