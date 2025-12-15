@@ -2,7 +2,7 @@ import { ThemedText, ThemedTextInput, ThemedView } from '@/src/components';
 import { useAuth } from '@/src/hooks/useAuth';
 import { useColorScheme } from '@/src/hooks/useColorScheme';
 import { buttons, cards, colors, containers, inputs, misc, text } from '@/src/theme';
-// 👇 Importamos el helper y las claves (keys) para hacer la lista
+// Importamos helper corregido
 import { AVATAR_KEYS, getAvatarSource } from '@/src/utils/avatarHelpers';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -12,19 +12,17 @@ import Toast from 'react-native-toast-message';
 
 const EditarPerfilScreen = () => {
   const router = useRouter();
-  // Usamos updateProfile del hook useAuth para que actualice todo el estado de la app
   const { authState, updateProfile } = useAuth();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const cardBg = isDark ? colors.cardDark : colors.primaryLight;
 
+  // Estado local inicializado con datos seguros
   const [nombre, setNombre] = useState(authState.user?.nombre_completo || '');
   const [email] = useState(authState.user?.email || '');
   const [telefono, setTelefono] = useState('');
   
-  // Guardamos solo la "clave" (ej: 'lego1'), no la ruta completa
-  const [selectedAvatarKey, setSelectedAvatarKey] = useState(authState.user?.avatar_url || 'lego1');
-  
+  const [selectedAvatarKey, setSelectedAvatarKey] = useState(authState.user?.avatar_url || 'boletin');
   const [cargando, setCargando] = useState(false);
 
   const handleGuardar = async () => {
@@ -36,7 +34,6 @@ const EditarPerfilScreen = () => {
     try {
         setCargando(true);
         
-        // Enviamos la "key" (ej: 'lego1') a la base de datos
         await updateProfile({
             nombre_completo: nombre,
             avatar_url: selectedAvatarKey, 
@@ -44,29 +41,35 @@ const EditarPerfilScreen = () => {
 
         Toast.show({ type: 'success', text1: 'Perfil actualizado correctamente' });
         
-        // Regresamos después de un segundo
         setTimeout(() => router.back(), 1000);
 
     } catch (error) {
-        Alert.alert('Error', 'No se pudo actualizar el perfil. Intenta nuevamente.');
+        Alert.alert('Error', 'No se pudo actualizar el perfil.');
         console.error(error);
     } finally {
+        // Importante: Liberar el estado de carga para poder volver a editar si hubo error
         setCargando(false);
     }
   };
 
   return (
     <ThemedView style={[containers.page, { backgroundColor: isDark ? colors.backgroundDark : colors.background }]}>
-      {/* Header */}
-      <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center' }}>
-        <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginLeft: -8 }}>
+      
+      {/* ✅ HEADER CENTRADO */}
+      <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginLeft: -8, width: 40 }}>
           <Ionicons name="arrow-back" size={26} color={colors.primary} />
         </TouchableOpacity>
-        <ThemedText style={[text.detailTitle, { marginTop: 0, marginBottom: 0, flex: 1, marginHorizontal: 0 }]}>Mi Perfil</ThemedText>
+        
+        <ThemedText style={[text.detailTitle, { marginTop: 0, marginBottom: 0, flex: 1, textAlign: 'center' }]}>
+            Mi Perfil
+        </ThemedText>
+
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView style={{ width: '100%' }}>
-        {/* Avatar Principal (Previsualización) */}
+        {/* Avatar Principal */}
         <View style={{ alignItems: 'center', marginBottom: 20 }}>
             <View style={{ position: 'relative' }}>
                 <Image 
@@ -77,7 +80,7 @@ const EditarPerfilScreen = () => {
             <ThemedText style={{ marginTop: 10, fontSize: 18, fontWeight: 'bold' }}>{nombre || 'Usuario'}</ThemedText>
         </View>
 
-        {/* ✅ Selector de Avatares Locales */}
+        {/* Selector de Avatares */}
         <View style={{ marginBottom: 20, paddingHorizontal: 16 }}>
             <ThemedText style={[text.label, { marginBottom: 10 }]}>Elige un avatar</ThemedText>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>

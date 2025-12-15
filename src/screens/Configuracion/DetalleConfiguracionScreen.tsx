@@ -12,22 +12,20 @@ export default function DetalleConfiguracionScreen() {
   const isDark = colorScheme === 'dark';
   const [notificaciones, setNotificaciones] = React.useState(true);
 
-  // Acción temporal para el botón de contraseña
   const handleCambiarPassword = () => {
     Alert.alert("Próximamente", "Aquí podrás cambiar tu contraseña.");
-    // En el futuro: router.push('/configuracion_tab/cambiar_password');
   };
 
   return (
     <ThemedView style={[containers.page, { backgroundColor: isDark ? colors.backgroundDark : colors.background }]}>
         
-        {/* Header */}
+        {/* ✅ HEADER CENTRADO */}
         <View style={{ paddingTop: 10, paddingHorizontal: 16, paddingBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginLeft: -8, width: 40 }}>
             <Ionicons name="arrow-back" size={26} color={colors.primary} />
           </TouchableOpacity>
           
-          <ThemedText style={[text.detailTitle, { marginTop: 0, marginBottom: 0, flex: 1, marginHorizontal: 0, textAlign: 'center' }]}>
+          <ThemedText style={[text.detailTitle, { marginTop: 0, marginBottom: 0, flex: 1, textAlign: 'center' }]}>
             Configuraciones
           </ThemedText>
 
@@ -36,12 +34,11 @@ export default function DetalleConfiguracionScreen() {
       
       <View style={{ width: '100%', gap: spacing.md }}>
         
-        <View style={[cards.interactive, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1, cursor: 'auto' }]}>
+        <View style={[cards.interactive, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1 }]}>
             <ThemedText style={[text.cardText, { color: colors.textDark }]}>Notificaciones</ThemedText>
             <Switch value={notificaciones} onValueChange={setNotificaciones} />
         </View>
         
-        {/* ✅ Nueva opción: Cambiar Contraseña */}
         <TouchableOpacity 
             style={[cards.interactive, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1 }]}
             onPress={handleCambiarPassword}
@@ -52,8 +49,6 @@ export default function DetalleConfiguracionScreen() {
             </View>
             <Ionicons name="chevron-forward" size={24} color={colors.primary} />
         </TouchableOpacity>
-
-        {/* Se eliminó el switch de Tema Oscuro */}
         
         <View style={[cards.interactive, { backgroundColor: '#fff', borderColor: '#ddd', borderWidth: 1 }]}>
             <ThemedText style={[text.cardText, { color: colors.textDark }]}>Idioma</ThemedText>

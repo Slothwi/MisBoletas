@@ -7,32 +7,41 @@ import { logger } from '../utils/logger';
 const TAG = 'AuthService';
 
 class AuthService {
-  // ✅ MODIFICADO: Acepta credentials Y rememberMe
+  
+  // 👇 Función TRADUCTORA: Backend (Inglés) -> App (Español)
+  private mapResponseToUser(data: any): User {
+    return {
+      id_usuario: data.id || data.id_usuario,
+      email: data.email || data.correo,
+      // Prioridad: full_name (backend) > nombre_completo (app) > nombre > "Usuario"
+      nombre_completo: data.full_name || data.nombre_completo || data.nombre || 'Usuario',
+      avatar_url: data.avatar_url, // Ahora guardará "boletin", "boletina", etc.
+      fecha_registro: data.created_at || data.fecha_registro
+    };
+  }
+
   async login(credentials: LoginCredentials & { rememberMe?: boolean }): Promise<AuthResponse> {
     try {
       logger.log(TAG, `🔄 Iniciando sesión... Recordarme: ${credentials.rememberMe}`);
 
-      // Datos puros para el backend (sin rememberMe)
       const loginData = {
         correo: credentials.correo,
         contrasena: credentials.contrasena
       };
 
-      const response = await apiService.post<AuthResponse>(API_ENDPOINTS.auth.login, loginData);
+      const response: any = await apiService.post(API_ENDPOINTS.auth.login, loginData);
 
       if (response.access_token) {
-        // 1. Guardar Access Token y Usuario
-        await this.storeTokenAndUser(response.access_token, response.user);
+        const userMapped = this.mapResponseToUser(response.user);
+        await this.storeTokenAndUser(response.access_token, userMapped);
 
-        // 2. Lógica "Recordarme" (Refresh Token)
         if (credentials.rememberMe && response.refresh_token) {
-          logger.log(TAG, '💾 Guardando Refresh Token');
-          // ✅ Ahora secureStorageService sí tiene saveItem
           await secureStorageService.saveItem('refresh_token', response.refresh_token);
         } else {
-          // Si no marcó recordarme, borramos cualquier refresh token previo
           await secureStorageService.deleteItem('refresh_token');
         }
+        
+        return { ...response, user: userMapped };
       }
 
       logger.log(TAG, '✅ Login exitoso');
@@ -40,10 +49,8 @@ class AuthService {
 
     } catch (error: any) {
       logger.error(TAG, `Error en login: ${error.response?.data || error.message}`);
-      // ... manejo de errores estándar ...
       let errorMessage = 'Error en el login.';
       if (error.response?.status === 401) errorMessage = 'Credenciales incorrectas.';
-      else if (error.response?.status === 404) errorMessage = 'Usuario no encontrado.';
       
       const apiError: ApiError = {
         message: errorMessage,
@@ -54,28 +61,22 @@ class AuthService {
     }
   }
 
-  // ✅ NUEVO: Intentar refrescar sesión
   async tryRefreshSession(): Promise<boolean> {
     try {
       const refreshToken = await secureStorageService.getItem('refresh_token');
       if (!refreshToken) return false;
 
-      logger.log(TAG, '🔄 Renovando sesión...');
-      // Endpoint para refrescar (asegúrate que el backend lo tenga)
-      const response = await apiService.post<AuthResponse>('/users/refresh-token', {
+      const response: any = await apiService.post('/users/refresh-token', {
         refresh_token: refreshToken
       });
 
       if (response.access_token) {
-        await this.storeTokenAndUser(response.access_token, response.user);
-        if (response.refresh_token) {
-            await secureStorageService.saveItem('refresh_token', response.refresh_token);
-        }
+        const userMapped = this.mapResponseToUser(response.user);
+        await this.storeTokenAndUser(response.access_token, userMapped);
         return true;
       }
       return false;
     } catch (error) {
-      logger.warn(TAG, '❌ Sesión expirada, requiere login');
       await this.logout();
       return false;
     }
@@ -85,8 +86,6 @@ class AuthService {
     try {
       const token = await this.getToken();
       if (token) return true;
-      
-      // Si no hay token, intentar refrescar antes de decir que no
       return await this.tryRefreshSession();
     } catch (error) {
       return false;
@@ -94,36 +93,31 @@ class AuthService {
   }
 
   async logout(): Promise<void> {
-    try {
-      logger.log(TAG, '🚪 Cerrando sesión');
-      await secureStorageService.clearAuthData();
-    } catch (error) {
-      logger.error(TAG, `Error en logout: ${error}`);
-      throw error;
-    }
+    await secureStorageService.clearAuthData();
   }
 
-  // ✅ CORREGIDO: updateProfile con endpoint y tipos correctos
+  // ✅ CORREGIDO: Envía 'full_name' y traduce la respuesta
   async updateProfile(userData: Partial<User>): Promise<User> {
     try {
       logger.log(TAG, '📝 Actualizando perfil');
       
-      // Mapeo para el backend (User -> UserUpdateRequest)
+      // Traducimos App -> Backend
       const updatePayload = {
-        nombre_usuario: userData.nombre_completo,
+        full_name: userData.nombre_completo, 
         avatar_url: userData.avatar_url
       };
 
-      // Endpoint correcto: /users/me
-      const response = await apiService.put<User>('/users/me', updatePayload);
+      const response: any = await apiService.put('/users/me', updatePayload);
       
-      // Actualizar localmente
+      // Traducimos Backend -> App
+      const updatedUserMapped = this.mapResponseToUser(response);
+      
       const currentUser = await secureStorageService.getUser();
       if (currentUser) {
-        await secureStorageService.storeUser({ ...currentUser, ...response });
+        await secureStorageService.storeUser({ ...currentUser, ...updatedUserMapped });
       }
       
-      return response;
+      return updatedUserMapped;
     } catch (error: any) {
       logger.error(TAG, `Error actualizando perfil: ${error}`);
       throw new Error('Error actualizando perfil');
@@ -131,18 +125,18 @@ class AuthService {
   }
 
   async register(userData: RegisterData): Promise<AuthResponse> {
-      // ... (Mismo código de registro que tenías, funciona bien) ...
        try {
-        const deepLinkUrl = 'misboletas://auth-callback';
         const registerData = {
             nombre: userData.nombre,
             correo: userData.correo,
             contrasena: userData.contrasena,
-            redirect_to: deepLinkUrl,
         };
-        const response = await apiService.post<AuthResponse>(API_ENDPOINTS.auth.register, registerData);
+        const response: any = await apiService.post(API_ENDPOINTS.auth.register, registerData);
+        
         if (response.access_token) {
-            await this.storeTokenAndUser(response.access_token, response.user);
+            const userMapped = this.mapResponseToUser(response.user);
+            await this.storeTokenAndUser(response.access_token, userMapped);
+            return { ...response, user: userMapped };
         }
         return response;
     } catch (error: any) {
@@ -152,7 +146,6 @@ class AuthService {
     }
   }
   
-  // Helpers
   async getToken(): Promise<string | null> { return await secureStorageService.getToken(); }
   async getStoredUser(): Promise<User | null> { return await secureStorageService.getUser(); }
   

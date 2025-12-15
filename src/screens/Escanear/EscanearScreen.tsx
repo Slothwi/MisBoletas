@@ -1,20 +1,28 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, ActivityIndicator, Alert, Image, ScrollView } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText, ThemedView } from '@/src/components';
-import { colors, buttons, containers, text, spacing } from '@/src/theme';
+import { colors, buttons, containers, text } from '@/src/theme';
 import documentoService from '@/src/services/DocumentoService';
 import Toast from 'react-native-toast-message';
+import { useColorScheme } from '@/src/hooks/useColorScheme';
 
 const EscanearScreen = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [previewUri, setPreviewUri] = useState<string | null>(null);
+  const [, setPreviewUri] = useState<string | null>(null);
+  
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
-  // Validar tipo de archivo soportado
+  const cardBg = isDark ? '#1e293b' : '#ffffff';
+  const textColor = isDark ? '#e2e8f0' : '#444';
+  const subTextColor = isDark ? '#94a3b8' : '#666';
+  const borderColor = isDark ? '#334155' : '#ddd';
+
   const isValidFileType = (mimeType?: string, name?: string): boolean => {
     const validImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
     const validPdfType = 'application/pdf';
@@ -30,7 +38,6 @@ const EscanearScreen = () => {
   };
 
   const procesarArchivo = async (asset: any) => {
-    // Validar antes de procesar
     if (!isValidFileType(asset.mimeType || asset.type, asset.fileName || asset.name)) {
       Alert.alert('Formato no soportado', 'Solo se aceptan JPG, PNG, WebP o PDF.');
       return;
@@ -48,13 +55,10 @@ const EscanearScreen = () => {
         type: asset.mimeType || asset.type || 'image/jpeg'
       });
 
-      console.log('✅ OCR completado:', ocrData);
-
       if (!ocrData || typeof ocrData !== 'object') {
         throw new Error('Respuesta OCR inválida');
       }
 
-      // Navegar al formulario con los datos extraídos
       router.push({
         pathname: '/formulario',
         params: {
@@ -124,113 +128,133 @@ const EscanearScreen = () => {
       }
     } catch (error) {
       console.error('Error selecting file:', error);
-      Alert.alert('Error', 'No se pudo seleccionar el archivo');
+        Alert.alert('Error', 'No se pudo seleccionar el archivo');
     }
-  };
+};
 
-  return (
-    <ThemedView style={[containers.page, { backgroundColor: '#fff' }]}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 20 }}>
-        
-        {/* Encabezado */}
-        <View style={{ alignItems: 'center', marginBottom: 40 }}>
-          <Ionicons name="receipt" size={64} color={colors.primary} style={{ marginBottom: 16 }} />
-          <ThemedText style={[text.detailTitle, { textAlign: 'center', marginTop: 0, marginBottom: 8 }]}>
-            Escanear Boleta o Factura
-          </ThemedText>
-          <ThemedText style={{ fontSize: 14, color: '#666', textAlign: 'center' }}>
-            Toma una foto o sube un archivo (JPG, PNG, PDF)
-          </ThemedText>
+return (
+    <ThemedView style={[containers.page, { backgroundColor: isDark ? colors.backgroundDark : colors.background }]}>
+
+        <View style={{ paddingTop: 10, paddingHorizontal: 16, alignItems: 'flex-start' }}>
+            <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginLeft: -8 }}>
+                <Ionicons name="arrow-back" size={26} color={colors.primary} />
+            </TouchableOpacity>
         </View>
 
-        {loading ? (
-          /* Estado Cargando */
-          <View style={{ alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
-            <ActivityIndicator size="large" color={colors.primary} style={{ marginBottom: 20 }} />
-            <ThemedText style={{ fontSize: 16, fontWeight: '600', textAlign: 'center' }}>
-              Analizando documento con IA...
-            </ThemedText>
-            <ThemedText style={{ fontSize: 12, color: '#999', marginTop: 8 }}>
-              Esto puede tomar unos segundos
-            </ThemedText>
-          </View>
-        ) : (
-          /* Opciones */
-          <View style={{ gap: 16 }}>
-            {/* Botón Tomar Foto */}
-            <TouchableOpacity 
-              style={[buttons.primary, { paddingVertical: 16 }]} 
-              onPress={tomarFoto}
-              activeOpacity={0.8}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name="camera" size={24} color="#fff" style={{ marginRight: 12 }} />
-                <View>
-                  <ThemedText style={[text.buttonText, { margin: 0 }]}>
-                    Tomar Foto
-                  </ThemedText>
-                  <ThemedText style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', marginTop: 2 }}>
-                    Captura con tu cámara
-                  </ThemedText>
+        <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 20 }}>
+        {/* ... el resto de tu código (View estilo tarjeta, etc) ... */}
+        
+        <View style={{ 
+            backgroundColor: cardBg, 
+            borderRadius: 24, 
+            padding: 24,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: isDark ? 0.3 : 0.1,
+            shadowRadius: 10,
+            elevation: 5
+        }}>
+            
+            <View style={{ alignItems: 'center', marginBottom: 30 }}>
+                <View style={{ 
+                    backgroundColor: isDark ? 'rgba(231, 117, 115, 0.2)' : '#ffe4e3', 
+                    padding: 16, 
+                    borderRadius: 50,
+                    marginBottom: 16
+                }}>
+                    <Ionicons name="scan" size={48} color={colors.primary} />
                 </View>
-              </View>
-            </TouchableOpacity>
-
-            {/* Divisor */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 8 }}>
-              <View style={{ flex: 1, height: 1, backgroundColor: '#ddd' }} />
-              <ThemedText style={{ color: '#999', fontSize: 12 }}>o</ThemedText>
-              <View style={{ flex: 1, height: 1, backgroundColor: '#ddd' }} />
+                
+                <ThemedText style={[text.detailTitle, { textAlign: 'center', marginTop: 0, marginBottom: 8, color: isDark ? '#fff' : colors.textDark }]}>
+                    Escanear Boleta
+                </ThemedText>
+                <ThemedText style={{ fontSize: 14, color: subTextColor, textAlign: 'center', lineHeight: 20 }}>
+                    Toma una foto clara o sube un archivo (PDF/JPG) para autocompletar los datos.
+                </ThemedText>
             </View>
 
-            {/* Botón Subir Archivo */}
-            <TouchableOpacity 
-              style={[buttons.secondary, { paddingVertical: 16, borderWidth: 2, borderColor: colors.primary }]} 
-              onPress={subirArchivo}
-              activeOpacity={0.8}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name="cloud-upload" size={24} color={colors.primary} style={{ marginRight: 12 }} />
-                <View>
-                  <ThemedText style={{ color: colors.primary, fontWeight: '700', margin: 0 }}>
-                    Subir Archivo
-                  </ThemedText>
-                  <ThemedText style={{ fontSize: 11, color: colors.primary, marginTop: 2, opacity: 0.7 }}>
-                    JPG, PNG o PDF
-                  </ThemedText>
+            {loading ? (
+            <View style={{ alignItems: 'center', justifyContent: 'center', minHeight: 150 }}>
+                <ActivityIndicator size="large" color={colors.primary} style={{ marginBottom: 20 }} />
+                <ThemedText style={{ fontSize: 16, fontWeight: '600', textAlign: 'center', color: textColor }}>
+                Analizando documento...
+                </ThemedText>
+                <ThemedText style={{ fontSize: 12, color: subTextColor, marginTop: 8 }}>
+                Nuestra IA está leyendo los datos
+                </ThemedText>
+            </View>
+            ) : (
+            <View style={{ gap: 16 }}>
+                
+                {/* Botón Tomar Foto - ALINEADO Y CENTRADO */}
+                <TouchableOpacity 
+                    style={[buttons.primary, { paddingVertical: 16 }]} 
+                    onPress={tomarFoto}
+                    activeOpacity={0.8}
+                >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                        <Ionicons name="camera" size={24} color="#fff" style={{ marginRight: 12 }} />
+                        <ThemedText style={[text.buttonText, { margin: 0, textAlign: 'center' }]}>
+                            Tomar Foto
+                        </ThemedText>
+                    </View>
+                </TouchableOpacity>
+
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 4 }}>
+                    <View style={{ flex: 1, height: 1, backgroundColor: borderColor }} />
+                    <ThemedText style={{ color: subTextColor, fontSize: 12 }}>o</ThemedText>
+                    <View style={{ flex: 1, height: 1, backgroundColor: borderColor }} />
                 </View>
-              </View>
-            </TouchableOpacity>
 
-            {/* Opción Manual */}
-            <TouchableOpacity 
-              onPress={() => router.push('/formulario')} 
-              style={{ marginTop: 16, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 8, borderWidth: 1, borderColor: '#ddd' }}
-            >
-              <ThemedText style={{ textAlign: 'center', color: '#888', fontWeight: '500' }}>
-                Ingresar datos manualmente
-              </ThemedText>
-            </TouchableOpacity>
-          </View>
-        )}
+                {/* Botón Subir Archivo - FONDO BLANCO Y ALINEADO */}
+                <TouchableOpacity 
+                    style={[buttons.secondary, { 
+                        paddingVertical: 16, 
+                        borderWidth: 2, 
+                        borderColor: colors.primary,
+                        backgroundColor: '#ffffff' // ✅ Fondo Blanco
+                    }]} 
+                    onPress={subirArchivo}
+                    activeOpacity={0.8}
+                >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                        <Ionicons name="cloud-upload-outline" size={24} color={colors.primary} style={{ marginRight: 12 }} />
+                        <ThemedText style={{ color: colors.primary, fontWeight: '700', margin: 0, textAlign: 'center' }}>
+                            Subir Archivo
+                        </ThemedText>
+                    </View>
+                </TouchableOpacity>
 
-        {/* Footer con tips */}
-        {!loading && (
-          <View style={{ marginTop: 40, paddingTop: 20, borderTopWidth: 1, borderTopColor: '#eee' }}>
-            <ThemedText style={{ fontSize: 12, color: '#999', marginBottom: 8, fontWeight: '600' }}>
-              💡 Tips para mejores resultados:
-            </ThemedText>
-            <ThemedText style={{ fontSize: 11, color: '#999', marginBottom: 4 }}>
-              • Asegúrate buena iluminación
-            </ThemedText>
-            <ThemedText style={{ fontSize: 11, color: '#999', marginBottom: 4 }}>
-              • Centra el documento en la foto
-            </ThemedText>
-            <ThemedText style={{ fontSize: 11, color: '#999' }}>
-              • Evita sombras y reflejos
-            </ThemedText>
-          </View>
-        )}
+                <TouchableOpacity 
+                    onPress={() => router.push('/formulario')} 
+                    style={{ 
+                        marginTop: 8, 
+                        paddingVertical: 14, 
+                        borderRadius: 12, 
+                        backgroundColor: isDark ? '#334155' : '#f3f4f6'
+                    }}
+                >
+                    <ThemedText style={{ textAlign: 'center', color: subTextColor, fontWeight: '500', fontSize: 14 }}>
+                        Ingresar datos manualmente
+                    </ThemedText>
+                </TouchableOpacity>
+            </View>
+            )}
+
+            {!loading && (
+            <View style={{ marginTop: 24, paddingTop: 16, borderTopWidth: 1, borderTopColor: borderColor }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                    <Ionicons name="bulb-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
+                    <ThemedText style={{ fontSize: 12, color: textColor, fontWeight: '600' }}>
+                    Tips para mejores resultados:
+                    </ThemedText>
+                </View>
+                <ThemedText style={{ fontSize: 11, color: subTextColor, marginBottom: 4 }}>• Busca buena iluminación.</ThemedText>
+                <ThemedText style={{ fontSize: 11, color: subTextColor }}>• Evita sombras sobre el texto.</ThemedText>
+            </View>
+            )}
+        </View>
+
       </ScrollView>
     </ThemedView>
   );
