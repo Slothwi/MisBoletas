@@ -5,10 +5,6 @@ import { ImageSourcePropType } from 'react-native';
 // El valor (derecha) es el archivo real en tu app.
 // ¡Asegúrate de que los nombres de archivo coincidan con los que pusiste en la carpeta!
 export const AVATAR_MAP: Record<string, ImageSourcePropType> = {
-    'lego1': require('@/assets/images/avatars/lego1.png'),
-    'lego2': require('@/assets/images/avatars/lego2.png'),
-    'mujer1': require('@/assets/images/avatars/mujer1.png'),
-    'hombre1': require('@/assets/images/avatars/hombre1.png'),
     // Puedes agregar más líneas aquí si añades más fotos
 };
 
