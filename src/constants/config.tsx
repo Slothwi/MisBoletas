@@ -16,9 +16,9 @@ const getApiUrl = (): string => {
     case 'DEV':
       return process.env.EXPO_PUBLIC_API_URL_DEV || 'http://192.168.88.3:8000/api/v1';
     case 'PROD':
-      return process.env.EXPO_PUBLIC_API_URL_PROD || 'https://misboletas-backend.onrender.com/api/v1';
+      return process.env.EXPO_PUBLIC_API_URL_PROD || 'https://api.misboletas.tech/api/v1';
     default:
-      return 'https://misboletas-backend.onrender.com/api/v1';
+      return 'https://api.misboletas.tech/api/v1';
   }
 };
 
@@ -86,6 +86,8 @@ export const API_ENDPOINTS = {
     confirm: '/bridges/confirm',  // GET /bridges/confirm (puente email → app)
     profile: '/users/me',
     updateProfile: '/users/',
+    forgotPassword: '/users/forgot-password',  // POST - solicita recovery email
+    resetPassword: '/users/reset-password',  // POST - establece nueva contraseña
   },
   // Categorías
   categorias: {
@@ -107,7 +109,7 @@ export const API_ENDPOINTS = {
     addToCategory: '/productos/:id/categorias/:categoryId',
     removeFromCategory: '/productos/:id/categorias/:categoryId',
     historialEliminados: '/productos/historial/eliminados',
-    restaurar: '/productos/:id/restaurar',
+    restore: '/productos/:id/restore',
   },
   // Documentos
   documentos: {

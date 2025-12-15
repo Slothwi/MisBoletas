@@ -1,11 +1,10 @@
 import { ThemedText } from '@/src/components';
 import { buttons, colors, containers, inputs, misc, spacing, text } from '@/src/theme';
+import { API_ENDPOINTS, BASE_URL } from '@/src/constants/config';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, ScrollView, TextInput, TouchableOpacity, View } from 'react-native';
 import Toast from 'react-native-toast-message';
-
-const API_URL = 'https://api.misboletas.tech/api';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -25,7 +24,7 @@ export default function ForgotPasswordScreen() {
     
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/v1/users/forgot-password`, {
+      const response = await fetch(`${BASE_URL}${API_ENDPOINTS.auth.forgotPassword}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

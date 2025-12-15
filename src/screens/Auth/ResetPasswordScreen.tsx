@@ -1,18 +1,43 @@
 import { ThemedText, ThemedView } from '@/src/components';
-// 👇 CORRECCIÓN: Importamos estilos del tema
 import { buttons, cards, containers, inputs, spacing, text } from '@/src/theme';
+import { API_ENDPOINTS, BASE_URL, STORAGE_CONFIG } from '@/src/constants/config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 
 export default function ResetPasswordScreen() {
-  const { token } = useLocalSearchParams();
   const router = useRouter();
+  const [recoveryToken, setRecoveryToken] = useState<string | null>(null);
+  const [recoveryEmail, setRecoveryEmail] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+
+  // Cargar token y email del AsyncStorage (guardados por AuthCallbackScreen)
+  useEffect(() => {
+    loadRecoveryData();
+  }, []);
+
+  const loadRecoveryData = async () => {
+    try {
+      const token = await AsyncStorage.getItem('recovery_token');
+      const email = await AsyncStorage.getItem('recovery_email');
+      
+      if (!token || !email) {
+        Alert.alert('Error', 'Link expirado o inválido. Solicita otro reset de contraseña.');
+        router.replace('/(auth)/login');
+        return;
+      }
+      
+      setRecoveryToken(token);
+      setRecoveryEmail(email);
+    } catch (error) {
+      console.error('Error loading recovery data:', error);
+      router.replace('/(auth)/login');
+    }
+  };
 
   const validatePassword = (pwd: string) => {
     if (pwd.length < 8) return 'Mínimo 8 caracteres';
@@ -23,6 +48,11 @@ export default function ResetPasswordScreen() {
   };
 
   const handleReset = async () => {
+    if (!recoveryToken || !recoveryEmail) {
+      Alert.alert('Error', 'Datos de recuperación inválidos');
+      return;
+    }
+
     if (!password || !confirmPassword) {
       Alert.alert('Error', 'Completa todos los campos');
       return;
@@ -41,22 +71,45 @@ export default function ResetPasswordScreen() {
 
     setLoading(true);
     try {
+      console.log('🔐 Resetting password for:', recoveryEmail);
+      
       const response = await fetch(
-        'https://api.misboletas.tech/api/v1/users/reset-password',
+        `${BASE_URL}${API_ENDPOINTS.auth.resetPassword || '/auth/reset-password'}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            token: token,
+            token: recoveryToken,
+            email: recoveryEmail,
             password: password
           })
         }
       );
 
       const data = await response.json();
+      console.log('✅ Reset response:', response.status);
 
-      if (response.ok && data.access_token) {
-        await AsyncStorage.setItem('accessToken', data.access_token);
+      if (response.ok) {
+        // Guardar token si viene en la respuesta
+        if (data.access_token) {
+          await AsyncStorage.setItem(STORAGE_CONFIG.authTokenKey, data.access_token);
+          if (data.user) {
+            await AsyncStorage.setItem(STORAGE_CONFIG.userDataKey, JSON.stringify(data.user));
+          }
+        }
+
+        // Guardar token si viene en la respuesta
+        if (data.access_token) {
+          await AsyncStorage.setItem(STORAGE_CONFIG.authTokenKey, data.access_token);
+          if (data.user) {
+            await AsyncStorage.setItem(STORAGE_CONFIG.userDataKey, JSON.stringify(data.user));
+          }
+        }
+
+        // Limpiar datos temporales
+        await AsyncStorage.removeItem('recovery_token');
+        await AsyncStorage.removeItem('recovery_email');
+
         setSuccess(true);
         setTimeout(() => {
           router.replace('/(tabs)/home');
@@ -66,8 +119,16 @@ export default function ResetPasswordScreen() {
           'Error',
           data.detail || 'El link ha expirado. Solicita uno nuevo.'
         );
+        
+        // Limpiar si el token expiró
+        if (response.status === 401 || response.status === 400) {
+          await AsyncStorage.removeItem('recovery_token');
+          await AsyncStorage.removeItem('recovery_email');
+          router.replace('/(auth)/forgot-password');
+        }
       }
     } catch (error) {
+      console.error('❌ Reset password error:', error);
       Alert.alert('Error', 'No se pudo restablecer la contraseña. Intenta nuevamente.');
     } finally {
       setLoading(false);
@@ -98,7 +159,10 @@ export default function ResetPasswordScreen() {
         </ThemedText>
 
         <ThemedView style={[cards.base, { marginTop: spacing.lg, marginBottom: spacing.lg }]}>
-          <ThemedText style={text.helperText}>✓ Mínimo 6 caracteres</ThemedText>
+          <ThemedText style={text.helperText}>✓ Mínimo 8 caracteres</ThemedText>
+          <ThemedText style={text.helperText}>✓ Una mayúscula (A-Z)</ThemedText>
+          <ThemedText style={text.helperText}>✓ Un número (0-9)</ThemedText>
+          <ThemedText style={text.helperText}>✓ Un símbolo (!@#$%^&*)</ThemedText>
         </ThemedView>
 
         <ThemedText style={text.label}>Nueva Contraseña</ThemedText>

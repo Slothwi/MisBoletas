@@ -23,6 +23,10 @@ export default function RootLayout() {
             options={{ headerShown: false }}
           />
           <Stack.Screen 
+            name="escanear" 
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen 
             name="formulario" 
             options={{ headerShown: false }}
           />

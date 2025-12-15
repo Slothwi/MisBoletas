@@ -107,12 +107,16 @@ const FormularioScreen = () => {
   const [cargandoCategorias, setCargandoCategorias] = useState(true);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [productoEditando, setProductoEditando] = useState<any>(null);
+  const [imagenTemporal, setImagenTemporal] = useState<string | null>(null);
 
   const paramsLoadedRef = useRef(false);
 
-  // 1. Cargar datos del producto
+  // 1. Cargar datos del producto o OCR
   useEffect(() => {
-    if (!paramsLoadedRef.current && params.producto && params.modoEdicion === 'true') {
+    if (paramsLoadedRef.current) return; // Evitar doble carga
+
+    // CASO 1: MODO EDICIÓN (Producto existente)
+    if (params.producto && params.modoEdicion === 'true') {
         paramsLoadedRef.current = true;
         try {
             const p = JSON.parse(params.producto as string);
@@ -127,8 +131,79 @@ const FormularioScreen = () => {
             if (p.duracion_garantia_meses) setDuracionGarantia(p.duracion_garantia_meses.toString());
             if (p.fecha_compra) setFechaCompra(new Date(p.fecha_compra));
         } catch { Alert.alert('Error', 'Datos inválidos'); }
+    } 
+    // CASO 2: MODO OCR (Nuevo producto prellenado)
+    else if (params.ocrData) {
+        paramsLoadedRef.current = true;
+        try {
+            const data = JSON.parse(params.ocrData as string);
+            console.log("Datos OCR recibidos:", data);
+
+            // Llenar tienda/comercio
+            if (data.comercio) setTienda(data.comercio);
+            if (data.tienda) setTienda(data.tienda);
+            
+            // Llenar precio/total
+            if (data.total) setPrecio(data.total.toString());
+            if (data.monto) setPrecio(data.monto.toString());
+            if (data.precio) setPrecio(data.precio.toString());
+            
+            // Llenar marca
+            if (data.marca) setMarca(data.marca);
+            if (data.vendor || data.vendedor) setMarca(data.vendor || data.vendedor);
+            
+            // Llenar modelo
+            if (data.modelo) setModelo(data.modelo);
+            if (data.descripcion) setModelo(data.descripcion);
+            
+            // Llenar garantía
+            if (data.garantia) setDuracionGarantia(data.garantia.toString());
+            
+            // Parsear fecha (robusto para múltiples formatos)
+            if (data.fecha || data.fecha_emision) {
+              const fechaStr = (data.fecha || data.fecha_emision).toString().trim();
+              try {
+                let nuevaFecha: Date | null = null;
+
+                // Intenta parsear DD/MM/YYYY o DD-MM-YYYY (formato Chile)
+                const regexDMY = /(\d{1,2})[/-](\d{1,2})[/-](\d{4})/;
+                const matchDMY = fechaStr.match(regexDMY);
+                
+                if (matchDMY) {
+                  const [, dia, mes, año] = matchDMY;
+                  nuevaFecha = new Date(parseInt(año), parseInt(mes) - 1, parseInt(dia));
+                } else {
+                  // Fallback: intenta Date.parse
+                  nuevaFecha = new Date(fechaStr);
+                }
+
+                if (nuevaFecha && !isNaN(nuevaFecha.getTime())) {
+                  setFechaCompra(nuevaFecha);
+                }
+              } catch (dateError) {
+                console.warn('⚠️ No se pudo parsear fecha:', fechaStr, dateError);
+              }
+            }
+            
+            // Guardar URI para subirla al guardar el producto
+            if (params.imagenTemporalUri) {
+                setImagenTemporal(params.imagenTemporalUri as string);
+                setArchivoSeleccionado({ 
+                    uri: params.imagenTemporalUri, 
+                    name: 'boleta_escaneada.jpg', 
+                    type: 'image/jpeg', 
+                    tipoDocumento: 'boleta' 
+                });
+            }
+            
+            Alert.alert('✅ Datos cargados', 'Hemos completado el formulario. Verifica los datos antes de guardar.');
+            
+        } catch (e) {
+            console.error("Error parseando OCR params", e);
+            Alert.alert('Advertencia', 'No se pudieron precargar todos los datos. Completa el formulario manualmente.');
+        }
     }
-  }, []);
+  }, [params]);
 
   // 2. Cargar categorías y setear la inicial
   useEffect(() => {
@@ -230,7 +305,7 @@ const FormularioScreen = () => {
         }
 
         Alert.alert('Éxito', 'Guardado correctamente', [
-            { text: 'OK', onPress: () => router.back() } 
+            { text: 'OK', onPress: () => router.replace('/(tabs)/home' as any) } 
         ]);
 
     } catch (e: any) {

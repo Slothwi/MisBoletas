@@ -239,15 +239,33 @@ class ProductoService {
     }
   }
 
+  // Alias para getDeleted (para mejor legibilidad)
+  async getHistorialEliminados(): Promise<Producto[]> {
+    return this.getDeleted();
+  }
+
   // Restaurar producto
   async restore(id: string): Promise<void> {
     try {
       console.log('🔄 Restoring product:', id);
-      const endpoint = API_ENDPOINTS.productos.restaurar.replace(':id', id);
+      const endpoint = API_ENDPOINTS.productos.restore.replace(':id', id);
       await apiService.put(endpoint, {});
       console.log('✅ Product restored successfully');
     } catch (error) {
       console.error('❌ Error restoring product:', error);
+      throw error;
+    }
+  }
+
+  // Eliminar permanentemente (solo para eliminados)
+  async deletePermanently(id: string): Promise<void> {
+    try {
+      console.log('🗑️ Permanently deleting product:', id);
+      // Hacer DELETE directo, no soft delete
+      await apiService.delete(`${API_ENDPOINTS.productos.delete}/${id}?permanent=true`);
+      console.log('✅ Product permanently deleted');
+    } catch (error) {
+      console.error('❌ Error permanently deleting product:', error);
       throw error;
     }
   }

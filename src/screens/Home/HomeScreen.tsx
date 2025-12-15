@@ -107,9 +107,10 @@ const HomeScreen = () => {
     }
   }, [authState.isAuthenticated, cargarDatos]);
 
-  const handleAgregarProducto = () => router.push('/formulario' as Href);
+  const handleAgregarProducto = () => router.push('/escanear' as Href);
   const handleVerProducto = (producto: Producto) => setProductoSeleccionado(producto);
   const handleVolverALista = () => setProductoSeleccionado(null);
+  const handleVerHistorial = () => router.push('/(tabs)/configuracion_tab/historial' as Href);
 
   // ... (MANTENER handleEliminarProducto y handleEditarProducto IGUAL QUE ANTES) ...
   const handleEliminarProducto = async (producto: Producto) => {
@@ -316,7 +317,7 @@ const HomeScreen = () => {
             <MaterialCommunityIcons name="package-variant" size={64} color="#ccc" />
             <ThemedText style={{ marginTop: 20 }}>Aún no tienes productos</ThemedText>
             <TouchableOpacity style={[buttons.primary, { marginTop: 20 }]} onPress={handleAgregarProducto}>
-                <ThemedText style={text.buttonText}>Agregar Producto</ThemedText>
+                <ThemedText style={text.buttonText}>📱 Escanear Boleta</ThemedText>
             </TouchableOpacity>
         </View>
       ) : (
@@ -361,9 +362,14 @@ const HomeScreen = () => {
                 );
             }}
             ListFooterComponent={
-                <TouchableOpacity style={[buttons.secondary, { marginTop: 20 }]} onPress={handleAgregarProducto}>
-                    <ThemedText style={{ color: colors.primary, textAlign: 'center', fontWeight: 'bold' }}>+ Agregar otro</ThemedText>
-                </TouchableOpacity>
+                <View style={{ gap: 10 }}>
+                  <TouchableOpacity style={[buttons.secondary, { marginTop: 20 }]} onPress={handleAgregarProducto}>
+                      <ThemedText style={{ color: colors.primary, textAlign: 'center', fontWeight: 'bold' }}>📱 Escanear Nueva Boleta</ThemedText>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[{ backgroundColor: '#f5f5f5', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#ddd' }]} onPress={handleVerHistorial}>
+                      <ThemedText style={{ color: '#888', textAlign: 'center', fontWeight: '500' }}>🗑️ Ver Papelera</ThemedText>
+                  </TouchableOpacity>
+                </View>
             }
         />
       )}

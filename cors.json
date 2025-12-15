@@ -1,0 +1,18 @@
+[
+  {
+    "origin": [
+      "https://misboletas.tech",
+      "https://api.misboletas.tech",
+      "https://www.misboletas.tech"
+    ],
+    "method": ["GET", "HEAD", "PUT", "POST", "DELETE", "OPTIONS"],
+    "responseHeader": [
+      "Content-Type",
+      "Content-Length",
+      "Authorization",
+      "Accept",
+      "Access-Control-Allow-Origin"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]

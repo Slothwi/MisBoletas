@@ -28,8 +28,34 @@ const HistorialScreen = () => {
   };
 
   const handleRestaurar = (producto: Producto) => {
-      // ... tu lógica aquí ...
-      Alert.alert("Restaurar", "...", [{ text: "OK", onPress: () => {} }]); // Simplificado para brevedad
+      if (!producto.id_producto) return;
+
+      Alert.alert(
+          "Restaurar Producto",
+          `¿Deseas restaurar "${producto.nombre}" a tus productos activos?`,
+          [
+              { text: "Cancelar", style: "cancel" },
+              { 
+                  text: "Restaurar", 
+                  onPress: async () => {
+                      try {
+                          // 1. Llamada al servicio (Asegúrate de tener este método en productoService)
+                          await productoService.restore(producto.id_producto!);
+                          
+                          // 2. Feedback visual
+                          Toast.show({ type: 'success', text1: 'Producto restaurado' });
+                          
+                          // 3. Navegar a Home para ver el producto restaurado
+                          router.replace('/(tabs)/home' as any);
+                          
+                      } catch (error) {
+                          console.error(error);
+                          Alert.alert("Error", "No se pudo restaurar el producto.");
+                      }
+                  } 
+              }
+          ]
+      );
   };
 
   useEffect(() => { cargarHistorial(); }, []);

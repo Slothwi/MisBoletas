@@ -66,6 +66,38 @@ class DocumentoService {
     }
   }
 
+  /**
+   * Valida si el tipo de archivo es soportado para OCR
+   */
+  isValidDocumentType(mimeType?: string, fileName?: string): { valid: boolean; message?: string } {
+    const validImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const validPdfType = 'application/pdf';
+    
+    const type = mimeType?.toLowerCase() || '';
+    const name = fileName?.toLowerCase() || '';
+    
+    // Check MIME type
+    if (validImageTypes.includes(type)) return { valid: true };
+    if (type === validPdfType) return { valid: true };
+    
+    // Check file extension
+    if (name.match(/\.(jpg|jpeg|png|webp|pdf)$/)) return { valid: true };
+    
+    return { 
+      valid: false, 
+      message: 'Archivo no soportado. Solo JPG, PNG, WebP o PDF.' 
+    };
+  }
+
+  /**
+   * Obtiene un nombre amigable para el tipo de documento
+   */
+  getDocumentTypeName(mimeType?: string): string {
+    if (mimeType?.includes('pdf')) return 'PDF';
+    if (mimeType?.includes('image')) return 'Imagen';
+    return 'Documento';
+  }
+
   async upload(
     productoId: string | number, 
     file: { uri: string; type?: string; name: string }
@@ -80,6 +112,49 @@ class DocumentoService {
 
     const url = API_ENDPOINTS.documentos.upload.replace(':productoId', productoId.toString());
     return await apiService.uploadFile<DocumentoUploadResponse>(url, formData);
+  }
+
+  /**
+   * Envía una imagen al endpoint de OCR "raw" para obtener datos antes de crear el producto.
+   * Maneja boletas y facturas en formato JPG, PNG o PDF.
+   */
+  async procesarOCRPrevia(file: { uri: string; type?: string; name: string }): Promise<OCRData> {
+    try {
+      // Comprimir solo si es imagen
+      const finalUri = file.type?.includes('image') ? await this.compressImage(file.uri) : file.uri;
+      
+      const formData = new FormData();
+      formData.append('file', {
+        uri: finalUri,
+        type: file.type || 'image/jpeg',
+        name: file.name,
+      } as any);
+
+      console.log('📤 OCR Previa - Enviando:', { name: file.name, type: file.type });
+
+      // Llamamos al endpoint OCR del backend
+      const response = await apiService.uploadFile<{ 
+        parsed_data?: OCRData;
+        file_name: string;
+        message: string;
+        ocr_results?: any;
+      }>('/ocr/procesar-boleta', formData);
+
+      console.log('✅ Respuesta OCR recibida:', response);
+
+      // Validar estructura de respuesta
+      if (!response.parsed_data) {
+        console.warn('⚠️ No hay parsed_data en respuesta OCR. Devolviendo respuesta completa.');
+        return response as any; // Fallback a respuesta completa
+      }
+
+      return response.parsed_data;
+    } catch (error: any) {
+      console.error('❌ Error en procesarOCRPrevia:', error);
+      throw new Error(
+        error?.message || 'Error procesando documento con OCR'
+      );
+    }
   }
 
   async getByProducto(productoId: string | number): Promise<Documento[]> {

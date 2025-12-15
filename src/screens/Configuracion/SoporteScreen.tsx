@@ -18,8 +18,23 @@ export default function SoporteScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleEnviar = async () => {
-    // ... lógica de envío ...
-    Alert.alert("Enviado", "Mensaje recibido");
+    if (!asunto.trim() || !mensaje.trim()) {
+      Alert.alert('Error', 'Por favor completa el asunto y el mensaje.');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await ticketService.createTicket(asunto, mensaje);
+      Alert.alert('Enviado', 'Tu mensaje fue recibido. Pronto te contactaremos.', [
+        { text: 'OK', onPress: () => router.back() }
+      ]);
+      setAsunto("");
+      setMensaje("");
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'No se pudo enviar el mensaje.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
