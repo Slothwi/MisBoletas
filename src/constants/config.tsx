@@ -92,7 +92,7 @@ export const API_ENDPOINTS = {
   // Categorías
   categorias: {
     list: '/categorias',
-    create: '/categorias',
+    create: '/categorias/',
     update: '/categorias',
     delete: '/categorias',
     search: '/categorias/buscar/nombre',

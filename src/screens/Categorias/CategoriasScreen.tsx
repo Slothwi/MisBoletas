@@ -34,6 +34,7 @@ const CategoriasScreen = () => {
   
   const [mostrandoFormulario, setMostrandoFormulario] = useState(false);
   const [nuevoNombreCategoria, setNuevoNombreCategoria] = useState("");
+  const [nuevoColorCategoria, setNuevoColorCategoria] = useState<string>(categoriaService.getRandomColor());
   const [categoriaAEditar, setCategoriaAEditar] = useState<Categoria | null>(null);
   const [nombreEdicion, setNombreEdicion] = useState("");
   const [mostrandoEdicion, setMostrandoEdicion] = useState(false);
@@ -100,9 +101,10 @@ const CategoriasScreen = () => {
     try {
       await categoriaService.create({
         nombre: nuevoNombreCategoria.trim(),
-        color: categoriaService.getRandomColor()
+        color: nuevoColorCategoria
       });
       setNuevoNombreCategoria("");
+      setNuevoColorCategoria(categoriaService.getRandomColor());
       setMostrandoFormulario(false);
       cargarCategorias();
       Alert.alert("Éxito", "Categoría creada");
@@ -255,28 +257,38 @@ const CategoriasScreen = () => {
         ))}
 
         {mostrandoFormulario ? (
-            <View style={[cards.base, { backgroundColor: cardBg, marginTop: 10, borderColor: colors.primary, borderWidth: 1 }]}>
-                <ThemedText style={{ marginBottom: 8, fontWeight: 'bold', color: textColor }}>Nueva Categoría</ThemedText>
-                <TextInput 
-                    style={[inputs.base, { backgroundColor: isDark ? '#222' : '#f9f9f9', color: textColor, borderColor: isDark ? '#444' : '#ddd' }]} 
-                    placeholder="Nombre..." 
-                    placeholderTextColor={subTextColor}
-                    value={nuevoNombreCategoria} 
-                    onChangeText={setNuevoNombreCategoria}
-                />
-                <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-                    <TouchableOpacity style={[buttons.secondary, { flex: 1, backgroundColor: isDark ? '#fff' : '#ddd' }]} onPress={() => setMostrandoFormulario(false)}>
-                        <ThemedText style={{ color: isDark ? '#222' : colors.textMuted, textAlign: 'center' }}>Cancelar</ThemedText>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={[buttons.primary, { flex: 1 }]} onPress={handleGuardarCategoria}>
-                        <ThemedText style={text.buttonText}>Crear</ThemedText>
-                    </TouchableOpacity>
-                </View>
+          <View style={[cards.base, { backgroundColor: cardBg, marginTop: 10, borderColor: colors.primary, borderWidth: 1 }]}>
+            <ThemedText style={{ marginBottom: 8, fontWeight: 'bold', color: textColor }}>Nueva Categoría</ThemedText>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+              <TouchableOpacity onPress={() => setNuevoColorCategoria(categoriaService.getRandomColor())} style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: nuevoColorCategoria, marginRight: 10, borderWidth: 1, borderColor: '#eee' }} />
+              <ThemedText style={{ color: textColor }}>Toca el círculo para cambiar color</ThemedText>
             </View>
+
+            <TextInput 
+              style={[inputs.base, { backgroundColor: '#ffffff', color: '#000000', borderColor: isDark ? colors.primary : '#ddd' }]} 
+              placeholder="Nombre..." 
+              placeholderTextColor={'#999999'}
+              value={nuevoNombreCategoria}  
+              onChangeText={setNuevoNombreCategoria}
+            />
+
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+              <TouchableOpacity style={[buttons.secondary, { flex: 1, backgroundColor: isDark ? '#fff' : '#ddd' }]} onPress={() => setMostrandoFormulario(false)}>
+                <ThemedText style={{ color: isDark ? '#222' : colors.textMuted, textAlign: 'center' }}>Cancelar</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity style={[buttons.primary, { flex: 1 }]} onPress={handleGuardarCategoria}>
+                <ThemedText style={text.buttonText}>Crear</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
         ) : (
-            <TouchableOpacity style={[buttons.secondary, { marginTop: 20, marginBottom: 40, backgroundColor: isDark ? '#f5f7fa' : '#f5f7fa', borderWidth: 1, borderColor: colors.primary }]} onPress={() => setMostrandoFormulario(true)}>
-                <ThemedText style={{ color: colors.primary, fontWeight: 'bold', textAlign: 'center' }}>+ Nueva Categoría</ThemedText>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={[buttons.secondary, { marginTop: 20, marginBottom: 40, backgroundColor: isDark ? '#f5f7fa' : '#f5f7fa', borderWidth: 1, borderColor: colors.primary }]}
+            onPress={() => { setNuevoNombreCategoria(''); setNuevoColorCategoria(categoriaService.getRandomColor()); setMostrandoFormulario(true); }}
+          >
+            <ThemedText style={{ color: colors.primary, fontWeight: 'bold', textAlign: 'center' }}>+ Nueva Categoría</ThemedText>
+          </TouchableOpacity>
         )}
       </ScrollView>
 
@@ -287,16 +299,16 @@ const CategoriasScreen = () => {
                 <ThemedText style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: textColor }}>Editar Categoría</ThemedText>
                 
                 <TextInput 
-                    style={[inputs.base, { backgroundColor: isDark ? '#222' : '#f9f9f9', color: textColor, marginBottom: 20, borderColor: borderColor }]} 
-                    value={nombreEdicion}
-                    onChangeText={setNombreEdicion}
-                    placeholder="Nombre de categoría"
-                    placeholderTextColor={subTextColor}
+                  style={[inputs.base, { backgroundColor: '#ffffff', color: '#000000', marginBottom: 20, borderColor: borderColor }]} 
+                  value={nombreEdicion}
+                  onChangeText={setNombreEdicion}
+                  placeholder="Nombre de categoría"
+                  placeholderTextColor={'#999999'}
                 />
 
                 <View style={{ flexDirection: 'row', gap: 10 }}>
-                    <TouchableOpacity style={[buttons.secondary, { flex: 1, backgroundColor: isDark ? '#333' : '#ddd' }]} onPress={() => setMostrandoEdicion(false)}>
-                        <ThemedText style={{ textAlign: 'center', color: isDark ? '#ccc' : subTextColor }}>Cancelar</ThemedText>
+                    <TouchableOpacity style={[buttons.secondary, { flex: 1, backgroundColor: isDark ? '#fff' : '#ddd' }]} onPress={() => setMostrandoEdicion(false)}>
+                        <ThemedText style={{ textAlign: 'center', color: isDark ? '#222' : subTextColor }}>Cancelar</ThemedText>
                     </TouchableOpacity>
                     <TouchableOpacity style={[buttons.primary, { flex: 1 }]} onPress={handleGuardarEdicion}>
                         <ThemedText style={text.buttonText}>Guardar</ThemedText>
