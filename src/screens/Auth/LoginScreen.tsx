@@ -46,11 +46,11 @@ const LoginScreen = () => {
       <View style={{ alignItems: 'center', marginBottom: 40 }}>
         <Image 
           source={require('@/assets/images/logoMisBoletas.jpeg')} 
-          style={{ width: 100, height: 100, borderRadius: 20 }}
+          style={{ width: 100, height: 100, borderRadius: 50 }}
           resizeMode="contain"
         />
         {/* ✅ CORREGIDO: text.detailTitle en lugar de text.title */}
-        <ThemedText style={[text.detailTitle, { marginTop: 20 }]}>Mis Boletas</ThemedText>
+        <ThemedText style={[text.detailTitle, { marginTop: 20, color: colors.textWithed }]}>Mis Boletas</ThemedText>
         {/* ✅ CORREGIDO: text.emptyStateSubtitle en lugar de text.subtitle */}
         <ThemedText style={text.emptyStateSubtitle}>Inicia sesión para continuar</ThemedText>
       </View>
@@ -58,7 +58,7 @@ const LoginScreen = () => {
       {/* Formulario */}
       <View style={{ width: '100%', gap: 16 }}>
         <View style={inputs.container}>
-          <ThemedText style={text.label}>Correo Electrónico</ThemedText>
+          <ThemedText style={[text.label, { color: colors.textWithed }]}>Correo Electrónico</ThemedText>
           <ThemedTextInput
             placeholder="ejemplo@correo.com"
             value={correo}
@@ -69,7 +69,7 @@ const LoginScreen = () => {
         </View>
 
         <View style={inputs.container}>
-          <ThemedText style={text.label}>Contraseña</ThemedText>
+          <ThemedText style={[text.label, { color: colors.textWithed }]}>Contraseña</ThemedText>
           <ThemedTextInput
             placeholder="********"
             value={contrasena}
@@ -111,13 +111,13 @@ const LoginScreen = () => {
           {cargando ? (
             <ActivityIndicator color="white" />
           ) : (
-            <ThemedText style={text.buttonText}>Iniciar Sesión</ThemedText>
+            <ThemedText style={[text.buttonText, { color: colors.textWithed }]}>Iniciar Sesión</ThemedText>
           )}
         </TouchableOpacity>
 
         {/* Registro */}
-        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20 }}>
-          <ThemedText>¿No tienes cuenta? </ThemedText>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20, }}>
+          <ThemedText style={{color: colors.backgroundLight}}>¿No tienes cuenta? </ThemedText>
           <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
             <ThemedText style={{ color: colors.primary, fontWeight: 'bold' }}>
               Regístrate

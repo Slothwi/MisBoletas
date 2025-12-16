@@ -15,9 +15,10 @@ const CategoriasScreen = () => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  // ✅ ESTILOS DINÁMICOS
+  // ✅ ESTILOS DINÁMICOS CORREGIDOS
   const bgColor = isDark ? colors.backgroundDark : colors.background;
-  const cardBg = isDark ? colors.cardDark : '#ffffff';
+  // Fondo de tarjetas: en dark usa un gris oscuro, en light blanco
+  const cardBg = isDark ? colors.cardDark : '#ffffff'; 
   const textColor = isDark ? colors.textLight : colors.textDark;
   const subTextColor = isDark ? '#aaaaaa' : '#666666';
   const borderColor = isDark ? '#333' : '#ddd';
@@ -31,7 +32,6 @@ const CategoriasScreen = () => {
   const [productosDeCategoria, setProductosDeCategoria] = useState<Producto[]>([]);
   const [cargandoProductos, setCargandoProductos] = useState(false);
   
-  // Estados para Crear/Editar Categoría
   const [mostrandoFormulario, setMostrandoFormulario] = useState(false);
   const [nuevoNombreCategoria, setNuevoNombreCategoria] = useState("");
   const [categoriaAEditar, setCategoriaAEditar] = useState<Categoria | null>(null);
@@ -40,7 +40,13 @@ const CategoriasScreen = () => {
 
   // --- CARGA DE DATOS ---
   const cargarCategorias = useCallback(async () => {
-    if (!authState.isAuthenticated) return;
+    // ✅ CORRECCIÓN CLAVE: Si no está autenticado, paramos la carga para no dejar el spinner infinito
+    if (!authState.isAuthenticated) {
+        setCargando(false);
+        return;
+    }
+    
+    setCargando(true); // Reiniciar spinner al intentar cargar
     try {
       const datos = await categoriaService.getAll();
       setCategorias(datos);
@@ -49,7 +55,7 @@ const CategoriasScreen = () => {
     } finally {
       setCargando(false);
     }
-  }, [authState.isAuthenticated]);
+  }, [authState.isAuthenticated]); // ✅ Se ejecuta cuando cambia el estado de auth
 
   useFocusEffect(
     useCallback(() => {
@@ -59,7 +65,6 @@ const CategoriasScreen = () => {
 
   // --- LÓGICA DE PRODUCTOS ---
   const handleVerCategoria = async (categoria: Categoria) => {
-    // 1. Limpieza inmediata
     setProductosDeCategoria([]); 
     setCargandoProductos(true);
     setCategoriaSeleccionada(categoria);
@@ -75,18 +80,14 @@ const CategoriasScreen = () => {
   };
 
   const handleVerProducto = (producto: Producto) => {
-    // 2. Inyección de Categoría (CORREGIDO)
     const productoParaEditar = { ...producto };
-    
     if (categoriaSeleccionada) {
-        // ✅ SOLUCIÓN: Eliminada la propiedad 'id_usuario' que causaba el error de tipos
         productoParaEditar.categorias = [{
             id_categoria: categoriaSeleccionada.id_categoria,
             nombre: categoriaSeleccionada.nombre,
             color: categoriaSeleccionada.color
         }];
     }
-
     router.push({ 
         pathname: '/formulario', 
         params: { producto: JSON.stringify(productoParaEditar), modoEdicion: 'true' } 
@@ -142,9 +143,7 @@ const CategoriasScreen = () => {
     }
   };
 
-  // --- RENDERIZADO ---
-
-  if (cargando) return <View style={containers.centered}><ActivityIndicator color={colors.primary} /></View>;
+  if (cargando) return <View style={[containers.centered, { backgroundColor: bgColor }]}><ActivityIndicator color={colors.primary} /></View>;
 
   // VISTA: LISTA DE PRODUCTOS DE UNA CATEGORÍA
   if (categoriaSeleccionada) {
@@ -175,7 +174,7 @@ const CategoriasScreen = () => {
                         <TouchableOpacity 
                             key={prod.id_producto} 
                             style={[cards.interactive, { 
-                                backgroundColor: cardBg, 
+                                backgroundColor: cardBg, // ✅ Usar variable dinámica
                                 borderColor: borderColor, 
                                 borderWidth: 1, 
                                 flexDirection: 'row', 
@@ -211,7 +210,7 @@ const CategoriasScreen = () => {
           <View 
             key={cat.id_categoria} 
             style={[cards.interactive, { 
-                backgroundColor: cardBg, 
+                backgroundColor: cardBg, // ✅ Dinámico
                 borderColor: borderColor,
                 borderWidth: 1,
                 paddingVertical: 12,
@@ -266,8 +265,8 @@ const CategoriasScreen = () => {
                     onChangeText={setNuevoNombreCategoria}
                 />
                 <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
-                    <TouchableOpacity style={[buttons.secondary, { flex: 1 }]} onPress={() => setMostrandoFormulario(false)}>
-                        <ThemedText style={{ color: colors.textMuted, textAlign: 'center' }}>Cancelar</ThemedText>
+                    <TouchableOpacity style={[buttons.secondary, { flex: 1, backgroundColor: isDark ? '#fff' : '#ddd' }]} onPress={() => setMostrandoFormulario(false)}>
+                        <ThemedText style={{ color: isDark ? '#222' : colors.textMuted, textAlign: 'center' }}>Cancelar</ThemedText>
                     </TouchableOpacity>
                     <TouchableOpacity style={[buttons.primary, { flex: 1 }]} onPress={handleGuardarCategoria}>
                         <ThemedText style={text.buttonText}>Crear</ThemedText>
@@ -275,7 +274,7 @@ const CategoriasScreen = () => {
                 </View>
             </View>
         ) : (
-            <TouchableOpacity style={[buttons.secondary, { marginTop: 20, marginBottom: 40 }]} onPress={() => setMostrandoFormulario(true)}>
+            <TouchableOpacity style={[buttons.secondary, { marginTop: 20, marginBottom: 40, backgroundColor: isDark ? '#f5f7fa' : '#f5f7fa', borderWidth: 1, borderColor: colors.primary }]} onPress={() => setMostrandoFormulario(true)}>
                 <ThemedText style={{ color: colors.primary, fontWeight: 'bold', textAlign: 'center' }}>+ Nueva Categoría</ThemedText>
             </TouchableOpacity>
         )}
@@ -296,8 +295,8 @@ const CategoriasScreen = () => {
                 />
 
                 <View style={{ flexDirection: 'row', gap: 10 }}>
-                    <TouchableOpacity style={[buttons.secondary, { flex: 1 }]} onPress={() => setMostrandoEdicion(false)}>
-                        <ThemedText style={{ textAlign: 'center', color: subTextColor }}>Cancelar</ThemedText>
+                    <TouchableOpacity style={[buttons.secondary, { flex: 1, backgroundColor: isDark ? '#333' : '#ddd' }]} onPress={() => setMostrandoEdicion(false)}>
+                        <ThemedText style={{ textAlign: 'center', color: isDark ? '#ccc' : subTextColor }}>Cancelar</ThemedText>
                     </TouchableOpacity>
                     <TouchableOpacity style={[buttons.primary, { flex: 1 }]} onPress={handleGuardarEdicion}>
                         <ThemedText style={text.buttonText}>Guardar</ThemedText>

@@ -1,5 +1,7 @@
 import { ThemedText } from '@/src/components';
 import { useAuth } from '@/src/hooks/useAuth';
+// 👇 Importamos el hook para detectar el tema
+import { useColorScheme } from '@/src/hooks/useColorScheme';
 import { buttons, colors, inputs, misc, text } from '@/src/theme';
 import { Ionicons } from '@expo/vector-icons'; 
 import { useRouter } from 'expo-router';
@@ -19,6 +21,18 @@ export default function RegisterScreen() {
   const router = useRouter();
   const { register, authState, clearError } = useAuth();
   
+  // ✅ DETECCIÓN DE TEMA (CLARO / OSCURO)
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  // ✅ PALETA DE COLORES DINÁMICA
+  const bgColor = isDark ? colors.backgroundDark : colors.background;
+  const textColor = isDark ? '#fff' : '#333';
+  const inputBg = isDark ? '#1e293b' : '#fff'; // Fondo inputs
+  const inputColor = isDark ? '#fff' : '#000'; // Texto inputs
+  const placeholderColor = isDark ? '#94a3b8' : '#999';
+  const inputBorder = isDark ? '#334155' : '#e2e8f0';
+
   const [formData, setFormData] = useState({
     nombre: '',
     correo: '',
@@ -90,22 +104,20 @@ export default function RegisterScreen() {
     }
   };
 
-  // ✅ COMPONENTE CHECKBOX MEJORADO
-  // Ahora acepta 'string' O un componente 'ReactNode' para estilos personalizados
+  // ✅ CHECKBOX ADAPTADO AL TEMA
   const Checkbox = ({ label, value, onChange, onLabelPress }: { label: string | React.ReactNode, value: boolean, onChange: () => void, onLabelPress?: () => void }) => (
     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 15 }}>
         <TouchableOpacity onPress={onChange} style={{ padding: 5 }}>
             <Ionicons 
                 name={value ? "checkbox" : "square-outline"} 
                 size={24} 
-                color={value ? colors.primary : '#999'} 
+                color={value ? colors.primary : placeholderColor} 
             />
         </TouchableOpacity>
         <TouchableOpacity onPress={onLabelPress || onChange} style={{ flex: 1, marginLeft: 8 }}>
             {typeof label === 'string' ? (
-                <ThemedText style={{ fontSize: 14, color: '#333' }}>{label}</ThemedText>
+                <ThemedText style={{ fontSize: 14, color: textColor }}>{label}</ThemedText>
             ) : (
-                // Si es un componente personalizado (como texto con estilos), lo renderizamos directo
                 label
             )}
         </TouchableOpacity>
@@ -113,8 +125,9 @@ export default function RegisterScreen() {
   );
 
   return (
+    // ✅ Aplicamos el fondo dinámico al contenedor principal
     <KeyboardAvoidingView 
-        style={{ flex: 1, backgroundColor: colors.background }} 
+        style={{ flex: 1, backgroundColor: bgColor }} 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
         <ScrollView 
@@ -122,101 +135,104 @@ export default function RegisterScreen() {
         keyboardShouldPersistTaps="handled"
         >
         <View style={{ padding: 20 }}>
+            {/* Logo: Se mantiene igual */}
             <Image 
-            source={require('@/assets/images/logoMisBoletas.jpeg')} 
-            style={misc.logo} 
+                source={require('@/assets/images/logoMisBoletas.jpeg')} 
+                style={[misc.logo, { borderRadius: 100 }]} // Un pequeño ajuste visual
             />
-            <ThemedText style={[text.detailTitle, { marginBottom: 10 }]}>Crear Cuenta</ThemedText>
-            <ThemedText style={[text.cardSubtitle, { textAlign: 'center', marginBottom: 30 }]}>Únete a Mis Boletas</ThemedText>
+            
+            {/* Textos con colores adaptativos */}
+            <ThemedText style={[text.detailTitle, { marginBottom: 10, color: textColor }]}>Crear Cuenta</ThemedText>
+            <ThemedText style={[text.cardSubtitle, { textAlign: 'center', marginBottom: 30, color: isDark ? '#aaa' : '#666' }]}>Únete a Mis Boletas</ThemedText>
             
             <View style={{ width: '100%' }}>
-            <ThemedText style={text.label}>Nombre *</ThemedText>
-            <TextInput
-                style={inputs.base}
-                placeholder="Tu nombre completo"
-                placeholderTextColor="#999"
-                value={formData.nombre}
-                onChangeText={(text) => setFormData({ ...formData, nombre: text })}
-                autoCapitalize="words"
-                editable={!authState.isLoading}
-            />
+                
+                <ThemedText style={[text.label, { color: textColor }]}>Nombre *</ThemedText>
+                <TextInput
+                    style={[inputs.base, { backgroundColor: inputBg, color: inputColor, borderColor: inputBorder }]}
+                    placeholder="Tu nombre completo"
+                    placeholderTextColor={placeholderColor}
+                    value={formData.nombre}
+                    onChangeText={(text) => setFormData({ ...formData, nombre: text })}
+                    autoCapitalize="words"
+                    editable={!authState.isLoading}
+                />
 
-            <ThemedText style={text.label}>Correo electrónico *</ThemedText>
-            <TextInput
-                style={inputs.base}
-                placeholder="tu@correo.com"
-                placeholderTextColor="#999"
-                value={formData.correo}
-                onChangeText={(text) => setFormData({ ...formData, correo: text })}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!authState.isLoading}
-            />
+                <ThemedText style={[text.label, { color: textColor }]}>Correo electrónico *</ThemedText>
+                <TextInput
+                    style={[inputs.base, { backgroundColor: inputBg, color: inputColor, borderColor: inputBorder }]}
+                    placeholder="tu@correo.com"
+                    placeholderTextColor={placeholderColor}
+                    value={formData.correo}
+                    onChangeText={(text) => setFormData({ ...formData, correo: text })}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    editable={!authState.isLoading}
+                />
 
-            <ThemedText style={text.label}>Contraseña *</ThemedText>
-            <TextInput
-                style={inputs.base}
-                placeholder="Mínimo 6 caracteres"
-                placeholderTextColor="#999"
-                value={formData.contrasena}
-                onChangeText={(text) => setFormData({ ...formData, contrasena: text })}
-                secureTextEntry
-                editable={!authState.isLoading}
-            />
+                <ThemedText style={[text.label, { color: textColor }]}>Contraseña *</ThemedText>
+                <TextInput
+                    style={[inputs.base, { backgroundColor: inputBg, color: inputColor, borderColor: inputBorder }]}
+                    placeholder="Mínimo 6 caracteres"
+                    placeholderTextColor={placeholderColor}
+                    value={formData.contrasena}
+                    onChangeText={(text) => setFormData({ ...formData, contrasena: text })}
+                    secureTextEntry
+                    editable={!authState.isLoading}
+                />
 
-            <ThemedText style={text.label}>Confirmar Contraseña *</ThemedText>
-            <TextInput
-                style={[inputs.base, { marginBottom: 20 }]}
-                placeholder="Repite tu contraseña"
-                placeholderTextColor="#999"
-                value={formData.confirmPassword}
-                onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
-                secureTextEntry
-                editable={!authState.isLoading}
-            />
+                <ThemedText style={[text.label, { color: textColor }]}>Confirmar Contraseña *</ThemedText>
+                <TextInput
+                    style={[inputs.base, { marginBottom: 20, backgroundColor: inputBg, color: inputColor, borderColor: inputBorder }]}
+                    placeholder="Repite tu contraseña"
+                    placeholderTextColor={placeholderColor}
+                    value={formData.confirmPassword}
+                    onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
+                    secureTextEntry
+                    editable={!authState.isLoading}
+                />
 
-            {/* ✅ CHECKBOX CON ESTILO DE ENLACE */}
-            <Checkbox 
-                label={
-                    <ThemedText style={{ fontSize: 14, color: '#333' }}>
-                        Acepto los{' '}
-                        <ThemedText style={{ color: colors.primary, fontWeight: 'bold', textDecorationLine: 'underline' }}>
-                            Términos y Condiciones
+                {/* ✅ Checkbox con texto dinámico */}
+                <Checkbox 
+                    label={
+                        <ThemedText style={{ fontSize: 14, color: textColor }}>
+                            Acepto los{' '}
+                            <ThemedText style={{ color: colors.primary, fontWeight: 'bold', textDecorationLine: 'underline' }}>
+                                Términos y Condiciones
+                            </ThemedText>
                         </ThemedText>
+                    }
+                    value={aceptaTerminos} 
+                    onChange={() => setAceptaTerminos(!aceptaTerminos)}
+                    onLabelPress={() => router.push('/terminos' as any)}
+                />
+                
+                <Checkbox 
+                    label="Quiero recibir novedades y promociones" 
+                    value={recibirNovedades} 
+                    onChange={() => setRecibirNovedades(!recibirNovedades)}
+                />
+
+                <TouchableOpacity 
+                    style={[buttons.primary, (authState.isLoading || !aceptaTerminos) && buttons.disabled]}
+                    onPress={handleRegister}
+                    disabled={authState.isLoading}
+                    >
+                    <ThemedText style={text.buttonText}>
+                    {authState.isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
                     </ThemedText>
-                }
-                value={aceptaTerminos} 
-                onChange={() => setAceptaTerminos(!aceptaTerminos)}
-                onLabelPress={() => {
-                    // Usamos la ruta pública
-                    router.push('/terminos' as any);
-                }}
-            />
-            
-            <Checkbox 
-                label="Quiero recibir novedades y promociones" 
-                value={recibirNovedades} 
-                onChange={() => setRecibirNovedades(!recibirNovedades)}
-            />
+                </TouchableOpacity>
 
-            <TouchableOpacity 
-                style={[buttons.primary, (authState.isLoading || !aceptaTerminos) && buttons.disabled]}
-                onPress={handleRegister}
-                disabled={authState.isLoading}
+                <TouchableOpacity 
+                    style={{ marginTop: 0, padding: 10, alignItems: 'center' }}
+                    onPress={() => router.push('/login')}
+                    disabled={authState.isLoading}
                 >
-                <ThemedText style={text.buttonText}>
-                {authState.isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
-                </ThemedText>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-                style={{ marginTop: 0, padding: 10, alignItems: 'center' }}
-                onPress={() => router.push('/login')}
-                disabled={authState.isLoading}
-            >
-                <ThemedText style={{ color: '#333', fontSize: 14, fontWeight: '500' }}>¿Ya tienes cuenta? Inicia sesión</ThemedText>
-            </TouchableOpacity>
+                    <ThemedText style={{ color: textColor, fontSize: 14, fontWeight: '500' }}>
+                        ¿Ya tienes cuenta? Inicia sesión
+                    </ThemedText>
+                </TouchableOpacity>
             </View>
         </View>
     </ScrollView>

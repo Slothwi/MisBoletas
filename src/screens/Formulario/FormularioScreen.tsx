@@ -113,9 +113,9 @@ const FormularioScreen = () => {
 
   // 1. Cargar datos del producto o OCR
   useEffect(() => {
-    if (paramsLoadedRef.current) return; // Evitar doble carga
+    if (paramsLoadedRef.current) return; 
 
-    // CASO 1: MODO EDICIÓN (Producto existente)
+    // CASO 1: MODO EDICIÓN
     if (params.producto && params.modoEdicion === 'true') {
         paramsLoadedRef.current = true;
         try {
@@ -139,24 +139,11 @@ const FormularioScreen = () => {
             const data = JSON.parse(params.ocrData as string);
             console.log("Datos OCR recibidos:", data);
 
-            // Llenar tienda/comercio
-            if (data.comercio) setTienda(data.comercio);
-            if (data.tienda) setTienda(data.tienda);
-            
-            // Llenar precio/total
-            if (data.total) setPrecio(data.total.toString());
-            if (data.monto) setPrecio(data.monto.toString());
-            if (data.precio) setPrecio(data.precio.toString());
-            
-            // Llenar marca
-            if (data.marca) setMarca(data.marca);
-            if (data.vendor || data.vendedor) setMarca(data.vendor || data.vendedor);
-            
-            // Llenar modelo
-            if (data.modelo) setModelo(data.modelo);
-            if (data.descripcion) setModelo(data.descripcion);
-            
-            // Llenar garantía
+            // Llenar datos básicos
+            if (data.comercio || data.tienda) setTienda(data.comercio || data.tienda);
+            if (data.total || data.precio || data.monto) setPrecio((data.total || data.precio || data.monto).toString());
+            if (data.marca || data.vendor || data.vendedor) setMarca(data.marca || data.vendor || data.vendedor);
+            if (data.modelo || data.descripcion) setModelo(data.modelo || data.descripcion);
             if (data.garantia) setDuracionGarantia(data.garantia.toString());
             
             // Parsear fecha
@@ -180,21 +167,23 @@ const FormularioScreen = () => {
               }
             }
 
-            // --- LÓGICA MOVIDA AQUÍ (ESTABA ROMPIENDO EL JSX) ---
+            // --- ✅ LÓGICA MEJORADA DE NOTAS E ÍTEMS ---
             let resumen = '📄 Datos extraídos automáticamente:';
             if (data.comercio) resumen += `\nTienda: ${data.comercio}`;
             if (data.fecha) resumen += `\nFecha: ${data.fecha}`;
-            if (data.total) resumen += `\nPrecio: $${data.total}`;
-            if (data.marca) resumen += `\nMarca: ${data.marca}`;
-            if (data.modelo) resumen += `\nModelo: ${data.modelo}`;
-            if (data.garantia) resumen += `\nGarantía: ${data.garantia} meses`;
-            if (data.numero_boleta) resumen += `\nN° Boleta: ${data.numero_boleta}`;
+            if (data.total) resumen += `\nPrecio Total: $${data.total}`;
             
-            // Solo sobrescribir notas si está vacío o es nuevo
+            // Si el backend detectó ítems, los agregamos
+            if (data.items_detectados && data.items_detectados.length > 0) {
+                resumen += `\n\n📦 Ítems detectados (${data.items_detectados.length}):\n${data.resumen_items}`;
+            }
+            
+            if (data.numero_boleta) resumen += `\n\nN° Boleta: ${data.numero_boleta}`;
+            
             setNotas(prev => prev ? prev : resumen);
-            // ----------------------------------------------------
+            // -------------------------------------------
             
-            // Guardar URI para subirla al guardar el producto
+            // Guardar URI
             if (params.imagenTemporalUri) {
                 setImagenTemporal(params.imagenTemporalUri as string);
                 setArchivoSeleccionado({ 
@@ -205,7 +194,7 @@ const FormularioScreen = () => {
                 });
             }
             
-            Alert.alert('✅ Datos cargados', 'Hemos completado el formulario con los datos de tu boleta. Verifica antes de guardar.');
+            Alert.alert('✅ Datos cargados', 'Hemos completado el formulario. Revisa los productos detectados en "Notas".');
             
         } catch (e) {
             console.error("Error parseando OCR params", e);
@@ -385,7 +374,7 @@ const FormularioScreen = () => {
           <View style={inputs.container}>
             <ThemedText style={[text.label, { color: textColor }]}>Notas</ThemedText>
             <ThemedTextInput 
-                style={[inputs.base, { height: 80, backgroundColor: inputBg, color: textColor, borderColor: '#ccc' }]} 
+                style={[inputs.base, { height: 100, backgroundColor: inputBg, color: textColor, borderColor: '#ccc' }]} 
                 multiline 
                 value={notas} 
                 onChangeText={setNotas} 
